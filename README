@@ -1,5 +1,5 @@
-Cross platform utility script that provides quick access to key info about a system. 
+Cross platform utility script that provides quick access to key info about a system. It is very useful for those logging into or building multiple systems. 
 
-It displays host name, OS, OS version, OS code name, Kernel, Processor, Proc speed, Memory Avail/Utilized, Disk Avail/Utilized, Local IP(s) (LAN), Internet IP(s).  
+It displays host name, OS, OS version, OS code name, Kernel, Processor, Proc speed, Memory Avail/Utilized, Disk Avail/Utilized, Local IP(s) (LAN), and Internet IP(s).  Irate requires sudo privileges to run. 
 
-It currently works on most Linux systems, macOS, and the Windows Subsystem for Linux (win10).
+It currently runs on most Linux systems, macOS, Raspberry PIs and the Windows Subsystem for Linux (win10).
