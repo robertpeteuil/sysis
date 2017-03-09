@@ -1,5 +1,40 @@
-Cross platform utility script that provides quick access to key info about a system. It is very useful for those logging into or building multiple systems. 
+sysis
 
-It displays host name, OS, OS version, OS code name, Kernel, Processor, Proc speed, Memory Avail/Utilized, Disk Avail/Utilized, Local IP(s) (LAN), and Internet IP(s).  Irate requires sudo privileges to run. 
+Cross-platform command-line script to gather and display key system information
 
-It currently runs on most Linux systems, macOS, Raspberry PIs and the Windows Subsystem for Linux (win10).
+  Ideal for sysadmins, developers and system builders who interact with multiple systems.  It provides a quick method to display key system information without the need to run several different commands**
+
+  sysis is designed to only display key information needed frequently, without the need to memorize and specify extra parameters.
+
+Information Displayed
+
+  -  Hostname
+  -  LAN IP(s) Addresses
+  -  Internet IP(s) Addresses
+  -  OS, code-name & version
+  -  Kernel & version
+  -  Device type & revision
+  -  Processor, revision, speed & number of cores
+  -  Memory usage, total & percentage used
+  -  Disk usage, total & percentage used
+
+  Items displayed varies based upon OS type and current user privileges
+
+Platforms Supported
+
+  - Linux
+  - macOS / OS X
+  - Windows 10 via Windows Subsystem for Linux (beta)
+  - Raspberry PIs (Linux)
+
+Execution
+
+  This is a command-line utility that is executed with `./sysis`
+
+  Optional Parameters
+
+  -h - 'help'
+  -n - 'network only mode'
+  -d - 'debug' - displays values by method obtained
+  -V - 'version info'
+  --help - 'detailed help info' - displays additional help including exit status information
