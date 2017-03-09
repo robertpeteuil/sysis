@@ -434,7 +434,7 @@ printReportNetwork() {
       echo -e "\t${CLRtitle}LAN IP \t\t${CLRwhite}${lanIP}"
     done
   fi
-  [[ -n pubIP ]] && echo -e "\t${CLRtitle}Internet IP \t${CLRwhite}${pubIP}${CLRnormal}\n"
+  [[ -n $pubIP ]] && echo -e "\t${CLRtitle}Internet IP \t${CLRwhite}${pubIP}${CLRnormal}\n"
   return 0
 }
 
