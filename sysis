@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # sysis - Collect and print information on system, network and OS
 #
@@ -12,8 +12,8 @@
 
 # INIT VARS AND FUNCTIONS
 scriptname="sysis"
-scriptbuildnum="3.3.13"
-scriptbuilddate="2016-05-31"
+scriptbuildnum="3.4.0"
+scriptbuilddate="2016-10-02"
 
 ############################################################
 ### VARS INITS
@@ -91,7 +91,7 @@ display_ver() {
   echo -en "${CLRheading2}${scriptname}${CLRwhite}  ver ${CLRtitle}${scriptbuildnum} ${CLRwhite}- ${CLRtitle}${scriptbuilddate}${CLRwhite}${CLRnormal}"
 }
 
-printScriptHelpInfo() {
+printHelp() {
   display_ver
   echo -e "\n${CLRwhite}Collect and print information on system, network and OS to standard output.\n"
   echo -e "${CLRtitle}usage: ${CLRwhite}${scriptname} ${CLRtitle2}[OPTIONS] [DEBUG]${CLRwhite}\n"
@@ -113,32 +113,37 @@ printScriptHelpInfo() {
   processExit
 }
 
-processCommandTail() {
+getCommandTail() {
   while [[ -n $1 ]]; do
     case $1 in
       -d)           mode="DEBUG";;
       -n)           mode="NET";;
-      -h)           printScriptHelpInfo;;
+      -h)           printHelp;;
       -V)           display_ver; exit 0;;
-      --help)       printScriptHelpInfo FULL;;
+      --help)       printHelp FULL;;
       --force)      mode="FORCE";;
-      *)            printScriptHelpInfo;;
+      *)            printHelp;;
     esac
     shift
   done
   return 0
 }
 
-gatherPUBLICip() {
-	pubIP=$(curl -s ipinfo.io/ip)
-  return 0
+cleanText() {
+    local var=$*
+    var="${var%"${var##*[![:space:]]}"}"  # remove leading whitespace
+    var="${var#"${var%%[![:space:]]*}"}"  # remove trailing whitespace
+    echo -n "$var"
 }
 
-gatherLANip() {
-	case $OS in
+getNetwork() {
+
+	pubIP=$(curl -s ipinfo.io/ip)
+
+  case $OS in
    Linux) # note RPI only has awk 1.x installed
     lanIP=$(ifconfig -a | awk '/(cast)/ {print $2}' | cut -d: -f2) ;;
-   Darwin)  # filters virtual adapters by checking for broadcast addy's with limited scope
+   Darwin)  # filters virtual adapters by checking for adapters with broadcast addy's with limited scope
     lanIP=$(ifconfig -a | awk '/(cast).([0-9]{1,3}\.){2}1\./ {print $2}') ;;
    FreeBSD|OpenBSD)
     lanIP=$(ifconfig  | grep -E 'inet.[0-9]' | grep -v '127.0.0.1' | awk '{print $2}') ;;
@@ -146,18 +151,20 @@ gatherLANip() {
     lanIP=$(ifconfig -a | grep inet | grep -v '127.0.0.1' | awk '{print $2}') ;;
    *)
     lanIP="Unknown" ;;
-	esac
+  esac
   if [[ -n $lanIP ]]; then
-		count=0
-		for i in $lanIP; do     # IF MULTI-IP's PUT IN ARRAY
-			lanIPS[count]=$i
-			((++count))
-		done
-	fi
+    count=0
+    for i in $lanIP; do     # IF MULTI-IP's PUT IN ARRAY
+      lanIPS[count]=$i
+      ((++count))
+    done
+  fi
   return 0
+
 }
 
-gatherSYSinfo() {
+getSystem() {
+
   if [[ $(uname 2> /dev/null) ]]; then
   	SYSnode=$(uname -n 2> /dev/null)
   	SYSkernal=$(uname -s 2> /dev/null)
@@ -167,24 +174,11 @@ gatherSYSinfo() {
   else
     processExit "cannot execute 'uname'"
   fi
-  return 0
-}
 
-gatherARCHinfo() {
   if [[ $(dpkg --help 2> /dev/null) ]]; then
     PROCarch=$(dpkg --print-architecture) # on RPI2, and RPI-Zero = armhf
   fi
-  return 0
-}
 
-trim() {
-    local var=$*
-    var="${var%"${var##*[![:space:]]}"}"  # remove leading whitespace
-    var="${var#"${var%%[![:space:]]*}"}"  # remove trailing whitespace
-    echo -n "$var"
-}
-
-gatherLSBinfo() {
   if [[ $(lsb_release -h 2> /dev/null) ]]; then
     LSBset="TRUE"   # LSB AVAILABLE FLAG
     LSBidPRE=$(lsb_release -i 2> /dev/null)
@@ -193,16 +187,18 @@ gatherLSBinfo() {
     LSBcodenamePRE=$(lsb_release -c 2> /dev/null)
     LSBallPRE=$(lsb_release -a 2> /dev/null)
     # Clean up text
-  	[[ -n $LSBidPRE ]] && LSBid=${LSBidPRE#*":"} && LSBid=$(trim "$LSBid")
-  	[[ -n $LSBdescrPRE ]] && LSBdescr=${LSBdescrPRE#*":"} && LSBdescr=$(trim "$LSBdescr")
-  	[[ -n $LSBrelPRE ]] && LSBrel=${LSBrelPRE#*":"} && LSBrel=$(trim "$LSBrel")
-  	[[ -n $LSBcodenamePRE ]] && LSBcodename=${LSBcodenamePRE#*":"} && LSBcodename=$(trim "$LSBcodename")
-   	[[ -n $LSBallPRE ]] && LSBall=${LSBallPRE#*":"} && LSBall=$(trim "$LSBall")
+  	[[ -n $LSBidPRE ]] && LSBid=${LSBidPRE#*":"} && LSBid=$(cleanText "$LSBid")
+  	[[ -n $LSBdescrPRE ]] && LSBdescr=${LSBdescrPRE#*":"} && LSBdescr=$(cleanText "$LSBdescr")
+  	[[ -n $LSBrelPRE ]] && LSBrel=${LSBrelPRE#*":"} && LSBrel=$(cleanText "$LSBrel")
+  	[[ -n $LSBcodenamePRE ]] && LSBcodename=${LSBcodenamePRE#*":"} && LSBcodename=$(cleanText "$LSBcodename")
+   	[[ -n $LSBallPRE ]] && LSBall=${LSBallPRE#*":"} && LSBall=$(cleanText "$LSBall")
   fi
+
   return 0
+
 }
 
-setNOTOSXvars() {
+setLinuxCommon() {
   if [[ $LSBset == "TRUE" ]]; then
     OSfullname="${LSBid} ${SYSkernal} ${LSBrel}"
     OScodename="${LSBcodename}"
@@ -215,11 +211,6 @@ setNOTOSXvars() {
       OSfullname="${SYSkernal}"
     fi
   fi
-  return 0
-}
-
-setLinuxCommon() {
-  setNOTOSXvars
   if [ -e "/sys/devices/system/cpu/possible" ]; then
     CPUspeed=$(lscpu | grep -m1 'MHz')
       CPUspeed=${CPUspeed%.*}             # strip eVERythign right of '.'
@@ -236,7 +227,7 @@ setLinuxCommon() {
   return 0
 }
 
-setRPIvars() {
+setRPI() {
   DeviceType="RPI"
   setLinuxCommon
   RPIrev=$(awk '/Revision/ { sub(/^.+\:/, "") ; print $1 }' /proc/cpuinfo)
@@ -266,25 +257,18 @@ setRPIvars() {
       *a02082) RPImodel="3B (1.2)"; RPImem="1 GB"; RPIman="Sony"; RPIrel="Q1 2016";;
       *) RPImodel="'Unknown Version'"; RPImem="Unknown"; RPIman="Unknown"; RPIrel="Unknown";;
   esac
-  # OSfullname in setLinuxCommon - setNOTOSXvars
-  # OScodename in setLinuxCommon - setNOTOSXvars
   OSVERsion=${SYSkernalVer%"-"*}  #remove '-xxx' on right
   HWdevice="Raspberry Pi ${RPImodel}"
   HWrelease="${RPIrel} (${RPIman})"
   CPUname=$(awk '/model\ name/ { sub(/-compatible/, ""); print ($4)" r"($7); exit}' /proc/cpuinfo)
-  # CPUspeed set in setLinuxCommon
-  # CPUcores set in setLinuxCommon
   MEMsize="${RPImem}"
   MEMusage=$(free -m | awk 'NR==2{printf "%s/%s MB (%d%%)\n", $3,$2,$3*100/$2 }')
-  # DISKusage set in setLinuxCommon
   return 0
 }
 
-setLINUXvars() {
+setLinux() {
   DeviceType="Linux"
   setLinuxCommon
-  # OSfullname in setLinuxCommon - setNOTOSXvars
-  # OScodename in setLinuxCommon - setNOTOSXvars
   OSVERsion=${SYSkernalVer%%"-"*}  #remove '-amd64' on right
   HWdevice="" # UNKNOWN HW
   HWrelease=""  # UNKNOWN HW
@@ -295,17 +279,14 @@ setLINUXvars() {
     CPUname=${CPUname/' CPU'/} # remove ' CPU'
     CPUname=${CPUname/' Processor'/} # remove ' Processor'
     CPUname=${CPUname%' @'*} # remove eVERything right of ' @', thus removing speed
-  # CPUspeed set in setLinuxCommon
-  # CPUcores set in setLinuxCommon
   MEMraw=$(free -m | awk '/^Mem:/{print $2}')
     MEMsize=$(( MEMraw / 925 ))   # total system ram in GB
     MEMsize="${MEMsize} GB"
   MEMusage=$(free -m | awk 'NR==2{printf "%s/%s MB (%.0f%%)\n", $3,$2,$3*100/$2 }')
-  # DISKusage set in setLinuxCommon
   return 0
 }
 
-setOSXvars() {
+setMac() {
   DeviceType="OSX"
   OSXinitialVer=${SYSkernalVer%%.*} # remove eVERything right of first '.'
   OSXadjustedVer=$((OSXinitialVer-4))  # subtract 4 from first number
@@ -331,12 +312,12 @@ setOSXvars() {
   esac
   HWdevice=${SYSplatform//,/.}
   HWrelease=""                   # Unknown on OSX
-  # OSX HW Quieries - 'sysctl -n' return value, 'sysctl -a | grep cpu' see params
-  CPUname=$(sysctl -n machdep.cpu.brand_string) # "Intel(R) Xeon(R) CPU E5-1620 v2 @ 3.70GHz"
+  # OSX HW Quieries - 'sysctl -n' return value, 'sysctl -a | grep cpu'
+  CPUname=$(sysctl -n machdep.cpu.brand_string)
     CPUname=${CPUname//(R)/} # remove ALL occurences of '(R)'
     CPUname=${CPUname/" CPU"/}
     CPUname=${CPUname%' @'*} # remove speed
-  CPUspeed=$(sysctl -n hw.cpufrequency_max) # get CPU speed "hw.cpufrequency_max: 3700000000"
+  CPUspeed=$(sysctl -n hw.cpufrequency_max) # get CPU speed
     CPUspeed=$((CPUspeed / 1000000))
     CPUspeedBig=$((CPUspeed / 1000))
     CPUspeedSmall=$((CPUspeed % 1000))
@@ -355,12 +336,12 @@ setOSXvars() {
     MEMused=$((MEMsize - MEMfree))
     MemRatio=$(( (MEMused * 100) / MEMsize))
   printf -v MEMusage "%s/%s GB (%.0f%%)" ${MEMused} ${MEMsize} ${MemRatio}
-  MEMsize="${MEMraw} GB"  # FINAL NOW - add 'GB' after using it to make MEMusage variable
+  MEMsize="${MEMraw} GB"  # add 'GB' after using it to make MEMusage
   DISKusage=$(df -h | awk '$NF=="/"{printf "%d/%d GB (%s)\n", $3,$2,$5}')
   return 0
 }
 
-printReportTitle () {
+printTitle () {
   display_ver
   echo -en "${CLRwhite}  -  ${REPORTTITLE}"
   case ${mode} in
@@ -373,15 +354,12 @@ printReportTitle () {
   return 0
 }
 
-printBashVars () {
+reportDebug() {
+  printTitle
   echo -e "\t${CLRheading}BASH VARS"
   echo -e "\t${CLRtitle}HOST = \t\t${CLRwhite}${MACHINE_NAME}"
   echo -e "\t${CLRtitle}OS = \t\t${CLRwhite}${OS}"
   echo -e "\t${CLRtitle}OS-TYPE =\t${CLRwhite}${OSTYPE}${CLRnormal}\n"
-  return 0
-}
-
-printSystemVars () {
   echo -e "\t${CLRheading}UNAME${CLRwhite}"
   echo -e "\t${CLRtitle}SYSkernal = \t${CLRwhite}${SYSkernal}"
   echo -e "\t${CLRtitle}SYSkernalVer = \t${CLRwhite}${SYSkernalVer}"
@@ -394,38 +372,24 @@ printSystemVars () {
     echo -e "\t${CLRtitle}LSBrel = \t${CLRwhite}${LSBrel}"
     echo -e "\t${CLRtitle}LSBcodename = \t${CLRwhite}${LSBcodename}${CLRnormal}\n"
   fi
+  if [[ "$DeviceType" == "RPI" ]]; then
+    echo -e "\t${CLRheading}RPI VARS"
+    echo -e "\t${CLRtitle}RPi HW Rev =\t${CLRwhite}${RPIrev}"
+    echo -e "\t${CLRtitle}RPi Model =\t${CLRwhite}${RPImodel}"
+    echo -e "\t${CLRtitle}RPi Rel Date =\t${CLRwhite}${RPIrel}"
+    echo -e "\t${CLRtitle}RPi Manuf =\t${CLRwhite}${RPIman}${CLRnormal}\n"
+  elif [[ "$DeviceType" == "OSX" ]]; then
+    echo -e "\t${CLRheading}OSX VARS"
+    echo -e "\t${CLRtitle}Main V Init = \t${CLRwhite}${OSXinitialVer}"
+    echo -e "\t${CLRtitle}Main V Adj = \t${CLRwhite}${OSXadjustedVer}"
+    echo -e "\t${CLRtitle}OSX Ver = \t${CLRwhite}${OSXmainVer}"
+    echo -e "\t${CLRtitle}OSX sub V = \t${CLRwhite}${OSXsubVer}${CLRnormal}\n"
+  fi
   return 0
 }
 
-printDebugRPI() {
-  echo -e "\t${CLRheading}RPI VARS"
-  echo -e "\t${CLRtitle}RPi HW Rev =\t${CLRwhite}${RPIrev}"
-  echo -e "\t${CLRtitle}RPi Model =\t${CLRwhite}${RPImodel}"
-  echo -e "\t${CLRtitle}RPi Rel Date =\t${CLRwhite}${RPIrel}"
-  echo -e "\t${CLRtitle}RPi Manuf =\t${CLRwhite}${RPIman}${CLRnormal}\n"
-  return 0
-}
-
-printDebugOSX() {
-  echo -e "\t${CLRheading}OSX VARS"
-  echo -e "\t${CLRtitle}Main V Init = \t${CLRwhite}${OSXinitialVer}"
-  echo -e "\t${CLRtitle}Main V Adj = \t${CLRwhite}${OSXadjustedVer}"
-  echo -e "\t${CLRtitle}OSX Ver = \t${CLRwhite}${OSXmainVer}"
-  echo -e "\t${CLRtitle}OSX sub V = \t${CLRwhite}${OSXsubVer}${CLRnormal}\n"
-  return 0
-}
-
-printDebugReport() {
-  printReportTitle
-  printBashVars
-  printSystemVars
-    [[ "$DeviceType" == "RPI" ]] && printDebugRPI
-    [[ "$DeviceType" == "OSX" ]] && printDebugOSX
-  return 0
-}
-
-printReportNetwork() {
-  printReportTitle
+reportNetwork() {
+  printTitle
   echo -e "\t${CLRheading}HOST\t\t${CLRheading2}${MACHINE_NAME}"
   [[ -n $SYSnode ]] && [[ "$SYSnode" != "$HOSTNAME" ]] && echo -e "\t${CLRheading}NODE\t\t${CLRheading2}${SYSnode}"
   if [[ $lanIP != "Unknown" ]]; then
@@ -438,7 +402,7 @@ printReportNetwork() {
   return 0
 }
 
-printReportSystem() {
+reportSystem() {
   echo -e "\t${CLRheading}OS\t\t${CLRheading2}${OSfullname}"
   [[ -n $OScodename ]] && echo -e "\t${CLRtitle}CODENAME\t${CLRwhite}${OScodename}"
   [[ -n $OSVERsion ]] && echo -e "\t${CLRtitle}OS VERSION\t${CLRwhite}${OSVERsion}"
@@ -454,14 +418,15 @@ printReportSystem() {
   return 0
 }
 
-printMainReport() {
-  printReportNetwork
-  if [[ -z "$DeviceType" ]] || [[ "$mode" == "FORCE" ]]; then # unknown device OR forced
+reportMain() {
+  reportNetwork
+  if [[ -z "$DeviceType" ]] || [[ "$mode" == "FORCE" ]]; then
+    # unknown device OR forced
     OSVERsion=${SYSkernalVer}  # set VARS to raw data
     CPUname=${SYSmachine}
     [[ "$SYSplatform" != "unknown" ]] && HWdevice=${SYSplatform}  # Don't set if 'unknown'
   fi
-  printReportSystem
+  reportSystem
   return 0
 }
 
@@ -470,38 +435,29 @@ printMainReport() {
 #     EXECUTION STARTS HERE
 ######################################################################
 
-### INITIALIZATION FUNCTIONS
-  processCommandTail "$@"    # CHECK FOR PASSED PARAMETERS
+getCommandTail "$@"
 
-### GATHER INFO
-  gatherPUBLICip
-  gatherLANip
+getNetwork
+[[ $mode == "NET" ]] && reportNetwork && processExit
+getSystem
 
-  [[ $mode == "NET" ]] && printReportNetwork && processExit
-
-  gatherSYSinfo
-  gatherARCHinfo
-  gatherLSBinfo
-
-### PROCESS DEVICE-SPECIFIC INFO
-  if [[ "$OS" == "Linux" ]]; then
-    if ([[ "$PROCarch" == "armhf" ]] || [[ $SYSmachine == armv* ]] || [[ "$OSTYPE" == "linux-gnueabihf" ]]); then
-      setRPIvars
-    else
-      setLINUXvars
-    fi
-  elif [[ "$OS" == "Darwin" ]]; then
-    setOSXvars
-  else                 # Unknown device
-    setNOTOSXvars
+if [[ "$OS" == "Linux" ]]; then
+  if ([[ "$PROCarch" == "armhf" ]] || [[ $SYSmachine == armv* ]] || [[ "$OSTYPE" == "linux-gnueabihf" ]]); then
+    setRPI
+  else
+    setLinux
   fi
+elif [[ "$OS" == "Darwin" ]]; then
+  setMac
+else                 # Unknown device
+  echo -e "Error: System Type not determined"
+  exit 1
+fi
 
-### PRINT REPORT
-  [[ "$mode" == "DEBUG" ]] && printDebugReport && processExit
-  printMainReport
+[[ "$mode" == "DEBUG" ]] && reportDebug && processExit
+reportMain
 
-### EXIT SCRIPT
-  processExit
+processExit
 
 ### SHOULD NEVER RUN CODE BELOW THIS LINE
 echo "ERROR - exit function didnt work" >&2
