@@ -25,7 +25,7 @@ Platforms Supported
   - Linux
   - macOS / OS X
   - Windows 10 via Windows Subsystem for Linux (beta)
-  - Raspberry PIs (Linux)
+  - Raspberry PI (Linux)
 
 Execution
 
@@ -38,3 +38,8 @@ Execution
   -d - 'debug' - displays values by method obtained
   -V - 'version info'
   --help - 'detailed help info' - displays additional help including exit status information
+
+To Do
+  - Revise Mac code to use 'macOS' instead of the now deprecated 'OS X'
+  - Update OS version information to include macOS (Sierra)
+  - Update Raspberry Pi hardware version information

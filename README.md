@@ -2,7 +2,7 @@
 
 ### cross-platform command-line script to gather and display key system information
 
-  **Ideal for sysadmins, developers and system builders who interact with multiple systems.  It provides a quick method to display key system information without the need to run several different commands**
+  **Ideal for sysadmins, developers and system builders who interact with multiple systems.**  It provides a quick method to display key system information without the need to run several different commands
 
   **sysis** is designed to only display key information needed frequently, without the need to memorize and specify extra parameters.   
 
@@ -25,7 +25,7 @@
   * Linux
   * macOS / OS X
   * Windows 10 via Windows Subsystem for Linux (beta)
-  * Raspberry PIs (Linux)
+  * Raspberry PI (Linux)
 
 #### Execution
 
@@ -33,13 +33,13 @@
 
 ##### Optional Parameters
 
-  -h - 'help'
-  -n - 'network only mode'  
-  -d - 'debug' - displays values by method obtained
-  -V - 'version info'
-  --help - 'detailed help info' - displays additional help including exit status information
+  * `-h` - 'help'
+  * `-n` - 'network only mode'
+  * `-d` - 'debug' - displays values by method obtained
+  * `-V` - 'version info'
+  * `--help` - 'detailed help info' - displays additional help including exit status information
 
 #### To Do
-* Update OS version information for the latest release of macOS (Sierra)
 * Revise Mac code to use 'macOS' instead of the now deprecated 'OS X'
-* Update Raspberry Pi revision information for the latest revisions  
+* Update OS version information to include macOS (Sierra)
+* Update Raspberry Pi hardware version information
