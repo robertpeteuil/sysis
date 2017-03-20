@@ -5,7 +5,7 @@
 **Ideal for sysadmins, developers and system builders who interact with multiple systems.**  It provides a quick method to display key system information without the need to run several different commands
 
 #### Screenshot of sysis output: 
-![sysis-macos](https://cloud.githubusercontent.com/assets/1554603/24115601/2144811c-0d61-11e7-97cd-795cf2643dc3.png)
+![sysis-macos-med](https://cloud.githubusercontent.com/assets/1554603/24118108/e1456456-0d69-11e7-8501-2c3954b8b12d.png)
 
 #### Supported Platforms
 
