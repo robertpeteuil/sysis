@@ -3,5 +3,6 @@ engines:
   shellcheck:
     enabled: true
 ratings:
-  paths: []
+  paths: 
+  - "sysis"
 exclude_paths: []
