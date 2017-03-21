@@ -1,8 +1,14 @@
 # sysis
+### Display Key System Information with this lightweight Cross-Platform Utility
+[![Code Climate](https://codeclimate.com/github/robertpeteuil/sysis/badges/gpa.svg)](https://codeclimate.com/github/robertpeteuil/sysis)
+[![GitHub issues](https://img.shields.io/github/issues/robertpeteuil/sysis.svg)](https://github.com/robertpeteuil/sysis)
+[![GitHub release](https://img.shields.io/github/release/robertpeteuil/sysis.svg?colorB=2067b8)](https://github.com/robertpeteuil/sysis)
+[![language: bash](https://img.shields.io/badge/language-bash-447799.svg?colorB=2067b8&style=flat-square "made in Bash")]()
+[![license](https://img.shields.io/github/license/robertpeteuil/sysis.svg?colorB=2067b8)](https://github.com/robertpeteuil/sysis)
 
-### cross-platform utility that gathers and displays key system information in one place
+---
 
-**Ideal for sysadmins, developers and system builders who interact with multiple systems.**  It provides a quick method to display key system information without the need to run several different commands
+**Ideal for sysadmins, developers and system builders who connect to dozens of systems daily.**  SYSIS provides a quick display of key system information without the need to run multiple different utilities.  It also avoids the bloat that is common in other System Information Utilities.
 
 #### Screenshot of sysis output: 
 ![sysis-macos-med](https://cloud.githubusercontent.com/assets/1554603/24118108/e1456456-0d69-11e7-8501-2c3954b8b12d.png)
