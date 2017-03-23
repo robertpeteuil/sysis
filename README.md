@@ -15,10 +15,11 @@
 
 ### Supported Platforms
 
-  * Linux
-  * macOS / OS X
-  * Raspberry PI (Linux)
-  * Windows 10 with "Bash on Linux" installed (supported in beta)
+  - Linux
+  - macOS / OS X
+  - Raspberry PI (Linux)
+  - Windows 10 with "Bash on Linux" installed (supported in beta)
+    - Requires installation of **make**, which can be installed with `sudo apt install make`
 
 ### Execution
 
