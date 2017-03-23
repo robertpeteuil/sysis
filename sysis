@@ -12,8 +12,8 @@
 
 # INIT VARS AND FUNCTIONS
 scriptname="sysis"
-scriptbuildnum="3.4.0"
-scriptbuilddate="2016-10-02"
+scriptbuildnum="3.4.1"
+scriptbuilddate="2017-03-23"
 
 ############################################################
 ### VARS INITS
@@ -113,7 +113,7 @@ getCommandTail() {
       -d)           mode="DEBUG";;
       -n)           mode="NET";;
       -h)           printHelp;;
-      -V)           display_ver; exit 0;;
+      -V)           display_ver; echo; exit 0;;
       --help)       printHelp FULL;;
       --force)      mode="FORCE";;
       *)            printHelp;;
