@@ -36,7 +36,7 @@ This is a command is executed simply with `sysis`
 Can be install with curl
 
 ```shell
-sh -c "`curl -s -L https://raw.github.com/robertpeteuil/sysis/master/install.sh`"
+bash -c "`curl -s -L https://raw.github.com/robertpeteuil/sysis/master/install.sh`"
 ```
 
 
