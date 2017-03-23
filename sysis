@@ -3,12 +3,7 @@
 # sysis - Collect and print information on system, network and OS
 #
 #     For OSX & Linux
-#         tested on yosemite, Debian Linux, Raspbian (Debian on Rasberry Pi)
 #
-#   TO DO -
-#     Shorten commands using awk
-#     enhance error checking - before ALL shell commands
-#       set EXITSTATUS & EXITMESSAGE accordingly
 
 # INIT VARS AND FUNCTIONS
 scriptname="sysis"
