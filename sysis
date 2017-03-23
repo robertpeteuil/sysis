@@ -12,7 +12,7 @@
 
 # INIT VARS AND FUNCTIONS
 scriptname="sysis"
-scriptbuildnum="3.4.1"
+scriptbuildnum="3.4.2"
 scriptbuilddate="2017-03-23"
 
 ############################################################
@@ -273,6 +273,7 @@ setLinux() {
     CPUname=${CPUname/' CPU'/} # remove ' CPU'
     CPUname=${CPUname/' Processor'/} # remove ' Processor'
     CPUname=${CPUname%' @'*} # remove eVERything right of ' @', thus removing speed
+    CPUname="${CPUname#"${CPUname%%[![:space:]]*}"}" # remove spaces at beginning
   MEMraw=$(free -m | awk '/^Mem:/{print $2}')
     MEMsize=$(( MEMraw / 925 ))   # total system ram in GB
     MEMsize="${MEMsize} GB"
