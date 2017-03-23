@@ -19,8 +19,7 @@
   - macOS / OS X
   - Raspberry PI (Linux)
   - Windows 10 with "Bash on Linux" installed (supported in beta)
-    - Requires installation of **make**, which can be installed with `sudo apt install make`
-
+    
 ### Execution
 
 This is a command is executed simply with `sysis`
@@ -31,6 +30,11 @@ This is a command is executed simply with `sysis`
 > -  `-d` - 'debug' - displays values by method obtained
 > -  `-V` - 'version info'
 > -  `--help` - 'detailed help info' - displays additional help including exit status information
+
+### Windows 10 - Bash on Windows - Pre-Installation Steps:
+
+- Install **make** utility with the command `sudo apt install make`
+- Allow write access to /usr/local/bin with the command `sudo chmod a+w /usr/local/bin`
 
 ### Installation:
 
