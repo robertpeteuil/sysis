@@ -33,13 +33,9 @@ EXITMESSAGE=""
 # TURN ON COLOR IF POSSIBLE, SET THEME
 if test -t 1; then            # check if stdout is a terminal
     ncolors=$(tput colors)    # see if it supports colors
-    if test -n "$ncolors" && test $ncolors -ge 8; then
+    if test -n "$ncolors" && test "$ncolors" -ge 8; then
       # Set Colors
         bold="$(tput bold)"
-        underline="$(tput smul)"
-        standout="$(tput smso)"
-        normal="$(tput sgr0)"
-        black="$(tput setaf 0)"
         red="$(tput setaf 1)"
         green="$(tput setaf 2)"
         yellow="$(tput setaf 3)"
@@ -52,9 +48,7 @@ if test -t 1; then            # check if stdout is a terminal
         CLRnormal="\033[0m"
         CLRwhite=${bold}${white}
         CLRheading=${bold}${blue}
-        # CLRheading=${bold}${green}
         CLRheading2=${bold}${green}
-        # CLRheading2=${bold}${blue}
         CLRtitle=${bold}${cyan}
         CLRtitle2=${bold}${magenta}
         CLRsuccess=${bold}${green}
