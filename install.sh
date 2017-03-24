@@ -2,31 +2,84 @@
 
 REPOACCT="robertpeteuil"
 REPONAME="sysis"
-PREFIX="/usr/local"
-BINDIR="${PREFIX}/bin"
+# DEBUG=true
 
-# switch to temp dir
-TMPDIR=${TMPDIR:-/tmp}
-cd "${TMPDIR}" || exit 1
+CURRENTDIR="$(pwd)"
+CURRENTDIR=${CURRENTDIR##*\/}    # remove leading dirs
 
-# find latest repo package, download and un-tar it
-PKGDLURL=$(curl -s https://api.github.com/repos/${REPOACCT}/${REPONAME}/releases/latest | grep tarball_url | head -n 1 | cut -d '"' -f 4)
-curl -sL "$PKGDLURL" | tar zxf -
+# UTILTMPDIR="${REPOACCT}-${REPONAME}*"
+UTILTMPDIR="${REPOACCT}-${REPONAME}"
 
-# find the name of the dir extracted to, as it has the last commit # as a suffix
-UTILTMPDIR=$(ls -d -t ${REPOACCT}-${REPONAME}* | head -n 1)
-UTILTMPDIR=${UTILTMPDIR//\//}
-cd "${UTILTMPDIR}" || exit 1
-
-# install with make if installed, otherwise use scripts
-if [[ $(make -h 2> /dev/null) ]]; then
-  make install
+if [[ ("${CURRENTDIR}" =~ "${UTILTMPDIR}"*) || (("${CURRENTDIR}" =~ "${REPONAME}"*)) ]]; then
+  [[ "$DEBUG" ]] && echo "we're in a dir named for the repo"
+  # assume the repo is downloaded and were doing a local install
 else
-  mkdir -p "${BINDIR}"
-  cp -f sysis "${BINDIR}"
-  echo "sysis utility installed to ${BINDIR}"
+  [[ "$DEBUG" ]] && echo "not in repo dir"
+  # not in repo directory (it needs to be DL'd)
+
+  # switch to temp dir
+  TMPDIR=${TMPDIR:-/tmp}
+  [[ "$DEBUG" ]] && echo -e "\tswitching to temp dir: ${TMPDIR}"
+  cd "${TMPDIR}" || exit 1
+
+  # find latest repo package, download and un-tar it
+  PKGDLURL=$(curl -s https://api.github.com/repos/${REPOACCT}/${REPONAME}/releases/latest | grep tarball_url | head -n 1 | cut -d '"' -f 4)
+  [[ "$DEBUG" ]] && echo -e "\tdownloading repo: ${PKGDLURL}"
+  curl -sL "$PKGDLURL" | tar zxf -
+
+  [[ "$DEBUG" ]] && echo -e "\tcalculating extraction dir name"
+  # find the name of the dir extracted to, as it has the last commit # as a suffix
+  UTILTMPDIR=$(ls -d -t ${REPOACCT}-${REPONAME}* | head -n 1)
+  UTILTMPDIR=${UTILTMPDIR/%\//}
+
+  [[ "$DEBUG" ]] && echo -e "\tchanging to extraction dir: ${UTILTMPDIR}"
+  # cd repo dir
+  cd "${UTILTMPDIR}" || exit 1
+
+  CLEANUPREQ=true
+
 fi
 
-# cleanup 
-cd "${TMPDIR}" || exit 1
-rm -rf "${UTILTMPDIR}"
+# install code
+[[ "$DEBUG" ]] && echo -e "Installer"
+if [[ -w "/usr/local/bin" ]]; then
+  [[ "$DEBUG" ]] && echo -e "\t/usr/local/bin writeable - installing there"
+  BINDIR="/usr/local/bin"
+  CMDPREFIX=""
+  STREAMLINED=true
+else
+  [[ "$DEBUG" ]] && echo -e "\t/usr/local/bin not writeable by current user\n\n"
+  echo -e "installer - ${REPONAME} utility\n"
+  echo "Specify install directory (a,b or c):"
+  echo -en "\t(a) '~/bin'    (b) '/usr/local/bin' as root    (c) abort : "
+  read -r -n 1 SELECTION
+  echo
+
+  if [ "${SELECTION}" == "a" ] || [ "${SELECTION}" == "A" ]; then
+    [[ "$DEBUG" ]] && echo "Option A selected: installing into ${HOME}/bin"
+    BINDIR="${HOME}/bin"
+    CMDPREFIX=""
+  elif [ "${SELECTION}" == "b" ] || [ "${SELECTION}" == "B" ]; then
+    [[ "$DEBUG" ]] && echo "Option B selected: installing into '/usr/local/bin' as root"
+    BINDIR="/usr/local/bin"
+    CMDPREFIX="sudo "
+  else
+    [[ "$DEBUG" ]] && echo "Aborting"
+    exit 0
+  fi
+
+fi
+
+# Install
+mkdir -p "${BINDIR}"
+${CMDPREFIX} cp -f sysis "${BINDIR}"
+
+# cleanup
+if [[ "${CLEANUPREQ}" ]]; then
+  [[ "$DEBUG" ]] && echo -e "\tcleaning up"
+  cd "${TMPDIR}" || exit 1
+  rm -rf "${UTILTMPDIR}"
+fi
+
+[[ ! "$STREAMLINED" ]] && echo
+echo "sysis utility installed to ${BINDIR}"
