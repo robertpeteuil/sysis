@@ -3,6 +3,7 @@ engines:
   shellcheck:
     enabled: true
 ratings:
-  paths: 
+  paths:
   - "sysis"
-exclude_paths: []
+exclude_paths:
+  - "install.sh"
