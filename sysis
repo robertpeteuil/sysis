@@ -109,7 +109,7 @@ getCommandTail() {
       -d)           mode="DEBUG";;
       -n)           mode="NET";;
       -h)           printHelp;;
-      -V)           display_ver; echo; exit 0;;
+      -V)           display_ver; echo; processExit;;
       --help)       printHelp FULL;;
       --force)      mode="FORCE";;
       *)            printHelp;;
@@ -446,8 +446,7 @@ if [[ "$OS" == "Linux" ]]; then
 elif [[ "$OS" == "Darwin" ]]; then
   setMac
 else                 # Unknown device
-  echo -e "Error: System Type not determined"
-  exit 1
+  processExit "${CLRerror}Error${CLRwhite}: ${CLRwarning}Could not determine System Type${CLRwhite}"
 fi
 
 [[ "$mode" == "DEBUG" ]] && reportDebug && processExit
