@@ -11,14 +11,14 @@
 **Ideal for sysadmins, developers and system builders who connect to dozens of systems daily.**  SYSIS provides a quick display of key system information without the need to run multiple different utilities.  It also avoids the bloat that is common in other System Information Utilities.
 
 ### Screenshot of sysis output: 
-![](https://cloud.githubusercontent.com/assets/1554603/24118108/e1456456-0d69-11e7-8501-2c3954b8b12d.png)
+![](https://cloud.githubusercontent.com/assets/1554603/24317998/d63074e8-10bb-11e7-82d2-3e82c1b4755a.png)
 
 ### Supported Platforms
 
   - Linux
   - macOS / OS X
   - Raspberry PI (Linux)
-  - Windows 10 with "Bash on Linux" installed (supported in beta)
+  - Windows 10 with "Bash on Linux"  
     
 ### Execution
 
@@ -31,11 +31,6 @@ This is a command is executed simply with `sysis`
 > -  `-V` - 'version info'
 > -  `--help` - 'detailed help info' - displays additional help including exit status information
 
-### Windows 10 - Bash on Windows - Pre-Installation Steps:
-
-- Install **make** utility with the command `sudo apt install make`
-- Allow write access to /usr/local/bin with the command `sudo chmod a+w /usr/local/bin`
-
 ### Installation:
 
 Can be install with curl
@@ -45,9 +40,9 @@ bash -c "`curl -s -L https://raw.github.com/robertpeteuil/sysis/master/install.s
 ```
 
 
-Alternatively, if the repo has been downloaded locally it can be installed with make
+If the repo has been downloaded locally, cd into the directory and run install.sh
 
 ```shell
 cd sysis
-make install
+./install.sh
 ```
