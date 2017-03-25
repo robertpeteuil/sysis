@@ -2,6 +2,7 @@
 
 REPOACCT="robertpeteuil"
 REPONAME="sysis"
+REPORTPHRASE="${REPONAME} utility"
 
 CURRENTDIR="$(pwd)"
 CURRENTDIR=${CURRENTDIR##*\/}
@@ -36,7 +37,7 @@ if [[ -w "/usr/local/bin" ]]; then
   CMDPREFIX=""
   STREAMLINED=true
 else
-  echo -e "installer - ${REPONAME} utility\n"
+  echo -e "installer - ${REPORTPHRASE}\n"
   echo "Specify install directory (a,b or c):"
   echo -en "\t(a) '~/bin'    (b) '/usr/local/bin' as root    (c) abort : "
   read -r -n 1 SELECTION
@@ -62,6 +63,6 @@ if [[ "${CLEANUPREQ}" ]]; then
 fi
 
 [[ ! "$STREAMLINED" ]] && echo
-echo "sysis utility installed to ${BINDIR}"
+echo "${REPORTPHRASE} installed to ${BINDIR}"
 
 exit 0
