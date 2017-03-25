@@ -10,10 +10,17 @@ CURRENTDIR=${CURRENTDIR##*\/}    # remove leading dirs
 # UTILTMPDIR="${REPOACCT}-${REPONAME}*"
 UTILTMPDIR="${REPOACCT}-${REPONAME}"
 
-if [[ ("${CURRENTDIR}" =~ "${UTILTMPDIR}"*) || (("${CURRENTDIR}" =~ "${REPONAME}"*)) ]]; then
-  [[ "$DEBUG" ]] && echo "we're in a dir named for the repo"
-  # assume the repo is downloaded and were doing a local install
-else
+cleanupDownload() {
+  [[ "$DEBUG" ]] && echo -e "\tcleaning up"
+  cd "${TMPDIR}" || exit 1
+  rm -rf "${UTILTMPDIR}"
+}
+
+# download the latest release from github UNLESS
+#   current dir-name = repo name (from git clone) OR
+#   current dir-name = package DL name (from extracting tar or zip)
+if [[ ! ("${CURRENTDIR}" =~ "${UTILTMPDIR}"*) && ! (("${CURRENTDIR}" =~ "${REPONAME}"*)) ]]; then
+
   [[ "$DEBUG" ]] && echo "not in repo dir"
   # not in repo directory (it needs to be DL'd)
 
@@ -37,6 +44,11 @@ else
   cd "${UTILTMPDIR}" || exit 1
 
   CLEANUPREQ=true
+
+else
+
+  [[ "$DEBUG" ]] && echo "we're in a dir named for the repo"
+  # assume the repo is downloaded and were doing a local install
 
 fi
 
@@ -65,6 +77,7 @@ else
     CMDPREFIX="sudo "
   else
     [[ "$DEBUG" ]] && echo "Aborting"
+    [[ "${CLEANUPREQ}" ]] && cleanupDownload
     exit 0
   fi
 
@@ -76,9 +89,7 @@ ${CMDPREFIX} cp -f sysis "${BINDIR}"
 
 # cleanup
 if [[ "${CLEANUPREQ}" ]]; then
-  [[ "$DEBUG" ]] && echo -e "\tcleaning up"
-  cd "${TMPDIR}" || exit 1
-  rm -rf "${UTILTMPDIR}"
+  cleanupDownload
 fi
 
 [[ ! "$STREAMLINED" ]] && echo
