@@ -198,8 +198,8 @@ setLinuxCommon() {
   fi
   if [ -e "/sys/devices/system/cpu/possible" ]; then
     CPUspeed=$(lscpu | grep -m1 'MHz')
-      CPUspeed=${CPUspeed%.*}             # strip eVERythign right of '.'
-      CPUspeed=${CPUspeed#*:}             # strip eVERything left of ':'
+      CPUspeed=${CPUspeed%.*}             # strip everythign right of '.'
+      CPUspeed=${CPUspeed#*:}             # strip everything left of ':'
       CPUspeed=${CPUspeed// /}            # strip spaces
       CPUspeedBig=$((CPUspeed / 1000))    # main digit
       CPUspeedSmall=$((CPUspeed % 1000))  # sub digit
@@ -251,7 +251,7 @@ setRPI() {
       *a32082) RPImodel="3B (1.2)"; RPImem="1 GB"; RPIman="Sony"; RPIrel="Q4 2016";;
       *) RPImodel="'Unknown Version'"; RPImem="Unknown"; RPIman="Unknown"; RPIrel="Unknown";;
   esac
-  OSVERsion=${SYSkernalVer%"-"*}  #remove '-xxx' on right
+  OSversion=${SYSkernalVer%"-"*}  #remove '-xxx' on right
   HWdevice="Raspberry Pi ${RPImodel}"
   HWrelease="${RPIrel} (${RPIman})"
   CPUname=$(awk '/model\ name/ { sub(/-compatible/, ""); print ($4)" r"($7); exit}' /proc/cpuinfo)
@@ -263,16 +263,16 @@ setRPI() {
 setLinux() {
   DeviceType="Linux"
   setLinuxCommon
-  OSVERsion=${SYSkernalVer%%"-"*}  #remove '-amd64' on right
+  OSversion=${SYSkernalVer%%"-"*}  #remove '-amd64' on right
   HWdevice="" # UNKNOWN HW
   HWrelease=""  # UNKNOWN HW
   CPUname=$(grep -m1 'model name' < /proc/cpuinfo)
-    CPUname=${CPUname#*': '} # strip eVERything left of ': '
+    CPUname=${CPUname#*': '} # strip everything left of ': '
     CPUname=${CPUname//'(R)'/} # remove '(R)'
     CPUname=${CPUname//'(tm)'/} # remove '(tm)'
     CPUname=${CPUname/' CPU'/} # remove ' CPU'
     CPUname=${CPUname/' Processor'/} # remove ' Processor'
-    CPUname=${CPUname%' @'*} # remove eVERything right of ' @', thus removing speed
+    CPUname=${CPUname%' @'*} # remove everything right of ' @', thus removing speed
     CPUname="${CPUname#"${CPUname%%[![:space:]]*}"}" # remove spaces at beginning
   MEMraw=$(free -m | awk '/^Mem:/{print $2}')
     MEMsize=$(( MEMraw / 925 ))   # total system ram in GB
@@ -283,12 +283,12 @@ setLinux() {
 
 setMac() {
   DeviceType="OSX"
-  OSXinitialVer=${SYSkernalVer%%.*} # remove eVERything right of first '.'
+  OSXinitialVer=${SYSkernalVer%%.*} # remove everything right of first '.'
   OSXadjustedVer=$((OSXinitialVer-4))  # subtract 4 from first number
   OSXsubVer=${SYSkernalVer%.*}  # remove rightmost # - 14.5.0 to 14.5
   OSXsubVer=${OSXsubVer#*.} # move leftmost # - 14.5 to 5
   OSXmainVer="10.${OSXadjustedVer}"
-  OSVERsion="10.${OSXadjustedVer}.${OSXsubVer}"
+  OSversion="10.${OSXadjustedVer}.${OSXsubVer}"
   OSfullname="macOS ${OSXmainVer}"
   # OSfullname="OS X ${OSXmainVer}"
   case $OSXmainVer in
@@ -401,7 +401,7 @@ reportNetwork() {
 reportSystem() {
   echo -e "\t${CLRheading}OS\t\t${CLRheading2}${OSfullname}"
   [[ -n $OScodename ]] && echo -e "\t${CLRtitle}CODENAME\t${CLRwhite}${OScodename}"
-  [[ -n $OSVERsion ]] && echo -e "\t${CLRtitle}OS VERSION\t${CLRwhite}${OSVERsion}"
+  [[ -n $OSversion ]] && echo -e "\t${CLRtitle}OS VERSION\t${CLRwhite}${OSversion}"
   echo -e "\n\t${CLRheading}DEVICE\t\t${CLRheading2}${HWdevice}"
   [[ -n $HWrelease ]] && echo -e "\t${CLRtitle}RELEASE DATE\t${CLRwhite}${HWrelease}"
   [[ -n $CPUname ]] && echo -e "\t${CLRtitle}PROCESSOR\t${CLRwhite}${CPUname}"
@@ -418,7 +418,7 @@ reportMain() {
   reportNetwork
   if [[ -z "$DeviceType" ]] || [[ "$mode" == "FORCE" ]]; then
     # unknown device OR forced
-    OSVERsion=${SYSkernalVer}  # set VARS to raw data
+    OSversion=${SYSkernalVer}  # set VARS to raw data
     CPUname=${SYSmachine}
     [[ "$SYSplatform" != "unknown" ]] && HWdevice=${SYSplatform}  # Don't set if 'unknown'
   fi
