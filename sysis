@@ -161,7 +161,7 @@ getSystem() {
   	SYSmachine=$(uname -m 2> /dev/null)
   	SYSplatform=$(uname -i 2> /dev/null)
   else
-    processExit "cannot execute 'uname'"
+    processExit "cannot execute ${CLRwarning}'uname'${CLRwhite}"
   fi
   if [[ $(dpkg --help 2> /dev/null) ]]; then
     PROCarch=$(dpkg --print-architecture) # on RPI2, and RPI-Zero = armhf
@@ -215,46 +215,48 @@ setLinuxCommon() {
 setRPI() {
   DeviceType="RPI"
   setLinuxCommon
-  RPIrev=$(awk '/Revision/ { sub(/^.+\:/, "") ; print $1 }' /proc/cpuinfo)
-  # info: http://elinux.org/RPi_HardwareHistory
-  case "$RPIrev" in
-      *beta) RPImodel="Beta"; RPImem="256 MB"; RPIman="Beta"; RPIrel="Q1 2012";;
-      *002) RPImodel="B (1.0)"; RPImem="256 MB"; RPIman="unknown"; RPIrel="Q1 2012";;
-      *003) RPImodel="B (1.0)"; RPImem="256 MB"; RPIman="ECN 001"; RPIrel="Q3 2012";;
-      *004) RPImodel="B (2.0)"; RPImem="256 MB"; RPIman="Sony"; RPIrel="Q3 2012";;
-      *005) RPImodel="B (2.0)"; RPImem="256 MB"; RPIman="Qisda"; RPIrel="Q4 2012";;
-      *006) RPImodel="B (2.0)"; RPImem="256 MB"; RPIman="Egoman"; RPIrel="Q4 2012";;
-      *007) RPImodel="A (2.0)"; RPImem="256 MB"; RPIman="Egoman"; RPIrel="Q1 2013";;
-      *008) RPImodel="A (2.0)"; RPImem="256 MB"; RPIman="Sony"; RPIrel="Q1 2013";;
-      *009) RPImodel="A (2.0)"; RPImem="256 MB"; RPIman="Qisda"; RPIrel="Q1 2013";;
-      *00d) RPImodel="B (2.0)"; RPImem="512 MB"; RPIman="Egoman"; RPIrel="Q4 2012";;
-      *00e) RPImodel="B (2.0)"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q4 2012";;
-      *00f) RPImodel="B (2.0)"; RPImem="512 MB"; RPIman="Qisda"; RPIrel="Q4 2012";;
-      *010) RPImodel="B+ (1.0)"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q3 2014";;
-      *011) RPImodel="Compute Module"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q2 2014";;
-      *012) RPImodel="A+ (1.0)"; RPImem="256 MB"; RPIman="Sony"; RPIrel="Q4 2014";;
-      *013) RPImodel="B+ (1.2)"; RPImem="512 MB"; RPIman="Embest"; RPIrel="Q1 2015";;
-      *014) RPImodel="Compute Module"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q1 2015";;
-      *015) RPImodel="A+ (1.0)"; RPImem="256 MB"; RPIman="Sony"; RPIrel="Q1 2015";;
-      *a01040) RPImodel="2B (1.0)"; RPImem="1 GB"; RPIman="Sony"; RPIrel="Unknown";;
-      *a01041) RPImodel="2B (1.1)"; RPImem="1 GB"; RPIman="Sony"; RPIrel="Q1 2015";;
-      *a21041) RPImodel="2B (1.1)"; RPImem="1 GB"; RPIman="Embest"; RPIrel="Q1 2015";;
-      *a22042) RPImodel="2B (1.2)"; RPImem="1 GB"; RPIman="Embest"; RPIrel="Q3 2016";;
-      *900021) RPImodel="A+ (1.1)"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q3 2016";;
-      *900032) RPImodel="B+ (1.2)"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q2 2016";;
-      *900092) RPImodel="Zero (1.2)"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q4 2015";;
-      *900093) RPImodel="Zero (1.3)"; RPImem="512 MB"; RPIman="Embest"; RPIrel="Q4 2016";;
-      *9000c1) RPImodel="Zero W (1.1)"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q1 2017";;
-      *a02082) RPImodel="3B (1.2)"; RPImem="1 GB"; RPIman="Sony"; RPIrel="Q1 2016";;
-      *a020a0) RPImodel="Compute Module 3"; RPImem="1 GB"; RPIman="Sony"; RPIrel="Q1 2017";;
-      *a22082) RPImodel="3B (1.2)"; RPImem="1 GB"; RPIman="Embest"; RPIrel="Q1 2016";;
-      *a32082) RPImodel="3B (1.2)"; RPImem="1 GB"; RPIman="Sony"; RPIrel="Q4 2016";;
-      *) RPImodel="'Unknown Version'"; RPImem="Unknown"; RPIman="Unknown"; RPIrel="Unknown";;
-  esac
+  if [ -e "/proc/cpuinfo" ]; then
+    RPIrev=$(awk '/Revision/ { sub(/^.+\:/, "") ; print $1 }' /proc/cpuinfo)
+    CPUname=$(awk '/model\ name/ { sub(/-compatible/, ""); print ($4)" r"($7); exit}' /proc/cpuinfo)
+    # info: http://elinux.org/RPi_HardwareHistory
+    case "$RPIrev" in
+        *beta) RPImodel="Beta"; RPImem="256 MB"; RPIman="Beta"; RPIrel="Q1 2012";;
+        *002) RPImodel="B (1.0)"; RPImem="256 MB"; RPIman="unknown"; RPIrel="Q1 2012";;
+        *003) RPImodel="B (1.0)"; RPImem="256 MB"; RPIman="ECN 001"; RPIrel="Q3 2012";;
+        *004) RPImodel="B (2.0)"; RPImem="256 MB"; RPIman="Sony"; RPIrel="Q3 2012";;
+        *005) RPImodel="B (2.0)"; RPImem="256 MB"; RPIman="Qisda"; RPIrel="Q4 2012";;
+        *006) RPImodel="B (2.0)"; RPImem="256 MB"; RPIman="Egoman"; RPIrel="Q4 2012";;
+        *007) RPImodel="A (2.0)"; RPImem="256 MB"; RPIman="Egoman"; RPIrel="Q1 2013";;
+        *008) RPImodel="A (2.0)"; RPImem="256 MB"; RPIman="Sony"; RPIrel="Q1 2013";;
+        *009) RPImodel="A (2.0)"; RPImem="256 MB"; RPIman="Qisda"; RPIrel="Q1 2013";;
+        *00d) RPImodel="B (2.0)"; RPImem="512 MB"; RPIman="Egoman"; RPIrel="Q4 2012";;
+        *00e) RPImodel="B (2.0)"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q4 2012";;
+        *00f) RPImodel="B (2.0)"; RPImem="512 MB"; RPIman="Qisda"; RPIrel="Q4 2012";;
+        *010) RPImodel="B+ (1.0)"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q3 2014";;
+        *011) RPImodel="Compute Module"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q2 2014";;
+        *012) RPImodel="A+ (1.0)"; RPImem="256 MB"; RPIman="Sony"; RPIrel="Q4 2014";;
+        *013) RPImodel="B+ (1.2)"; RPImem="512 MB"; RPIman="Embest"; RPIrel="Q1 2015";;
+        *014) RPImodel="Compute Module"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q1 2015";;
+        *015) RPImodel="A+ (1.0)"; RPImem="256 MB"; RPIman="Sony"; RPIrel="Q1 2015";;
+        *a01040) RPImodel="2B (1.0)"; RPImem="1 GB"; RPIman="Sony"; RPIrel="Unknown";;
+        *a01041) RPImodel="2B (1.1)"; RPImem="1 GB"; RPIman="Sony"; RPIrel="Q1 2015";;
+        *a21041) RPImodel="2B (1.1)"; RPImem="1 GB"; RPIman="Embest"; RPIrel="Q1 2015";;
+        *a22042) RPImodel="2B (1.2)"; RPImem="1 GB"; RPIman="Embest"; RPIrel="Q3 2016";;
+        *900021) RPImodel="A+ (1.1)"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q3 2016";;
+        *900032) RPImodel="B+ (1.2)"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q2 2016";;
+        *900092) RPImodel="Zero (1.2)"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q4 2015";;
+        *900093) RPImodel="Zero (1.3)"; RPImem="512 MB"; RPIman="Embest"; RPIrel="Q4 2016";;
+        *9000c1) RPImodel="Zero W (1.1)"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q1 2017";;
+        *a02082) RPImodel="3B (1.2)"; RPImem="1 GB"; RPIman="Sony"; RPIrel="Q1 2016";;
+        *a020a0) RPImodel="Compute Module 3"; RPImem="1 GB"; RPIman="Sony"; RPIrel="Q1 2017";;
+        *a22082) RPImodel="3B (1.2)"; RPImem="1 GB"; RPIman="Embest"; RPIrel="Q1 2016";;
+        *a32082) RPImodel="3B (1.2)"; RPImem="1 GB"; RPIman="Sony"; RPIrel="Q4 2016";;
+        *) RPImodel="'Unknown Version'"; RPImem="Unknown"; RPIman="Unknown"; RPIrel="Unknown";;
+    esac
+  fi
   OSversion=${SYSkernalVer%"-"*}  #remove '-xxx' on right
   HWdevice="Raspberry Pi ${RPImodel}"
   HWrelease="${RPIrel} (${RPIman})"
-  CPUname=$(awk '/model\ name/ { sub(/-compatible/, ""); print ($4)" r"($7); exit}' /proc/cpuinfo)
   MEMsize="${RPImem}"
   MEMusage=$(free -m | awk 'NR==2{printf "%s/%s MB (%d%%)\n", $3,$2,$3*100/$2 }')
   return 0
@@ -266,7 +268,8 @@ setLinux() {
   OSversion=${SYSkernalVer%%"-"*}  #remove '-amd64' on right
   HWdevice=""  # UNKNOWN HW
   HWrelease=""  # UNKNOWN HW
-  CPUname=$(grep -m1 'model name' < /proc/cpuinfo)
+  if [ -e "/proc/cpuinfo" ]; then
+    CPUname=$(grep -m1 'model name' < /proc/cpuinfo)
     CPUname=${CPUname#*': '}  # strip everything left of ': '
     CPUname=${CPUname//'(R)'/}  # remove '(R)'
     CPUname=${CPUname//'(tm)'/}  # remove '(tm)'
@@ -274,6 +277,7 @@ setLinux() {
     CPUname=${CPUname/' Processor'/}  # remove ' Processor'
     CPUname=${CPUname%' @'*}  # remove everything right of ' @', thus removing speed
     CPUname="${CPUname#"${CPUname%%[![:space:]]*}"}"  # remove spaces at beginning
+  fi
   MEMraw=$(free -m | awk '/^Mem:/{print $2}')
     MEMsize=$(( MEMraw / 925 ))   # total system ram in GB
     MEMsize="${MEMsize} GB"
