@@ -129,7 +129,7 @@ cleanText() {
 getNetwork() {
   pubIP=$(curl -s ipinfo.io/ip)
   case $OS in
-   Linux) # note RPI only has awk 1.x installed
+   Linux)  # note RPI only has awk 1.x installed
     if [[ $(ifconfig -a 2> /dev/null) ]]; then
       lanIP=$(ifconfig -a | awk '/(cast)/ {print $2}' | cut -d: -f2)
     fi
@@ -145,7 +145,7 @@ getNetwork() {
   esac
   if [[ -n $lanIP ]]; then
     count=0
-    for i in $lanIP; do     # IF MULTI-IP's PUT IN ARRAY
+    for i in $lanIP; do  # if multi-ip's put in array
       lanIPS[count]=$i
       ((++count))
     done
@@ -264,16 +264,16 @@ setLinux() {
   DeviceType="Linux"
   setLinuxCommon
   OSversion=${SYSkernalVer%%"-"*}  #remove '-amd64' on right
-  HWdevice="" # UNKNOWN HW
+  HWdevice=""  # UNKNOWN HW
   HWrelease=""  # UNKNOWN HW
   CPUname=$(grep -m1 'model name' < /proc/cpuinfo)
-    CPUname=${CPUname#*': '} # strip everything left of ': '
-    CPUname=${CPUname//'(R)'/} # remove '(R)'
-    CPUname=${CPUname//'(tm)'/} # remove '(tm)'
-    CPUname=${CPUname/' CPU'/} # remove ' CPU'
-    CPUname=${CPUname/' Processor'/} # remove ' Processor'
-    CPUname=${CPUname%' @'*} # remove everything right of ' @', thus removing speed
-    CPUname="${CPUname#"${CPUname%%[![:space:]]*}"}" # remove spaces at beginning
+    CPUname=${CPUname#*': '}  # strip everything left of ': '
+    CPUname=${CPUname//'(R)'/}  # remove '(R)'
+    CPUname=${CPUname//'(tm)'/}  # remove '(tm)'
+    CPUname=${CPUname/' CPU'/}  # remove ' CPU'
+    CPUname=${CPUname/' Processor'/}  # remove ' Processor'
+    CPUname=${CPUname%' @'*}  # remove everything right of ' @', thus removing speed
+    CPUname="${CPUname#"${CPUname%%[![:space:]]*}"}"  # remove spaces at beginning
   MEMraw=$(free -m | awk '/^Mem:/{print $2}')
     MEMsize=$(( MEMraw / 925 ))   # total system ram in GB
     MEMsize="${MEMsize} GB"
@@ -283,10 +283,10 @@ setLinux() {
 
 setMac() {
   DeviceType="Mac"
-  MacOSinitialVer=${SYSkernalVer%%.*} # remove everything right of first '.'
-  MacOSadjustedVer=$((MacOSinitialVer-4))  # subtract 4 from first number
-  MacOSsubVer=${SYSkernalVer%.*}  # remove rightmost # - 14.5.0 to 14.5
-  MacOSsubVer=${MacOSsubVer#*.} # move leftmost # - 14.5 to 5
+  MacOSinitialVer=${SYSkernalVer%%.*}  # remove everything right of first '.'
+  MacOSadjustedVer=$((MacOSinitialVer-4))   # subtract 4 from first number
+  MacOSsubVer=${SYSkernalVer%.*}   # remove rightmost # - 14.5.0 to 14.5
+  MacOSsubVer=${MacOSsubVer#*.}  # move leftmost # - 14.5 to 5
   MacOSmainVer="10.${MacOSadjustedVer}"
   OSversion="10.${MacOSadjustedVer}.${MacOSsubVer}"
   OSfullname="macOS ${MacOSmainVer}"
@@ -309,25 +309,25 @@ setMac() {
   HWrelease=""                   # Unknown on Mac
   # Mac HW Quieries - 'sysctl -n' return value, 'sysctl -a | grep cpu'
   CPUname=$(sysctl -n machdep.cpu.brand_string)
-    CPUname=${CPUname//(R)/} # remove ALL occurences of '(R)'
+    CPUname=${CPUname//(R)/}  # remove ALL occurences of '(R)'
     CPUname=${CPUname/" CPU"/}
-    CPUname=${CPUname%' @'*} # remove speed
+    CPUname=${CPUname%' @'*}  # remove speed
   CPUspeed=$(sysctl -n hw.cpufrequency_max) # get CPU speed
     CPUspeed=$((CPUspeed / 1000000))
     CPUspeedBig=$((CPUspeed / 1000))
     CPUspeedSmall=$((CPUspeed % 1000))
     CPUspeed="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz"
-  CPUcores=$(sysctl -n hw.ncpu) # get CPU cores "hw.ncpu: 8"
-  MEMraw=$(sysctl -n hw.memsize)  # "hw.memsize: 34359738368"
+  CPUcores=$(sysctl -n hw.ncpu)  # get CPU cores "hw.ncpu: 8"
+  MEMraw=$(sysctl -n hw.memsize)   # "hw.memsize: 34359738368"
     MEMraw=$((MEMraw / 1024))
     MEMraw=$((MEMraw / 1024))
     MEMraw=$((MEMraw / 1024))
     MEMsize="${MEMraw}"   # SUFFIX ADDED after calculation BELOW
   MEMfree=$(vm_stat | grep 'wired')
-    MEMfree=${MEMfree#*':'} # remove 'pages wired down:'
-    MEMfree=${MEMfree%'.'*} # remove '.' at right side
-    MEMfree=${MEMfree// /}  # remove all spaces
-    MEMfree=$((MEMfree / 262144)) # multiple # pages by 4096 bytes per pages
+    MEMfree=${MEMfree#*':'}  # remove 'pages wired down:'
+    MEMfree=${MEMfree%'.'*}  # remove '.' at right side
+    MEMfree=${MEMfree// /}   # remove all spaces
+    MEMfree=$((MEMfree / 262144))  # multiple # pages by 4096 bytes per pages
     MEMused=$((MEMsize - MEMfree))
     MemRatio=$(( (MEMused * 100) / MEMsize))
   printf -v MEMusage "%s/%s GB (%.0f%%)" ${MEMused} ${MEMsize} ${MemRatio}
@@ -444,7 +444,7 @@ if [[ "$OS" == "Linux" ]]; then
   fi
 elif [[ "$OS" == "Darwin" ]]; then
   setMac
-else                 # Unknown device
+else  # Unknown device
   processExit "${CLRerror}Error${CLRwhite}: ${CLRwarning}Could not determine System Type${CLRwhite}"
 fi
 
