@@ -7,8 +7,8 @@
 
 # INIT VARS AND FUNCTIONS
 scriptname="sysis"
-scriptbuildnum="3.4.4"
-scriptbuilddate="2017-03-23"
+scriptbuildnum="3.4.5"
+scriptbuilddate="2017-03-24"
 
 ############################################################
 ### VARS INITS
@@ -293,7 +293,7 @@ setMac() {
     10.12) OScodename="Sierra";;
     10.11) OScodename="El Capitan";;
     10.10) OScodename="Yosemite";;
-    10.9) OScodename="MaVERicks";;
+    10.9) OScodename="Mavericks";;
     10.8) OScodename="Mountain Lion";;
     10.7) OScodename="Lion";;
     10.6) OScodename="Snow Leopard";;
