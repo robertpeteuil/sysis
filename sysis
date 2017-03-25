@@ -325,17 +325,18 @@ setMac() {
   MEMraw=$(sysctl -n hw.memsize)   # "hw.memsize: 34359738368"
     MEMraw=$((MEMraw / 1024))
     MEMraw=$((MEMraw / 1024))
-    MEMraw=$((MEMraw / 1024))
-    MEMsize="${MEMraw}"   # SUFFIX ADDED after calculation BELOW
+    MEMsize=$((MEMraw / 1024))
+    # MEMsize="${MEMraw}"   # SUFFIX ADDED after calculation BELOW
   MEMfree=$(vm_stat | grep 'wired')
     MEMfree=${MEMfree#*':'}  # remove 'pages wired down:'
     MEMfree=${MEMfree%'.'*}  # remove '.' at right side
     MEMfree=${MEMfree// /}   # remove all spaces
-    MEMfree=$((MEMfree / 262144))  # multiple # pages by 4096 bytes per pages
-    MEMused=$((MEMsize - MEMfree))
-    MemRatio=$(( (MEMused * 100) / MEMsize))
-  printf -v MEMusage "%s/%s GB (%.0f%%)" ${MEMused} ${MEMsize} ${MemRatio}
-  MEMsize="${MEMraw} GB"  # add 'GB' after using it to make MEMusage
+    # MEMfree=$((MEMfree / 262144))  # multiple # pages by 4096 bytes per pages
+    MEMfree=$((MEMfree / 256))  # multiple # pages by 4096 bytes per pages
+    MEMused=$((MEMraw - MEMfree))
+    MemRatio=$(( (MEMused * 100) / MEMraw))
+  printf -v MEMusage "%s/%s MB (%.0f%%)" ${MEMused} ${MEMraw} ${MemRatio}
+  MEMsize="${MEMsize} GB"  # add 'GB' after using it to make MEMusage
   DISKusage=$(df -h | awk '$NF=="/"{printf "%d/%d GB (%s)\n", $3,$2,$5}')
   return 0
 }
