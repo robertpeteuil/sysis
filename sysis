@@ -282,16 +282,15 @@ setLinux() {
 }
 
 setMac() {
-  DeviceType="OSX"
-  OSXinitialVer=${SYSkernalVer%%.*} # remove everything right of first '.'
-  OSXadjustedVer=$((OSXinitialVer-4))  # subtract 4 from first number
-  OSXsubVer=${SYSkernalVer%.*}  # remove rightmost # - 14.5.0 to 14.5
-  OSXsubVer=${OSXsubVer#*.} # move leftmost # - 14.5 to 5
-  OSXmainVer="10.${OSXadjustedVer}"
-  OSversion="10.${OSXadjustedVer}.${OSXsubVer}"
-  OSfullname="macOS ${OSXmainVer}"
-  # OSfullname="OS X ${OSXmainVer}"
-  case $OSXmainVer in
+  DeviceType="Mac"
+  MacOSinitialVer=${SYSkernalVer%%.*} # remove everything right of first '.'
+  MacOSadjustedVer=$((MacOSinitialVer-4))  # subtract 4 from first number
+  MacOSsubVer=${SYSkernalVer%.*}  # remove rightmost # - 14.5.0 to 14.5
+  MacOSsubVer=${MacOSsubVer#*.} # move leftmost # - 14.5 to 5
+  MacOSmainVer="10.${MacOSadjustedVer}"
+  OSversion="10.${MacOSadjustedVer}.${MacOSsubVer}"
+  OSfullname="macOS ${MacOSmainVer}"
+  case $MacOSmainVer in
     10.12) OScodename="Sierra";;
     10.11) OScodename="El Capitan";;
     10.10) OScodename="Yosemite";;
@@ -307,8 +306,8 @@ setMac() {
     10.0) OScodename="Cheetah";;
   esac
   HWdevice=${SYSplatform//,/.}
-  HWrelease=""                   # Unknown on OSX
-  # OSX HW Quieries - 'sysctl -n' return value, 'sysctl -a | grep cpu'
+  HWrelease=""                   # Unknown on Mac
+  # Mac HW Quieries - 'sysctl -n' return value, 'sysctl -a | grep cpu'
   CPUname=$(sysctl -n machdep.cpu.brand_string)
     CPUname=${CPUname//(R)/} # remove ALL occurences of '(R)'
     CPUname=${CPUname/" CPU"/}
@@ -374,12 +373,12 @@ reportDebug() {
     echo -e "\t${CLRtitle}RPi Model =\t${CLRwhite}${RPImodel}"
     echo -e "\t${CLRtitle}RPi Rel Date =\t${CLRwhite}${RPIrel}"
     echo -e "\t${CLRtitle}RPi Manuf =\t${CLRwhite}${RPIman}${CLRnormal}\n"
-  elif [[ "$DeviceType" == "OSX" ]]; then
-    echo -e "\t${CLRheading}OSX VARS"
-    echo -e "\t${CLRtitle}Main V Init = \t${CLRwhite}${OSXinitialVer}"
-    echo -e "\t${CLRtitle}Main V Adj = \t${CLRwhite}${OSXadjustedVer}"
-    echo -e "\t${CLRtitle}OSX Ver = \t${CLRwhite}${OSXmainVer}"
-    echo -e "\t${CLRtitle}OSX sub V = \t${CLRwhite}${OSXsubVer}${CLRnormal}\n"
+  elif [[ "$DeviceType" == "Mac" ]]; then
+    echo -e "\t${CLRheading}MacOS VARS"
+    echo -e "\t${CLRtitle}Raw Version = \t${CLRwhite}${MacOSinitialVer}"
+    echo -e "\t${CLRtitle}Adj Version = \t${CLRwhite}${MacOSadjustedVer}"
+    echo -e "\t${CLRtitle}MacOS Ver = \t${CLRwhite}${MacOSmainVer}"
+    echo -e "\t${CLRtitle}MacOS sub V = \t${CLRwhite}${MacOSsubVer}${CLRnormal}\n"
   fi
   return 0
 }
