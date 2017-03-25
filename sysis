@@ -88,6 +88,7 @@ printHelp() {
   echo -e "${CLRtitle2}     -d\t${CLRwhite}: debug only report"
   echo -e "${CLRtitle2}     -n\t${CLRwhite}: network only report"
   echo -e "${CLRtitle2}     -h\t${CLRwhite}: basic help"
+  echo -e "${CLRtitle2}     -V\t${CLRwhite}: display version"
   echo -e "${CLRtitle2} --help\t${CLRwhite}: detailed help${CLRnormal}"
   if [[ "$1" ]]; then   # print all help
     echo
