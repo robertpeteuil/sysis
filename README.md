@@ -18,7 +18,7 @@
   - Linux
   - macOS / OS X
   - Raspberry PI (Linux)
-  - Windows 10 with "Bash on Linux"  
+  - Windows 10 with "Bash on Windows"  
     
 ### Execution
 
