@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
 
-# sysis - Collect and print information on system, network and OS
+# sysis - Display Key System Information
 #
-#     For OSX & Linux
+#     Lightweight Cross-Platform Utility for:
+#         macOS, Linux, and Windows 10 wih Bash on Windows
+#
+#    from: https://github.com/robertpeteuil/sysis
+#
+#  Author: Robert Peteuil   @RobertPeteuil
 #
 
-# INIT VARS AND FUNCTIONS
 scriptname="sysis"
-scriptbuildnum="3.4.5"
-scriptbuilddate="2017-03-24"
+scriptbuildnum="3.4.6"
+scriptbuilddate="2017-03-25"
 
 ############################################################
 ### VARS INITS
@@ -25,7 +29,7 @@ EXITMESSAGE=""
 ############################################################
 ###     PRE-EXECUTION
 
-# TURN ON COLOR IF POSSIBLE, SET THEME
+# turn on color if possible
 if test -t 1; then            # check if stdout is a terminal
     ncolors=$(tput colors)    # see if it supports colors
     if test -n "$ncolors" && test "$ncolors" -ge 8; then
@@ -39,7 +43,7 @@ if test -t 1; then            # check if stdout is a terminal
         cyan="$(tput setaf 6)"
         white="$(tput setaf 7)"
 
-      # Set Color Theme - vars used by echo statements
+      # set color theme - allows for quickly changing all output
         CLRnormal="\033[0m"
         CLRwhite=${bold}${white}
         CLRheading=${bold}${blue}
@@ -57,14 +61,14 @@ fi
 #     FUNCTIONS
 ######################################################################
 
-processExit () {    # ERROR MESSAGE CAN BE SENT TO FUNCTION WHEN CALLING
+processExit () {    # error message can be sent to function when calling
   local var="$*"
   if [[ -n "$EXITMESSAGE" ]]; then
     echo -e "$EXITMESSAGE" >&2
   fi
-  if [[ -n "$var" ]]; then
-    echo -e "$var" >&2
-    [[ "$EXITSTATUS" == 0 ]] && EXITSTATUS=1  # if error-text passed set to at least 1
+  if [[ -n "$var" ]]; then                    # if error-text was passed
+    echo -e "$var" >&2                        # display it on std-error
+    [[ "$EXITSTATUS" == 0 ]] && EXITSTATUS=1  # set exit status to at least 1
   fi
   exit $EXITSTATUS
 }
@@ -109,7 +113,7 @@ getCommandTail() {
       -d)           mode="DEBUG";;
       -n)           mode="NET";;
       -h)           printHelp;;
-      -V)           display_ver; echo; exit 0;;
+      -V)           display_ver; echo; processExit;;
       --help)       printHelp FULL;;
       --force)      mode="FORCE";;
       *)            printHelp;;
@@ -127,16 +131,14 @@ cleanText() {
 }
 
 getNetwork() {
-
-	pubIP=$(curl -s ipinfo.io/ip)
-
+  pubIP=$(curl -s ipinfo.io/ip)
   case $OS in
-   Linux) # note RPI only has awk 1.x installed
+   Linux)  # note RPI only has awk 1.x installed
     if [[ $(ifconfig -a 2> /dev/null) ]]; then
       lanIP=$(ifconfig -a | awk '/(cast)/ {print $2}' | cut -d: -f2)
     fi
     ;;
-   Darwin)  # filters virtual adapters by checking for adapters with broadcast addy's with limited scope
+   Darwin)  # filters virtual adapters as those with limited scope broadcast addys
     lanIP=$(ifconfig -a | awk '/(cast).([0-9]{1,3}\.){2}1\./ {print $2}') ;;
    FreeBSD|OpenBSD)
     lanIP=$(ifconfig  | grep -E 'inet.[0-9]' | grep -v '127.0.0.1' | awk '{print $2}') ;;
@@ -147,17 +149,15 @@ getNetwork() {
   esac
   if [[ -n $lanIP ]]; then
     count=0
-    for i in $lanIP; do     # IF MULTI-IP's PUT IN ARRAY
+    for i in $lanIP; do  # if multi-ip's put in array
       lanIPS[count]=$i
       ((++count))
     done
   fi
   return 0
-
 }
 
 getSystem() {
-
   if [[ $(uname 2> /dev/null) ]]; then
   	SYSnode=$(uname -n 2> /dev/null)
   	SYSkernal=$(uname -s 2> /dev/null)
@@ -165,13 +165,11 @@ getSystem() {
   	SYSmachine=$(uname -m 2> /dev/null)
   	SYSplatform=$(uname -i 2> /dev/null)
   else
-    processExit "cannot execute 'uname'"
+    processExit "cannot execute ${CLRwarning}'uname'${CLRwhite}"
   fi
-
   if [[ $(dpkg --help 2> /dev/null) ]]; then
     PROCarch=$(dpkg --print-architecture) # on RPI2, and RPI-Zero = armhf
   fi
-
   if [[ $(lsb_release -h 2> /dev/null) ]]; then
     LSBset="TRUE"   # LSB AVAILABLE FLAG
     LSBidPRE=$(lsb_release -i 2> /dev/null)
@@ -186,9 +184,7 @@ getSystem() {
   	[[ -n $LSBcodenamePRE ]] && LSBcodename=${LSBcodenamePRE#*":"} && LSBcodename=$(cleanText "$LSBcodename")
    	[[ -n $LSBallPRE ]] && LSBall=${LSBallPRE#*":"} && LSBall=$(cleanText "$LSBall")
   fi
-
   return 0
-
 }
 
 setLinuxCommon() {
@@ -196,18 +192,18 @@ setLinuxCommon() {
     OSfullname="${LSBid} ${SYSkernal} ${LSBrel}"
     OScodename="${LSBcodename}"
   else  # lsb_release not installed
-    if [ -e "/etc/*release" ]; then # if it exists - set OS info from release doc
+    if [ -e "/etc/*release" ]; then  # set OS info from release doc if possible
       OSrelease=$(awk '/^VERSION_ID=/ {split($1, ary, /"/); print ary[2]}' /etc/*release)
       OSfullname="$(awk '/^ID=/ { print toupper(substr($name,4,1)) tolower(substr($name,5))}' /etc/*release) ${SYSkernal} ${OSrelease}"
       OScodename=$(awk '/^VERSION=/ {split($0, ary, /(\()||(\))/); print toupper(substr(ary[2],1,1)) tolower(substr(ary[2],2)) }' /etc/*release)
-    else  # no OS release doc, just use the basic OS name from uname
+    else  # otherwise use the basic OS name from uname
       OSfullname="${SYSkernal}"
     fi
   fi
   if [ -e "/sys/devices/system/cpu/possible" ]; then
     CPUspeed=$(lscpu | grep -m1 'MHz')
-      CPUspeed=${CPUspeed%.*}             # strip eVERythign right of '.'
-      CPUspeed=${CPUspeed#*:}             # strip eVERything left of ':'
+      CPUspeed=${CPUspeed%.*}             # strip everythign right of '.'
+      CPUspeed=${CPUspeed#*:}             # strip everything left of ':'
       CPUspeed=${CPUspeed// /}            # strip spaces
       CPUspeedBig=$((CPUspeed / 1000))    # main digit
       CPUspeedSmall=$((CPUspeed % 1000))  # sub digit
@@ -223,37 +219,48 @@ setLinuxCommon() {
 setRPI() {
   DeviceType="RPI"
   setLinuxCommon
-  RPIrev=$(awk '/Revision/ { sub(/^.+\:/, "") ; print $1 }' /proc/cpuinfo)
-  # info: http://elinux.org/RPi_HardwareHistory
-  case "$RPIrev" in
-      *beta) RPImodel="Beta"; RPImem="256 MB"; RPIman="Beta"; RPIrel="Q1 2012";;
-      *002) RPImodel="B (1.0)"; RPImem="256 MB"; RPIman="unknown"; RPIrel="Q1 2012";;
-      *003) RPImodel="B (1.0)"; RPImem="256 MB"; RPIman="ECN 001"; RPIrel="Q3 2012";;
-      *004) RPImodel="B (2.0)"; RPImem="256 MB"; RPIman="Sony"; RPIrel="Q3 2012";;
-      *005) RPImodel="B (2.0)"; RPImem="256 MB"; RPIman="Qisda"; RPIrel="Q4 2012";;
-      *006) RPImodel="B (2.0)"; RPImem="256 MB"; RPIman="Egoman"; RPIrel="Q4 2012";;
-      *007) RPImodel="A (2.0)"; RPImem="256 MB"; RPIman="Egoman"; RPIrel="Q1 2013";;
-      *008) RPImodel="A (2.0)"; RPImem="256 MB"; RPIman="Sony"; RPIrel="Q1 2013";;
-      *009) RPImodel="A (2.0)"; RPImem="256 MB"; RPIman="Qisda"; RPIrel="Q1 2013";;
-      *00d) RPImodel="B (2.0)"; RPImem="512 MB"; RPIman="Egoman"; RPIrel="Q4 2012";;
-      *00e) RPImodel="B (2.0)"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q4 2012";;
-      *00f) RPImodel="B (2.0)"; RPImem="512 MB"; RPIman="Qisda"; RPIrel="Q4 2012";;
-      *010) RPImodel="B+ (1.0)"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q3 2014";;
-      *011) RPImodel="Compute Module"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q2 2014";;
-      *012) RPImodel="A+ (1.0)"; RPImem="256 MB"; RPIman="Sony"; RPIrel="Q4 2014";;
-      *013) RPImodel="B+ (1.2)"; RPImem="512 MB"; RPIman="Embest"; RPIrel="Q1 2015";;
-      *014) RPImodel="Compute Module"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q1 2015";;
-      *015) RPImodel="A+ (1.0)"; RPImem="256 MB"; RPIman="Sony"; RPIrel="Q1 2015";;
-      *a01041) RPImodel="2B (1.1)"; RPImem="1 GB"; RPIman="Sony"; RPIrel="Q1 2015";;
-      *a21041) RPImodel="2B (1.1)"; RPImem="1 GB"; RPIman="Embest"; RPIrel="Q1 2015";;
-      *900092) RPImodel="Zero (2.0)"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q4 2015";;
-      *a02082) RPImodel="3B (1.2)"; RPImem="1 GB"; RPIman="Sony"; RPIrel="Q1 2016";;
-      *) RPImodel="'Unknown Version'"; RPImem="Unknown"; RPIman="Unknown"; RPIrel="Unknown";;
-  esac
-  OSVERsion=${SYSkernalVer%"-"*}  #remove '-xxx' on right
+  if [ -e "/proc/cpuinfo" ]; then
+    RPIrev=$(awk '/Revision/ { sub(/^.+\:/, "") ; print $1 }' /proc/cpuinfo)
+    CPUname=$(awk '/model\ name/ { sub(/-compatible/, ""); print ($4)" r"($7); exit}' /proc/cpuinfo)
+    # info: http://elinux.org/RPi_HardwareHistory
+    case "$RPIrev" in
+        *beta) RPImodel="Beta"; RPImem="256 MB"; RPIman="Beta"; RPIrel="Q1 2012";;
+        *002) RPImodel="B (1.0)"; RPImem="256 MB"; RPIman="unknown"; RPIrel="Q1 2012";;
+        *003) RPImodel="B (1.0)"; RPImem="256 MB"; RPIman="ECN 001"; RPIrel="Q3 2012";;
+        *004) RPImodel="B (2.0)"; RPImem="256 MB"; RPIman="Sony"; RPIrel="Q3 2012";;
+        *005) RPImodel="B (2.0)"; RPImem="256 MB"; RPIman="Qisda"; RPIrel="Q4 2012";;
+        *006) RPImodel="B (2.0)"; RPImem="256 MB"; RPIman="Egoman"; RPIrel="Q4 2012";;
+        *007) RPImodel="A (2.0)"; RPImem="256 MB"; RPIman="Egoman"; RPIrel="Q1 2013";;
+        *008) RPImodel="A (2.0)"; RPImem="256 MB"; RPIman="Sony"; RPIrel="Q1 2013";;
+        *009) RPImodel="A (2.0)"; RPImem="256 MB"; RPIman="Qisda"; RPIrel="Q1 2013";;
+        *00d) RPImodel="B (2.0)"; RPImem="512 MB"; RPIman="Egoman"; RPIrel="Q4 2012";;
+        *00e) RPImodel="B (2.0)"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q4 2012";;
+        *00f) RPImodel="B (2.0)"; RPImem="512 MB"; RPIman="Qisda"; RPIrel="Q4 2012";;
+        *010) RPImodel="B+ (1.0)"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q3 2014";;
+        *011) RPImodel="Compute Module"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q2 2014";;
+        *012) RPImodel="A+ (1.0)"; RPImem="256 MB"; RPIman="Sony"; RPIrel="Q4 2014";;
+        *013) RPImodel="B+ (1.2)"; RPImem="512 MB"; RPIman="Embest"; RPIrel="Q1 2015";;
+        *014) RPImodel="Compute Module"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q1 2015";;
+        *015) RPImodel="A+ (1.0)"; RPImem="256 MB"; RPIman="Sony"; RPIrel="Q1 2015";;
+        *a01040) RPImodel="2B (1.0)"; RPImem="1 GB"; RPIman="Sony"; RPIrel="Unknown";;
+        *a01041) RPImodel="2B (1.1)"; RPImem="1 GB"; RPIman="Sony"; RPIrel="Q1 2015";;
+        *a21041) RPImodel="2B (1.1)"; RPImem="1 GB"; RPIman="Embest"; RPIrel="Q1 2015";;
+        *a22042) RPImodel="2B (1.2)"; RPImem="1 GB"; RPIman="Embest"; RPIrel="Q3 2016";;
+        *900021) RPImodel="A+ (1.1)"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q3 2016";;
+        *900032) RPImodel="B+ (1.2)"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q2 2016";;
+        *900092) RPImodel="Zero (1.2)"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q4 2015";;
+        *900093) RPImodel="Zero (1.3)"; RPImem="512 MB"; RPIman="Embest"; RPIrel="Q4 2016";;
+        *9000c1) RPImodel="Zero W (1.1)"; RPImem="512 MB"; RPIman="Sony"; RPIrel="Q1 2017";;
+        *a02082) RPImodel="3B (1.2)"; RPImem="1 GB"; RPIman="Sony"; RPIrel="Q1 2016";;
+        *a020a0) RPImodel="Compute Module 3"; RPImem="1 GB"; RPIman="Sony"; RPIrel="Q1 2017";;
+        *a22082) RPImodel="3B (1.2)"; RPImem="1 GB"; RPIman="Embest"; RPIrel="Q1 2016";;
+        *a32082) RPImodel="3B (1.2)"; RPImem="1 GB"; RPIman="Sony"; RPIrel="Q4 2016";;
+        *) RPImodel="'Unknown Version'"; RPImem="Unknown"; RPIman="Unknown"; RPIrel="Unknown";;
+    esac
+  fi
+  OSversion=${SYSkernalVer%"-"*}  #remove '-xxx' on right
   HWdevice="Raspberry Pi ${RPImodel}"
   HWrelease="${RPIrel} (${RPIman})"
-  CPUname=$(awk '/model\ name/ { sub(/-compatible/, ""); print ($4)" r"($7); exit}' /proc/cpuinfo)
   MEMsize="${RPImem}"
   MEMusage=$(free -m | awk 'NR==2{printf "%s/%s MB (%d%%)\n", $3,$2,$3*100/$2 }')
   return 0
@@ -262,35 +269,36 @@ setRPI() {
 setLinux() {
   DeviceType="Linux"
   setLinuxCommon
-  OSVERsion=${SYSkernalVer%%"-"*}  #remove '-amd64' on right
-  HWdevice="" # UNKNOWN HW
+  OSversion=${SYSkernalVer%%"-"*}  #remove '-amd64' on right
+  HWdevice=""   # UNKNOWN HW
   HWrelease=""  # UNKNOWN HW
-  CPUname=$(grep -m1 'model name' < /proc/cpuinfo)
-    CPUname=${CPUname#*': '} # strip eVERything left of ': '
-    CPUname=${CPUname//'(R)'/} # remove '(R)'
-    CPUname=${CPUname//'(tm)'/} # remove '(tm)'
-    CPUname=${CPUname/' CPU'/} # remove ' CPU'
-    CPUname=${CPUname/' Processor'/} # remove ' Processor'
-    CPUname=${CPUname%' @'*} # remove eVERything right of ' @', thus removing speed
-    CPUname="${CPUname#"${CPUname%%[![:space:]]*}"}" # remove spaces at beginning
-  MEMraw=$(free -m | awk '/^Mem:/{print $2}')
-    MEMsize=$(( MEMraw / 925 ))   # total system ram in GB
+  if [ -e "/proc/cpuinfo" ]; then
+    CPUname=$(grep -m1 'model name' < /proc/cpuinfo)
+    CPUname=${CPUname#*': '}  # strip everything left of ': '
+    CPUname=${CPUname//'(R)'/}  # remove '(R)'
+    CPUname=${CPUname//'(tm)'/}  # remove '(tm)'
+    CPUname=${CPUname/' CPU'/}  # remove ' CPU'
+    CPUname=${CPUname/' Processor'/}  # remove ' Processor'
+    CPUname=${CPUname%' @'*}  # remove everything right of ' @', thus removing speed
+    CPUname="${CPUname#"${CPUname%%[![:space:]]*}"}"  # remove spaces at beginning
+  fi
+  MEMsizeMB=$(free -m | awk '/^Mem:/{print $2}')
+    MEMsize=$(( MEMsizeMB / 925 ))   # total system ram in GB
     MEMsize="${MEMsize} GB"
   MEMusage=$(free -m | awk 'NR==2{printf "%s/%s MB (%.0f%%)\n", $3,$2,$3*100/$2 }')
   return 0
 }
 
 setMac() {
-  DeviceType="OSX"
-  OSXinitialVer=${SYSkernalVer%%.*} # remove eVERything right of first '.'
-  OSXadjustedVer=$((OSXinitialVer-4))  # subtract 4 from first number
-  OSXsubVer=${SYSkernalVer%.*}  # remove rightmost # - 14.5.0 to 14.5
-  OSXsubVer=${OSXsubVer#*.} # move leftmost # - 14.5 to 5
-  OSXmainVer="10.${OSXadjustedVer}"
-  OSVERsion="10.${OSXadjustedVer}.${OSXsubVer}"
-  OSfullname="macOS ${OSXmainVer}"
-  # OSfullname="OS X ${OSXmainVer}"
-  case $OSXmainVer in
+  DeviceType="Mac"
+  MacOSinitialVer=${SYSkernalVer%%.*}  # remove everything right of first '.'
+  MacOSadjustedVer=$((MacOSinitialVer-4))   # subtract 4 from first number
+  MacOSsubVer=${SYSkernalVer%.*}   # remove rightmost # - 14.5.0 to 14.5
+  MacOSsubVer=${MacOSsubVer#*.}  # move leftmost # - 14.5 to 5
+  MacOSmainVer="10.${MacOSadjustedVer}"
+  OSversion="10.${MacOSadjustedVer}.${MacOSsubVer}"
+  OSfullname="macOS ${MacOSmainVer}"
+  case $MacOSmainVer in
     10.12) OScodename="Sierra";;
     10.11) OScodename="El Capitan";;
     10.10) OScodename="Yosemite";;
@@ -306,32 +314,40 @@ setMac() {
     10.0) OScodename="Cheetah";;
   esac
   HWdevice=${SYSplatform//,/.}
-  HWrelease=""                   # Unknown on OSX
-  # OSX HW Quieries - 'sysctl -n' return value, 'sysctl -a | grep cpu'
+  HWrelease=""  # Unknown on Mac
+  # Mac HW Quieries - 'sysctl -n' return value, 'sysctl -a | grep cpu'
   CPUname=$(sysctl -n machdep.cpu.brand_string)
-    CPUname=${CPUname//(R)/} # remove ALL occurences of '(R)'
+    CPUname=${CPUname//(R)/}  # remove ALL occurences of '(R)'
     CPUname=${CPUname/" CPU"/}
-    CPUname=${CPUname%' @'*} # remove speed
+    CPUname=${CPUname%' @'*}  # remove speed
   CPUspeed=$(sysctl -n hw.cpufrequency_max) # get CPU speed
     CPUspeed=$((CPUspeed / 1000000))
     CPUspeedBig=$((CPUspeed / 1000))
     CPUspeedSmall=$((CPUspeed % 1000))
     CPUspeed="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz"
-  CPUcores=$(sysctl -n hw.ncpu) # get CPU cores "hw.ncpu: 8"
-  MEMraw=$(sysctl -n hw.memsize)  # "hw.memsize: 34359738368"
-    MEMraw=$((MEMraw / 1024))
-    MEMraw=$((MEMraw / 1024))
-    MEMraw=$((MEMraw / 1024))
-    MEMsize="${MEMraw}"   # SUFFIX ADDED after calculation BELOW
-  MEMfree=$(vm_stat | grep 'wired')
-    MEMfree=${MEMfree#*':'} # remove 'pages wired down:'
-    MEMfree=${MEMfree%'.'*} # remove '.' at right side
-    MEMfree=${MEMfree// /}  # remove all spaces
-    MEMfree=$((MEMfree / 262144)) # multiple # pages by 4096 bytes per pages
-    MEMused=$((MEMsize - MEMfree))
-    MemRatio=$(( (MEMused * 100) / MEMsize))
-  printf -v MEMusage "%s/%s GB (%.0f%%)" ${MEMused} ${MEMsize} ${MemRatio}
-  MEMsize="${MEMraw} GB"  # add 'GB' after using it to make MEMusage
+  CPUcores=$(sysctl -n hw.ncpu)  # get CPU cores "hw.ncpu: 8"
+  MEMsizeMB=$(sysctl -n hw.memsize)   # "hw.memsize: 34359738368"
+    MEMadjust=$(( 1024 * 1024 ))
+    MEMsizeMB=$((MEMsizeMB / MEMadjust))   # Mem Size in MB
+    MEMsize="$((MEMsizeMB / 1024)) GB"  # Mem Size in GB
+  MEMusedApps=$(vm_stat | grep 'active')
+    MEMusedApps=${MEMusedApps#*':'}  # remove 'pages wired down:'
+    MEMusedApps=${MEMusedApps%%'.'*}  # remove '.' at right side
+    MEMusedApps=${MEMusedApps// /}   # remove all spaces
+    MEMusedApps=$((MEMusedApps / 256))  # in MB - multiple # pages by 4096 bytes per pages
+  MEMusedWired=$(vm_stat | grep 'wired')
+    MEMusedWired=${MEMusedWired#*':'}  # remove 'pages wired down:'
+    MEMusedWired=${MEMusedWired%'.'*}  # remove '.' at right side
+    MEMusedWired=${MEMusedWired// /}   # remove all spaces
+    MEMusedWired=$((MEMusedWired / 256))  # in MB - multiple # pages by 4096 bytes per pages
+  MEMusedComp=$(vm_stat | grep 'occupied by compressor')
+    MEMusedComp=${MEMusedComp#*':'}  # remove 'pages wired down:'
+    MEMusedComp=${MEMusedComp%'.'*}  # remove '.' at right side
+    MEMusedComp=${MEMusedComp// /}   # remove all spaces
+    MEMusedComp=$((MEMusedComp / 256))  # in MB - multiple # pages by 4096 bytes per pages
+  MEMused=$((MEMusedApps + MEMusedWired + MEMusedComp))
+  MemRatio=$(( (MEMused * 100) / MEMsizeMB))
+  printf -v MEMusage "%s/%s MB (%.0f%%)" ${MEMused} ${MEMsizeMB} ${MemRatio}
   DISKusage=$(df -h | awk '$NF=="/"{printf "%d/%d GB (%s)\n", $3,$2,$5}')
   return 0
 }
@@ -373,12 +389,12 @@ reportDebug() {
     echo -e "\t${CLRtitle}RPi Model =\t${CLRwhite}${RPImodel}"
     echo -e "\t${CLRtitle}RPi Rel Date =\t${CLRwhite}${RPIrel}"
     echo -e "\t${CLRtitle}RPi Manuf =\t${CLRwhite}${RPIman}${CLRnormal}\n"
-  elif [[ "$DeviceType" == "OSX" ]]; then
-    echo -e "\t${CLRheading}OSX VARS"
-    echo -e "\t${CLRtitle}Main V Init = \t${CLRwhite}${OSXinitialVer}"
-    echo -e "\t${CLRtitle}Main V Adj = \t${CLRwhite}${OSXadjustedVer}"
-    echo -e "\t${CLRtitle}OSX Ver = \t${CLRwhite}${OSXmainVer}"
-    echo -e "\t${CLRtitle}OSX sub V = \t${CLRwhite}${OSXsubVer}${CLRnormal}\n"
+  elif [[ "$DeviceType" == "Mac" ]]; then
+    echo -e "\t${CLRheading}MacOS VARS"
+    echo -e "\t${CLRtitle}Raw Version = \t${CLRwhite}${MacOSinitialVer}"
+    echo -e "\t${CLRtitle}Adj Version = \t${CLRwhite}${MacOSadjustedVer}"
+    echo -e "\t${CLRtitle}MacOS Ver = \t${CLRwhite}${MacOSmainVer}"
+    echo -e "\t${CLRtitle}MacOS sub V = \t${CLRwhite}${MacOSsubVer}${CLRnormal}\n"
   fi
   return 0
 }
@@ -400,7 +416,7 @@ reportNetwork() {
 reportSystem() {
   echo -e "\t${CLRheading}OS\t\t${CLRheading2}${OSfullname}"
   [[ -n $OScodename ]] && echo -e "\t${CLRtitle}CODENAME\t${CLRwhite}${OScodename}"
-  [[ -n $OSVERsion ]] && echo -e "\t${CLRtitle}OS VERSION\t${CLRwhite}${OSVERsion}"
+  [[ -n $OSversion ]] && echo -e "\t${CLRtitle}OS VERSION\t${CLRwhite}${OSversion}"
   echo -e "\n\t${CLRheading}DEVICE\t\t${CLRheading2}${HWdevice}"
   [[ -n $HWrelease ]] && echo -e "\t${CLRtitle}RELEASE DATE\t${CLRwhite}${HWrelease}"
   [[ -n $CPUname ]] && echo -e "\t${CLRtitle}PROCESSOR\t${CLRwhite}${CPUname}"
@@ -417,7 +433,7 @@ reportMain() {
   reportNetwork
   if [[ -z "$DeviceType" ]] || [[ "$mode" == "FORCE" ]]; then
     # unknown device OR forced
-    OSVERsion=${SYSkernalVer}  # set VARS to raw data
+    OSversion=${SYSkernalVer}  # set VARS to raw data
     CPUname=${SYSmachine}
     [[ "$SYSplatform" != "unknown" ]] && HWdevice=${SYSplatform}  # Don't set if 'unknown'
   fi
@@ -444,9 +460,8 @@ if [[ "$OS" == "Linux" ]]; then
   fi
 elif [[ "$OS" == "Darwin" ]]; then
   setMac
-else                 # Unknown device
-  echo -e "Error: System Type not determined"
-  exit 1
+else  # Unknown device
+  processExit "${CLRerror}Error${CLRwhite}: ${CLRwarning}Could not determine System Type${CLRwhite}"
 fi
 
 [[ "$mode" == "DEBUG" ]] && reportDebug && processExit
