@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
 
-# sysis - Collect and print information on system, network and OS
+# sysis - Display Key System Information
 #
-#     For OSX & Linux
+#     Lightweight Cross-Platform Utility for:
+#         macOS, Linux, and Windows 10 wih Bash on Windows
+#
+#    from: https://github.com/robertpeteuil/sysis
+#
+#  Author: Robert Peteuil   @RobertPeteuil
 #
 
-# INIT VARS AND FUNCTIONS
 scriptname="sysis"
-scriptbuildnum="3.4.5"
-scriptbuilddate="2017-03-24"
+scriptbuildnum="3.4.6"
+scriptbuilddate="2017-03-25"
 
 ############################################################
 ### VARS INITS
@@ -25,7 +29,7 @@ EXITMESSAGE=""
 ############################################################
 ###     PRE-EXECUTION
 
-# TURN ON COLOR IF POSSIBLE, SET THEME
+# turn on color if possible
 if test -t 1; then            # check if stdout is a terminal
     ncolors=$(tput colors)    # see if it supports colors
     if test -n "$ncolors" && test "$ncolors" -ge 8; then
@@ -39,7 +43,7 @@ if test -t 1; then            # check if stdout is a terminal
         cyan="$(tput setaf 6)"
         white="$(tput setaf 7)"
 
-      # Set Color Theme - vars used by echo statements
+      # set color theme - allows for quickly changing all output
         CLRnormal="\033[0m"
         CLRwhite=${bold}${white}
         CLRheading=${bold}${blue}
@@ -57,14 +61,14 @@ fi
 #     FUNCTIONS
 ######################################################################
 
-processExit () {    # ERROR MESSAGE CAN BE SENT TO FUNCTION WHEN CALLING
+processExit () {    # error message can be sent to function when calling
   local var="$*"
   if [[ -n "$EXITMESSAGE" ]]; then
     echo -e "$EXITMESSAGE" >&2
   fi
-  if [[ -n "$var" ]]; then
-    echo -e "$var" >&2
-    [[ "$EXITSTATUS" == 0 ]] && EXITSTATUS=1  # if error-text passed set to at least 1
+  if [[ -n "$var" ]]; then                    # if error-text was passed
+    echo -e "$var" >&2                        # display it on std-error
+    [[ "$EXITSTATUS" == 0 ]] && EXITSTATUS=1  # set exit status to at least 1
   fi
   exit $EXITSTATUS
 }
@@ -266,7 +270,7 @@ setLinux() {
   DeviceType="Linux"
   setLinuxCommon
   OSversion=${SYSkernalVer%%"-"*}  #remove '-amd64' on right
-  HWdevice=""  # UNKNOWN HW
+  HWdevice=""   # UNKNOWN HW
   HWrelease=""  # UNKNOWN HW
   if [ -e "/proc/cpuinfo" ]; then
     CPUname=$(grep -m1 'model name' < /proc/cpuinfo)
@@ -310,7 +314,7 @@ setMac() {
     10.0) OScodename="Cheetah";;
   esac
   HWdevice=${SYSplatform//,/.}
-  HWrelease=""                   # Unknown on Mac
+  HWrelease=""  # Unknown on Mac
   # Mac HW Quieries - 'sysctl -n' return value, 'sysctl -a | grep cpu'
   CPUname=$(sysctl -n machdep.cpu.brand_string)
     CPUname=${CPUname//(R)/}  # remove ALL occurences of '(R)'
@@ -323,37 +327,25 @@ setMac() {
     CPUspeed="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz"
   CPUcores=$(sysctl -n hw.ncpu)  # get CPU cores "hw.ncpu: 8"
   MEMsizeMB=$(sysctl -n hw.memsize)   # "hw.memsize: 34359738368"
-    MEMsizeMB=$((MEMsizeMB / 1024))
-    MEMsizeMB=$((MEMsizeMB / 1024))   # this version used in uage in MB
-    MEMsize=$((MEMsizeMB / 1024))  # this used for size in GB
-    MEMsize="${MEMsize} GB"  # add 'GB' after using it to make MEMusage
-    # MEMsize="${MEMsizeMB}"   # SUFFIX ADDED after calculation BELOW
-  # MEMfree=$(vm_stat | grep 'wired')
-  #   MEMfree=${MEMfree#*':'}  # remove 'pages wired down:'
-  #   MEMfree=${MEMfree%'.'*}  # remove '.' at right side
-  #   MEMfree=${MEMfree// /}   # remove all spaces
-  #   MEMfree=$((MEMfree / 256))  # in MB - multiple # pages by 4096 bytes per pages
+    MEMadjust=$(( 1024 * 1024 ))
+    MEMsizeMB=$((MEMsizeMB / MEMadjust))   # Mem Size in MB
+    MEMsize="$((MEMsizeMB / 1024)) GB"  # Mem Size in GB
   MEMusedApps=$(vm_stat | grep 'active')
     MEMusedApps=${MEMusedApps#*':'}  # remove 'pages wired down:'
     MEMusedApps=${MEMusedApps%%'.'*}  # remove '.' at right side
     MEMusedApps=${MEMusedApps// /}   # remove all spaces
     MEMusedApps=$((MEMusedApps / 256))  # in MB - multiple # pages by 4096 bytes per pages
-    # echo "UsedApps: $MEMusedApps"
   MEMusedWired=$(vm_stat | grep 'wired')
     MEMusedWired=${MEMusedWired#*':'}  # remove 'pages wired down:'
     MEMusedWired=${MEMusedWired%'.'*}  # remove '.' at right side
     MEMusedWired=${MEMusedWired// /}   # remove all spaces
     MEMusedWired=$((MEMusedWired / 256))  # in MB - multiple # pages by 4096 bytes per pages
-    # echo "UsedWired: $MEMusedWired"
   MEMusedComp=$(vm_stat | grep 'occupied by compressor')
     MEMusedComp=${MEMusedComp#*':'}  # remove 'pages wired down:'
     MEMusedComp=${MEMusedComp%'.'*}  # remove '.' at right side
     MEMusedComp=${MEMusedComp// /}   # remove all spaces
     MEMusedComp=$((MEMusedComp / 256))  # in MB - multiple # pages by 4096 bytes per pages
-    # echo "MEMusedComp: $MEMusedComp"
   MEMused=$((MEMusedApps + MEMusedWired + MEMusedComp))
-  # MEMused=$((MEMsizeMB - MEMusedTotal))
-  # echo "Total: $MEMused"
   MemRatio=$(( (MEMused * 100) / MEMsizeMB))
   printf -v MEMusage "%s/%s MB (%.0f%%)" ${MEMused} ${MEMsizeMB} ${MemRatio}
   DISKusage=$(df -h | awk '$NF=="/"{printf "%d/%d GB (%s)\n", $3,$2,$5}')
