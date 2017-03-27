@@ -3,7 +3,7 @@
 [![Code Climate](https://codeclimate.com/github/robertpeteuil/sysis/badges/gpa.svg)](https://codeclimate.com/github/robertpeteuil/sysis)
 [![GitHub issues](https://img.shields.io/github/issues/robertpeteuil/sysis.svg)](https://github.com/robertpeteuil/sysis)
 [![GitHub release](https://img.shields.io/github/release/robertpeteuil/sysis.svg?colorB=2067b8)](https://github.com/robertpeteuil/sysis)
-[![language: bash](https://img.shields.io/badge/language-bash-447799.svg?colorB=2067b8&style=flat-square "made in Bash")]()
+[![lang](https://img.shields.io/badge/language-bash-89e051.svg?style=flat-square)]()
 [![license](https://img.shields.io/github/license/robertpeteuil/sysis.svg?colorB=2067b8)](https://github.com/robertpeteuil/sysis)
 
 ---
