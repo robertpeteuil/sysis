@@ -1,5 +1,5 @@
-# sysis
-### Display Key System Information with this lightweight Cross-Platform Utility
+# SYSIS - the Lightweight System-Information Utility
+### Display Key System Information with this Cross-Platform Utility right from the shell
 [![Code Climate](https://codeclimate.com/github/robertpeteuil/sysis/badges/gpa.svg)](https://codeclimate.com/github/robertpeteuil/sysis)
 [![GitHub issues](https://img.shields.io/github/issues/robertpeteuil/sysis.svg)](https://github.com/robertpeteuil/sysis)
 [![GitHub release](https://img.shields.io/github/release/robertpeteuil/sysis.svg?colorB=2067b8)](https://github.com/robertpeteuil/sysis)
@@ -8,7 +8,11 @@
 
 ---
 
-**Ideal for sysadmins, developers and system builders who connect to dozens of systems daily.**  SYSIS provides a quick display of key system information without the need to run multiple different utilities.  It also avoids the bloat that is common in other System Information Utilities.
+**SYSIS is ideal for sysadmins, developers and IT Professionals who connect to dozens of systems daily and need to quickly determine key system information.**  SYSIS displays concise and organized information for the Host, OS and System HW.  It allows the user to obtain this quickly without the need to run multiple device-specific commands and utilities.  
+
+It was designed with the busy professional in mind:
+- Simple to use and doesnt require paramters
+- Executes quickly by gathering only the most commonly needed information   
 
 ### sysis output on macOS and RasberryPi: 
 ![](https://cloud.githubusercontent.com/assets/1554603/24470009/4a5fde4e-1472-11e7-951a-4d5a4cec09b7.png)
@@ -17,13 +21,13 @@
 ### Supported Platforms
 
   - Linux
-  - macOS / OS X
+  - macOS (OS X)
   - Raspberry PI (Linux)
   - Windows 10 with "Bash on Windows"  
     
 ### Execution
 
-This is a command is executed simply with `sysis`
+This is a command is executed simply by typing `sysis`
 
 > Optional parameters:
 > -  `-h` - 'help'
