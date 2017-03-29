@@ -12,7 +12,7 @@
 
 ### sysis output on macOS and RasberryPi: 
 ![](https://cloud.githubusercontent.com/assets/1554603/24470009/4a5fde4e-1472-11e7-951a-4d5a4cec09b7.png)
-![](https://cloud.githubusercontent.com/assets/1554603/24471813/2fa3f832-1478-11e7-8530-512935469ebf.png)
+![](https://cloud.githubusercontent.com/assets/1554603/24471945/c3793d9c-1478-11e7-89cd-c96404695a8d.png)
 
 ### Supported Platforms
 
