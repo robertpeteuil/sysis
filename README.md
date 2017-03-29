@@ -10,8 +10,9 @@
 
 **Ideal for sysadmins, developers and system builders who connect to dozens of systems daily.**  SYSIS provides a quick display of key system information without the need to run multiple different utilities.  It also avoids the bloat that is common in other System Information Utilities.
 
-### Screenshot of sysis output: 
-![](https://cloud.githubusercontent.com/assets/1554603/24317998/d63074e8-10bb-11e7-82d2-3e82c1b4755a.png)
+### sysis output on macOS and RasberryPi: 
+![](https://cloud.githubusercontent.com/assets/1554603/24470009/4a5fde4e-1472-11e7-951a-4d5a4cec09b7.png)
+![](https://cloud.githubusercontent.com/assets/1554603/24471813/2fa3f832-1478-11e7-8530-512935469ebf.png)
 
 ### Supported Platforms
 
