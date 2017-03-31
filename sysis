@@ -11,7 +11,7 @@
 #
 
 scriptname="sysis"
-scriptbuildnum="3.4.6.10"
+scriptbuildnum="3.4.6.11"
 scriptbuilddate="2017-03-31"
 
 ############################################################
@@ -131,7 +131,7 @@ cleanText() {
 
 cleanCPUname() {
   local tempCPUname=$1
-  tempCPUname=${tempCPUname#*': '}          # strip everything left of ': '
+  tempCPUname=${tempCPUname#*': '}          # strip left of ': '
   tempCPUname=${tempCPUname//'(R)'/}        # remove '(R)'
   tempCPUname=${tempCPUname//'(tm)'/}       # remove '(tm)'
   tempCPUname=${tempCPUname/'(TM)'/}        # remove '(TM)'
@@ -144,10 +144,9 @@ cleanCPUname() {
 
 cleanVARtext() {
   local unclearVARtext=$1
-  unclearVARtext=${unclearVARtext#*':'}           # strip everything left of ':'
-  unclearVARtext=${unclearVARtext%%'.'*}          # strip everything right of '.'
-  unclearVARtext=${unclearVARtext// /}            # remove spaces
-  # unclearVARtext=$((unclearVARtext / 256))
+  unclearVARtext=${unclearVARtext#*':'}     # strip left of ':'
+  unclearVARtext=${unclearVARtext%%'.'*}    # strip right of '.'
+  unclearVARtext=${unclearVARtext// /}      # remove spaces
   echo -n "$unclearVARtext"
 }
 
@@ -159,15 +158,19 @@ getNetwork() {
     case $OS in
      Linux)  # note RPI only has awk 1.x installed
         lanIP=$(ifconfig -a | awk '/(cast)/ {print $2}' | cut -d: -f2)
-      ;;
-     Darwin)  # filters virtual adapters as those with limited scope broadcast
-      lanIP=$(ifconfig -a | awk '/(cast).([0-9]{1,3}\.){2}1\./ {print $2}') ;;
+        ;;
+     Darwin)  # filters virtual adapters (those with limited scope broadcast)
+        lanIP=$(ifconfig -a | awk '/(cast).([0-9]{1,3}\.){2}1\./ {print $2}')
+        ;;
      FreeBSD|OpenBSD)
-      lanIP=$(ifconfig  | grep -E 'inet.[0-9]' | grep -v '127.0.0.1' | awk '{print $2}') ;;
+        lanIP=$(ifconfig  | grep -E 'inet.[0-9]' | grep -v '127.0.0.1' | awk '{print $2}')
+        ;;
      SunOS)
-      lanIP=$(ifconfig -a | grep inet | grep -v '127.0.0.1' | awk '{print $2}') ;;
+        lanIP=$(ifconfig -a | grep inet | grep -v '127.0.0.1' | awk '{print $2}')
+        ;;
      *)
-      lanIP="Unknown" ;;
+        lanIP="Unknown"
+        ;;
     esac
   fi
   # if multi LanIPs put in array
@@ -214,28 +217,23 @@ setLinuxCommon() {
   if [[ $LSBset == "TRUE" ]]; then  # use vals from lsb_release if possible
     OSfullname="${LSBid} ${SYSkernal} ${LSBrel}"
     OScodename="${LSBcodename}"
-  else  # plan b - get vals from release doc
+  else                              # plan b - get vals from release doc
     if [ -e "/etc/*release" ]; then
       OSrelease=$(awk '/^VERSION_ID=/ {split($1, ary, /"/); print ary[2]}' /etc/*release)
       OSfullname="$(awk '/^ID=/ { print toupper(substr($name,4,1)) tolower(substr($name,5))}' /etc/*release) ${SYSkernal} ${OSrelease}"
       OScodename=$(awk '/^VERSION=/ {split($0, ary, /(\()||(\))/); print toupper(substr(ary[2],1,1)) tolower(substr(ary[2],2)) }' /etc/*release)
-    else  # plan c - get OS name from uname
+    else                            # plan c - get OS name from uname
       OSfullname="${SYSkernal}"
     fi
   fi
   if [ -e "/sys/devices/system/cpu/possible" ]; then
     CPUspeed=$(lscpu | grep -m1 'MHz')
       CPUspeed=$(cleanVARtext "$CPUspeed")
-      # CPUspeed=${CPUspeed#*':'}             # strip everything left of ':'
-      # CPUspeed=${CPUspeed%%'.'*}             # strip everythign right of '.'
-      # CPUspeed=${CPUspeed// /}            # strip spaces
-      CPUspeedBig=$((CPUspeed / 1000))    # main digit
-      CPUspeedSmall=$((CPUspeed % 1000))  # sub digit
+      CPUspeedBig=$((CPUspeed / 1000))
+      CPUspeedSmall=$((CPUspeed % 1000))
       CPUspeed="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz"
     CPUcores=$(lscpu | grep 'Core(s)')
       CPUcores=$(cleanVARtext "$CPUcores")
-      # CPUcores=${CPUcores#*:}             # strip left of ':'
-      # CPUcores=${CPUcores// /}            # strip spaces
   fi
   DISKusage=$(df -h | awk '$NF=="/"{printf "%d/%d GB (%s)\n", $3,$2,$5}')
   return 0
@@ -345,8 +343,8 @@ setMac() {
   CPUcores=$(sysctl -n hw.ncpu)
   MEMsizeMB=$(sysctl -n hw.memsize)
     MEMadjust=$(( 1024 * 1024 ))
-    MEMsizeMB=$((MEMsizeMB / MEMadjust))    # Mem Size in MB
-  MEMsize="$((MEMsizeMB / 1024)) GB"        # Mem Size in GB
+    MEMsizeMB=$((MEMsizeMB / MEMadjust))    # Mem in MB
+  MEMsize="$((MEMsizeMB / 1024)) GB"        # Mem in GB
   #  Memory used = App Use + Wired use + Compressed use
   MEMusedApps=$(vm_stat | grep 'active')
     MEMusedApps=$(cleanVARtext "$MEMusedApps")
@@ -388,7 +386,7 @@ reportDebug() {
   echo -e "\t${CLRtitle}SYSkernalVer = \t${CLRwhite}${SYSkernalVer}"
   echo -e "\t${CLRtitle}SYSmachine = \t${CLRwhite}${SYSmachine}"
   echo -e "\t${CLRtitle}SYSplatform = \t${CLRwhite}${SYSplatform}\n"
-  if [[ "$LSBset" == "TRUE" ]]; then   # only print if LSB installed
+  if [[ "$LSBset" == "TRUE" ]]; then
     echo -e "\t${CLRheading}LSB_RELEASE${CLRwhite}"
     echo -e "\t${CLRtitle}LSBdescr = \t${CLRwhite}${LSBdescr}"
     echo -e "\t${CLRtitle}LSBid = \t${CLRwhite}${LSBid}"
@@ -443,8 +441,8 @@ reportSystem() {
 
 reportMain() {
   reportNetwork
-  if [[ -z "$DeviceType" ]] || [[ "$mode" == "FORCE" ]]; then  # unknown device OR forced unknown
-    # set VARS to raw data
+  if [[ -z "$DeviceType" ]] || [[ "$mode" == "FORCE" ]]; then
+    # set VARS to rawest form
     OSversion=${SYSkernalVer}
     CPUname=${SYSmachine}
     [[ "$SYSplatform" != "unknown" ]] && HWdevice=${SYSplatform}
@@ -466,15 +464,12 @@ getSystem
 
 if [[ "$OS" == "Linux" ]]; then
   if ([[ "$PROCarch" == "armhf" ]] || [[ $SYSmachine == armv* ]] || [[ "$OSTYPE" == "linux-gnueabihf" ]]); then
-    # RPi unique extraction + some linux
-    setRPI
+    setRPI    # RPi unique extraction + some linux
   else
-    # pure Linux - standard linux info extraction
-    setLinux
+    setLinux  # pure Linux - standard linux info extraction
   fi
 elif [[ "$OS" == "Darwin" ]]; then
-  # Mac unique info extraction
-  setMac
+  setMac      # Mac unique info extraction
 else
   # un-determined host type
   processExit "${CLRerror}Error${CLRwhite}: ${CLRwarning}Could not determine System Type${CLRwhite}"
