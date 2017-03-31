@@ -11,8 +11,8 @@
 #
 
 scriptname="sysis"
-scriptbuildnum="3.4.6.6"
-scriptbuilddate="2017-03-30"
+scriptbuildnum="3.4.6.7"
+scriptbuilddate="2017-03-31"
 
 ############################################################
 ### VARS INITS
@@ -42,8 +42,7 @@ if test -t 1; then            # check if stdout is a terminal
         magenta="$(tput setaf 5)"
         cyan="$(tput setaf 6)"
         white="$(tput setaf 7)"
-
-      # set color theme - allows for quickly changing all output
+      # set color theme vars to allow for quick changing
         CLRnormal="\033[0m"
         CLRwhite=${bold}${white}
         CLRheading=${bold}${blue}
@@ -67,8 +66,8 @@ processExit () {    # error message can be sent to function when calling
     echo -e "$EXITMESSAGE" >&2
   fi
   if [[ -n "$var" ]]; then                    # if error-text was passed
-    echo -e "$var" >&2                        # display it on std-error
-    [[ "$EXITSTATUS" == 0 ]] && EXITSTATUS=1  # set exit status to at least 1
+    echo -e "$var" >&2                        #   display it on std-error
+    [[ "$EXITSTATUS" == 0 ]] && EXITSTATUS=1  #   set exit-status to at least 1
   fi
   exit $EXITSTATUS
 }
@@ -94,7 +93,7 @@ printHelp() {
   echo -e "${CLRtitle2}     -h\t${CLRwhite}: basic help"
   echo -e "${CLRtitle2}     -V\t${CLRwhite}: display version"
   echo -e "${CLRtitle2} --help\t${CLRwhite}: detailed help${CLRnormal}"
-  if [[ "$1" ]]; then   # print all help
+  if [[ "$1" ]]; then
     echo
     echo -e "${CLRtitle}   DEBUG"
     echo -e "${CLRtitle2}--force\t${CLRwhite}: force report as 'unknown' type"
@@ -145,9 +144,9 @@ cleanCPUname() {
 
 cleanMEMused() {
   local MEMvariable=$1
-  MEMvariable=${MEMvariable#*':'}
-  MEMvariable=${MEMvariable%%'.'*}
-  MEMvariable=${MEMvariable// /}
+  MEMvariable=${MEMvariable#*':'}           # strip everything left of ':'
+  MEMvariable=${MEMvariable%%'.'*}          # strip everything right of '.'
+  MEMvariable=${MEMvariable// /}            # remove spaces
   MEMvariable=$((MEMvariable / 256))
   echo -n "$MEMvariable"
 }
@@ -161,7 +160,7 @@ getNetwork() {
      Linux)  # note RPI only has awk 1.x installed
         lanIP=$(ifconfig -a | awk '/(cast)/ {print $2}' | cut -d: -f2)
       ;;
-     Darwin)  # filters virtual adapters = limited scope broadcast addys
+     Darwin)  # filters virtual adapters as those with limited scope broadcast
       lanIP=$(ifconfig -a | awk '/(cast).([0-9]{1,3}\.){2}1\./ {print $2}') ;;
      FreeBSD|OpenBSD)
       lanIP=$(ifconfig  | grep -E 'inet.[0-9]' | grep -v '127.0.0.1' | awk '{print $2}') ;;
@@ -171,9 +170,10 @@ getNetwork() {
       lanIP="Unknown" ;;
     esac
   fi
+  # if multi LanIPs put in array
   if [[ -n $lanIP ]]; then
     count=0
-    for i in $lanIP; do  # if multi-ip's put in array
+    for i in $lanIP; do
       lanIPS[count]=$i
       ((++count))
     done
@@ -192,16 +192,15 @@ getSystem() {
     processExit "cannot execute ${CLRwarning}'uname'${CLRwhite}"
   fi
   if [[ $(dpkg --help 2> /dev/null) ]]; then
-    PROCarch=$(dpkg --print-architecture) # on RPI2, and RPI-Zero = armhf
+    PROCarch=$(dpkg --print-architecture)
   fi
   if [[ $(lsb_release -h 2> /dev/null) ]]; then
-    LSBset="TRUE"   # LSB AVAILABLE FLAG
+    LSBset="TRUE"
     LSBidPRE=$(lsb_release -i 2> /dev/null)
     LSBdescrPRE=$(lsb_release -d 2> /dev/null)
     LSBrelPRE=$(lsb_release -r 2> /dev/null)
     LSBcodenamePRE=$(lsb_release -c 2> /dev/null)
     LSBallPRE=$(lsb_release -a 2> /dev/null)
-    # Clean up text
   	[[ -n $LSBidPRE ]] && LSBid=${LSBidPRE#*":"} && LSBid=$(cleanText "$LSBid")
   	[[ -n $LSBdescrPRE ]] && LSBdescr=${LSBdescrPRE#*":"} && LSBdescr=$(cleanText "$LSBdescr")
   	[[ -n $LSBrelPRE ]] && LSBrel=${LSBrelPRE#*":"} && LSBrel=$(cleanText "$LSBrel")
@@ -212,15 +211,15 @@ getSystem() {
 }
 
 setLinuxCommon() {
-  if [[ $LSBset == "TRUE" ]]; then
+  if [[ $LSBset == "TRUE" ]]; then  # use vals from lsb_release if possible
     OSfullname="${LSBid} ${SYSkernal} ${LSBrel}"
     OScodename="${LSBcodename}"
-  else  # lsb_release not installed
-    if [ -e "/etc/*release" ]; then  # set OS info from release doc if possible
+  else  # plan b - get vals from release doc
+    if [ -e "/etc/*release" ]; then
       OSrelease=$(awk '/^VERSION_ID=/ {split($1, ary, /"/); print ary[2]}' /etc/*release)
       OSfullname="$(awk '/^ID=/ { print toupper(substr($name,4,1)) tolower(substr($name,5))}' /etc/*release) ${SYSkernal} ${OSrelease}"
       OScodename=$(awk '/^VERSION=/ {split($0, ary, /(\()||(\))/); print toupper(substr(ary[2],1,1)) tolower(substr(ary[2],2)) }' /etc/*release)
-    else  # otherwise use the basic OS name from uname
+    else  # plan c - get OS name from uname
       OSfullname="${SYSkernal}"
     fi
   fi
@@ -233,7 +232,7 @@ setLinuxCommon() {
       CPUspeedSmall=$((CPUspeed % 1000))  # sub digit
       CPUspeed="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz"
     CPUcores=$(lscpu | grep 'Core(s)')
-      CPUcores=${CPUcores#*:}             # strip left of ': '
+      CPUcores=${CPUcores#*:}             # strip left of ':'
       CPUcores=${CPUcores// /}            # strip spaces
   fi
   DISKusage=$(df -h | awk '$NF=="/"{printf "%d/%d GB (%s)\n", $3,$2,$5}')
@@ -246,7 +245,7 @@ setRPI() {
   if [ -e "/proc/cpuinfo" ]; then
     RPIrev=$(awk '/Revision/ { sub(/^.+\:/, "") ; print $1 }' /proc/cpuinfo)
     CPUname=$(awk '/model\ name/ { sub(/-compatible/, ""); print ($4)" r"($7); exit}' /proc/cpuinfo)
-    # info: http://elinux.org/RPi_HardwareHistory
+    # RPI HW version source: http://elinux.org/RPi_HardwareHistory
     case "$RPIrev" in
         *beta) RPImodel="Beta"; RPImem="256 MB"; RPIman="Beta"; RPIrel="Q1 2012";;
         *002) RPImodel="B (1.0)"; RPImem="256 MB"; RPIman="unknown"; RPIrel="Q1 2012";;
@@ -282,7 +281,7 @@ setRPI() {
         *) RPImodel="'Unknown Version'"; RPImem="Unknown"; RPIman="Unknown"; RPIrel="Unknown";;
     esac
   fi
-  OSversion=${SYSkernalVer%"-"*}  #remove '-xxx' on right
+  OSversion=${SYSkernalVer%"-"*}
   HWdevice="Raspberry Pi ${RPImodel}"
   HWrelease="${RPIrel} (${RPIman})"
   MEMsize="${RPImem}"
@@ -293,22 +292,15 @@ setRPI() {
 setLinux() {
   DeviceType="Linux"
   setLinuxCommon
-  OSversion=${SYSkernalVer%%"-"*}  #remove '-amd64' on right
+  OSversion=${SYSkernalVer%%"-"*}
   HWdevice=""
   HWrelease=""
   if [ -e "/proc/cpuinfo" ]; then
     CPUname=$(grep -m1 'model name' < /proc/cpuinfo)
     CPUname=$(cleanCPUname "$CPUname")
-    # CPUname=${CPUname#*': '}  # strip everything left of ': '
-    # CPUname=${CPUname//'(R)'/}  # remove '(R)'
-    # CPUname=${CPUname//'(tm)'/}  # remove '(tm)'
-    # CPUname=${CPUname/' CPU'/}  # remove ' CPU'
-    # CPUname=${CPUname/' Processor'/}  # remove ' Processor'
-    # CPUname=${CPUname%' @'*}  # remove everything right of ' @', thus removing speed
-    # CPUname=$(cleanText "$CPUname")
   fi
   MEMsizeMB=$(free -m | awk '/^Mem:/{print $2}')
-    MEMsize=$(( MEMsizeMB / 925 ))   # total system ram in GB
+    MEMsize=$(( MEMsizeMB / 925 ))
     MEMsize="${MEMsize} GB"
   MEMusage=$(free -m | awk 'NR==2{printf "%s/%s MB (%.0f%%)\n", $3,$2,$3*100/$2 }')
   return 0
@@ -316,10 +308,10 @@ setLinux() {
 
 setMac() {
   DeviceType="Mac"
-  MacOSinitialVer=${SYSkernalVer%%.*}  # remove everything right of first '.'
-  MacOSadjustedVer=$((MacOSinitialVer-4))   # subtract 4 from first number
-  MacOSsubVer=${SYSkernalVer%.*}   # remove rightmost # - 14.5.0 to 14.5
-  MacOSsubVer=${MacOSsubVer#*.}  # move leftmost # - 14.5 to 5
+  MacOSinitialVer=${SYSkernalVer%%.*}
+  MacOSadjustedVer=$((MacOSinitialVer-4))
+  MacOSsubVer=${SYSkernalVer%.*}
+  MacOSsubVer=${MacOSsubVer#*.}
   MacOSmainVer="10.${MacOSadjustedVer}"
   OSversion="10.${MacOSadjustedVer}.${MacOSsubVer}"
   OSfullname="macOS ${MacOSmainVer}"
@@ -339,42 +331,27 @@ setMac() {
     10.0) OScodename="Cheetah";;
   esac
   HWdevice=${SYSplatform//,/.}
-  HWrelease=""  # Unknown on Mac
+  HWrelease=""
   # Mac HW Quieries - 'sysctl -n' return value, 'sysctl -a | grep cpu'
   CPUname=$(sysctl -n machdep.cpu.brand_string)
   CPUname=$(cleanCPUname "$CPUname")
-    # CPUname=${CPUname//(R)/}  # remove ALL occurences of '(R)'
-    # CPUname=${CPUname/" CPU"/}
-    # CPUname=${CPUname/"(TM)"/}
-    # CPUname=${CPUname%' @'*}  # remove speed
-  CPUspeed=$(sysctl -n hw.cpufrequency_max) # get CPU speed
+  CPUspeed=$(sysctl -n hw.cpufrequency_max)
     CPUspeed=$((CPUspeed / 1000000))
     CPUspeedBig=$((CPUspeed / 1000))
     CPUspeedSmall=$((CPUspeed % 1000))
     CPUspeed="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz"
-  CPUcores=$(sysctl -n hw.ncpu)  # get CPU cores "hw.ncpu: 8"
-  MEMsizeMB=$(sysctl -n hw.memsize)   # "hw.memsize: 34359738368"
+  CPUcores=$(sysctl -n hw.ncpu)
+  MEMsizeMB=$(sysctl -n hw.memsize)
     MEMadjust=$(( 1024 * 1024 ))
-    MEMsizeMB=$((MEMsizeMB / MEMadjust))   # Mem Size in MB
-    MEMsize="$((MEMsizeMB / 1024)) GB"  # Mem Size in GB
+    MEMsizeMB=$((MEMsizeMB / MEMadjust))    # Mem Size in MB
+  MEMsize="$((MEMsizeMB / 1024)) GB"        # Mem Size in GB
+  #  Memory used = App Use + Wired use + Compressed use
   MEMusedApps=$(vm_stat | grep 'active')
-  MEMusedApps=$(cleanMEMused "$MEMusedApps")
-    # MEMusedApps=${MEMusedApps#*':'}  # remove 'pages wired down:'
-    # MEMusedApps=${MEMusedApps%%'.'*}  # remove '.' at right side
-    # MEMusedApps=${MEMusedApps// /}   # remove all spaces
-    # MEMusedApps=$((MEMusedApps / 256))  # in MB - multiple # pages by 4096 bytes per pages
+    MEMusedApps=$(cleanMEMused "$MEMusedApps")
   MEMusedWired=$(vm_stat | grep 'wired')
-  MEMusedWired=$(cleanMEMused "$MEMusedWired")
-    # MEMusedWired=${MEMusedWired#*':'}  # remove 'pages wired down:'
-    # MEMusedWired=${MEMusedWired%'.'*}  # remove '.' at right side
-    # MEMusedWired=${MEMusedWired// /}   # remove all spaces
-    # MEMusedWired=$((MEMusedWired / 256))  # in MB - multiple # pages by 4096 bytes per pages
+    MEMusedWired=$(cleanMEMused "$MEMusedWired")
   MEMusedComp=$(vm_stat | grep 'occupied by compressor')
-  MEMusedComp=$(cleanMEMused "$MEMusedComp")
-    # MEMusedComp=${MEMusedComp#*':'}  # remove 'pages wired down:'
-    # MEMusedComp=${MEMusedComp%'.'*}  # remove '.' at right side
-    # MEMusedComp=${MEMusedComp// /}   # remove all spaces
-    # MEMusedComp=$((MEMusedComp / 256))  # in MB - multiple # pages by 4096 bytes per pages
+    MEMusedComp=$(cleanMEMused "$MEMusedComp")
   MEMused=$((MEMusedApps + MEMusedWired + MEMusedComp))
   MemRatio=$(( (MEMused * 100) / MEMsizeMB))
   printf -v MEMusage "%s/%s MB (%.0f%%)" ${MEMused} ${MEMsizeMB} ${MemRatio}
@@ -461,11 +438,11 @@ reportSystem() {
 
 reportMain() {
   reportNetwork
-  if [[ -z "$DeviceType" ]] || [[ "$mode" == "FORCE" ]]; then
-    # unknown device OR forced
-    OSversion=${SYSkernalVer}  # set VARS to raw data
+  if [[ -z "$DeviceType" ]] || [[ "$mode" == "FORCE" ]]; then  # unknown device OR forced unknown
+    # set VARS to raw data
+    OSversion=${SYSkernalVer}
     CPUname=${SYSmachine}
-    [[ "$SYSplatform" != "unknown" ]] && HWdevice=${SYSplatform}  # Don't set if 'unknown'
+    [[ "$SYSplatform" != "unknown" ]] && HWdevice=${SYSplatform}
   fi
   reportSystem
   return 0
@@ -484,13 +461,17 @@ getSystem
 
 if [[ "$OS" == "Linux" ]]; then
   if ([[ "$PROCarch" == "armhf" ]] || [[ $SYSmachine == armv* ]] || [[ "$OSTYPE" == "linux-gnueabihf" ]]); then
+    # RPi unique extraction + some linux
     setRPI
   else
+    # pure Linux - standard linux info extraction
     setLinux
   fi
 elif [[ "$OS" == "Darwin" ]]; then
+  # Mac unique info extraction
   setMac
-else  # Unknown device
+else
+  # un-determined host type
   processExit "${CLRerror}Error${CLRwhite}: ${CLRwarning}Could not determine System Type${CLRwhite}"
 fi
 
