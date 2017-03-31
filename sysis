@@ -11,7 +11,7 @@
 #
 
 scriptname="sysis"
-scriptbuildnum="3.4.6.7"
+scriptbuildnum="3.4.6.10"
 scriptbuilddate="2017-03-31"
 
 ############################################################
@@ -138,17 +138,17 @@ cleanCPUname() {
   tempCPUname=${tempCPUname/' CPU'/}        # remove ' CPU'
   tempCPUname=${tempCPUname/' Processor'/}  # remove ' Processor'
   tempCPUname=${tempCPUname%' @'*}          # remove speed
-  tempCPUname=$(cleanText "$tempCPUname")
+  tempCPUname=$(cleanText "$tempCPUname")   # remove leading / trailine space
   echo -n "$tempCPUname"
 }
 
-cleanMEMused() {
-  local MEMvariable=$1
-  MEMvariable=${MEMvariable#*':'}           # strip everything left of ':'
-  MEMvariable=${MEMvariable%%'.'*}          # strip everything right of '.'
-  MEMvariable=${MEMvariable// /}            # remove spaces
-  MEMvariable=$((MEMvariable / 256))
-  echo -n "$MEMvariable"
+cleanVARtext() {
+  local unclearVARtext=$1
+  unclearVARtext=${unclearVARtext#*':'}           # strip everything left of ':'
+  unclearVARtext=${unclearVARtext%%'.'*}          # strip everything right of '.'
+  unclearVARtext=${unclearVARtext// /}            # remove spaces
+  # unclearVARtext=$((unclearVARtext / 256))
+  echo -n "$unclearVARtext"
 }
 
 getNetwork() {
@@ -225,15 +225,17 @@ setLinuxCommon() {
   fi
   if [ -e "/sys/devices/system/cpu/possible" ]; then
     CPUspeed=$(lscpu | grep -m1 'MHz')
-      CPUspeed=${CPUspeed%.*}             # strip everythign right of '.'
-      CPUspeed=${CPUspeed#*:}             # strip everything left of ':'
-      CPUspeed=${CPUspeed// /}            # strip spaces
+      CPUspeed=$(cleanVARtext "$CPUspeed")
+      # CPUspeed=${CPUspeed#*':'}             # strip everything left of ':'
+      # CPUspeed=${CPUspeed%%'.'*}             # strip everythign right of '.'
+      # CPUspeed=${CPUspeed// /}            # strip spaces
       CPUspeedBig=$((CPUspeed / 1000))    # main digit
       CPUspeedSmall=$((CPUspeed % 1000))  # sub digit
       CPUspeed="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz"
     CPUcores=$(lscpu | grep 'Core(s)')
-      CPUcores=${CPUcores#*:}             # strip left of ':'
-      CPUcores=${CPUcores// /}            # strip spaces
+      CPUcores=$(cleanVARtext "$CPUcores")
+      # CPUcores=${CPUcores#*:}             # strip left of ':'
+      # CPUcores=${CPUcores// /}            # strip spaces
   fi
   DISKusage=$(df -h | awk '$NF=="/"{printf "%d/%d GB (%s)\n", $3,$2,$5}')
   return 0
@@ -347,11 +349,14 @@ setMac() {
   MEMsize="$((MEMsizeMB / 1024)) GB"        # Mem Size in GB
   #  Memory used = App Use + Wired use + Compressed use
   MEMusedApps=$(vm_stat | grep 'active')
-    MEMusedApps=$(cleanMEMused "$MEMusedApps")
+    MEMusedApps=$(cleanVARtext "$MEMusedApps")
+    MEMusedApps=$((MEMusedApps / 256))
   MEMusedWired=$(vm_stat | grep 'wired')
-    MEMusedWired=$(cleanMEMused "$MEMusedWired")
+    MEMusedWired=$(cleanVARtext "$MEMusedWired")
+    MEMusedWired=$((MEMusedWired / 256))
   MEMusedComp=$(vm_stat | grep 'occupied by compressor')
-    MEMusedComp=$(cleanMEMused "$MEMusedComp")
+    MEMusedComp=$(cleanVARtext "$MEMusedComp")
+    MEMusedComp=$((MEMusedComp / 256))
   MEMused=$((MEMusedApps + MEMusedWired + MEMusedComp))
   MemRatio=$(( (MEMused * 100) / MEMsizeMB))
   printf -v MEMusage "%s/%s MB (%.0f%%)" ${MEMused} ${MEMsizeMB} ${MemRatio}
