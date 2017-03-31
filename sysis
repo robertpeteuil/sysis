@@ -11,8 +11,8 @@
 #
 
 scriptname="sysis"
-scriptbuildnum="3.4.6"
-scriptbuilddate="2017-03-25"
+scriptbuildnum="3.4.6.1"
+scriptbuilddate="2017-03-30"
 
 ############################################################
 ### VARS INITS
@@ -319,6 +319,7 @@ setMac() {
   CPUname=$(sysctl -n machdep.cpu.brand_string)
     CPUname=${CPUname//(R)/}  # remove ALL occurences of '(R)'
     CPUname=${CPUname/" CPU"/}
+    CPUname=${CPUname/"(TM)"/}
     CPUname=${CPUname%' @'*}  # remove speed
   CPUspeed=$(sysctl -n hw.cpufrequency_max) # get CPU speed
     CPUspeed=$((CPUspeed / 1000000))
