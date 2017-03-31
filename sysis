@@ -11,7 +11,7 @@
 #
 
 scriptname="sysis"
-scriptbuildnum="3.4.6.2"
+scriptbuildnum="3.4.6.3"
 scriptbuilddate="2017-03-30"
 
 ############################################################
@@ -128,6 +128,19 @@ cleanText() {
     var="${var%"${var##*[![:space:]]}"}"  # remove leading whitespace
     var="${var#"${var%%[![:space:]]*}"}"  # remove trailing whitespace
     echo -n "$var"
+}
+
+cleanCPUname() {
+  tempCPUname=$1
+  tempCPUname=${tempCPUname#*': '}          # strip everything left of ': '
+  tempCPUname=${tempCPUname//'(R)'/}        # remove '(R)'
+  tempCPUname=${tempCPUname//'(tm)'/}       # remove '(tm)'
+  tempCPUname=${tempCPUname/'(TM)'/}        # remove '(TM)'
+  tempCPUname=${tempCPUname/' CPU'/}        # remove ' CPU'
+  tempCPUname=${tempCPUname/' Processor'/}  # remove ' Processor'
+  tempCPUname=${tempCPUname%' @'*}          # remove speed
+  tempCPUname=$(cleanText "$tempCPUname")
+  echo -n "$tempCPUname"
 }
 
 getNetwork() {
@@ -274,13 +287,14 @@ setLinux() {
   HWrelease=""  # UNKNOWN HW
   if [ -e "/proc/cpuinfo" ]; then
     CPUname=$(grep -m1 'model name' < /proc/cpuinfo)
-    CPUname=${CPUname#*': '}  # strip everything left of ': '
-    CPUname=${CPUname//'(R)'/}  # remove '(R)'
-    CPUname=${CPUname//'(tm)'/}  # remove '(tm)'
-    CPUname=${CPUname/' CPU'/}  # remove ' CPU'
-    CPUname=${CPUname/' Processor'/}  # remove ' Processor'
-    CPUname=${CPUname%' @'*}  # remove everything right of ' @', thus removing speed
-    CPUname=$(cleanText "$CPUname")
+    CPUname=$(cleanCPUname "$CPUname")
+    # CPUname=${CPUname#*': '}  # strip everything left of ': '
+    # CPUname=${CPUname//'(R)'/}  # remove '(R)'
+    # CPUname=${CPUname//'(tm)'/}  # remove '(tm)'
+    # CPUname=${CPUname/' CPU'/}  # remove ' CPU'
+    # CPUname=${CPUname/' Processor'/}  # remove ' Processor'
+    # CPUname=${CPUname%' @'*}  # remove everything right of ' @', thus removing speed
+    # CPUname=$(cleanText "$CPUname")
   fi
   MEMsizeMB=$(free -m | awk '/^Mem:/{print $2}')
     MEMsize=$(( MEMsizeMB / 925 ))   # total system ram in GB
@@ -317,10 +331,11 @@ setMac() {
   HWrelease=""  # Unknown on Mac
   # Mac HW Quieries - 'sysctl -n' return value, 'sysctl -a | grep cpu'
   CPUname=$(sysctl -n machdep.cpu.brand_string)
-    CPUname=${CPUname//(R)/}  # remove ALL occurences of '(R)'
-    CPUname=${CPUname/" CPU"/}
-    CPUname=${CPUname/"(TM)"/}
-    CPUname=${CPUname%' @'*}  # remove speed
+  CPUname=$(cleanCPUname "$CPUname")
+    # CPUname=${CPUname//(R)/}  # remove ALL occurences of '(R)'
+    # CPUname=${CPUname/" CPU"/}
+    # CPUname=${CPUname/"(TM)"/}
+    # CPUname=${CPUname%' @'*}  # remove speed
   CPUspeed=$(sysctl -n hw.cpufrequency_max) # get CPU speed
     CPUspeed=$((CPUspeed / 1000000))
     CPUspeedBig=$((CPUspeed / 1000))
