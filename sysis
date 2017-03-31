@@ -11,7 +11,7 @@
 #
 
 scriptname="sysis"
-scriptbuildnum="3.4.6.5"
+scriptbuildnum="3.4.6.6"
 scriptbuilddate="2017-03-30"
 
 ############################################################
@@ -141,6 +141,15 @@ cleanCPUname() {
   tempCPUname=${tempCPUname%' @'*}          # remove speed
   tempCPUname=$(cleanText "$tempCPUname")
   echo -n "$tempCPUname"
+}
+
+cleanMEMused() {
+  local MEMvariable=$1
+  MEMvariable=${MEMvariable#*':'}
+  MEMvariable=${MEMvariable%%'.'*}
+  MEMvariable=${MEMvariable// /}
+  MEMvariable=$((MEMvariable / 256))
+  echo -n "$MEMvariable"
 }
 
 getNetwork() {
@@ -349,20 +358,23 @@ setMac() {
     MEMsizeMB=$((MEMsizeMB / MEMadjust))   # Mem Size in MB
     MEMsize="$((MEMsizeMB / 1024)) GB"  # Mem Size in GB
   MEMusedApps=$(vm_stat | grep 'active')
-    MEMusedApps=${MEMusedApps#*':'}  # remove 'pages wired down:'
-    MEMusedApps=${MEMusedApps%%'.'*}  # remove '.' at right side
-    MEMusedApps=${MEMusedApps// /}   # remove all spaces
-    MEMusedApps=$((MEMusedApps / 256))  # in MB - multiple # pages by 4096 bytes per pages
+  MEMusedApps=$(cleanMEMused "$MEMusedApps")
+    # MEMusedApps=${MEMusedApps#*':'}  # remove 'pages wired down:'
+    # MEMusedApps=${MEMusedApps%%'.'*}  # remove '.' at right side
+    # MEMusedApps=${MEMusedApps// /}   # remove all spaces
+    # MEMusedApps=$((MEMusedApps / 256))  # in MB - multiple # pages by 4096 bytes per pages
   MEMusedWired=$(vm_stat | grep 'wired')
-    MEMusedWired=${MEMusedWired#*':'}  # remove 'pages wired down:'
-    MEMusedWired=${MEMusedWired%'.'*}  # remove '.' at right side
-    MEMusedWired=${MEMusedWired// /}   # remove all spaces
-    MEMusedWired=$((MEMusedWired / 256))  # in MB - multiple # pages by 4096 bytes per pages
+  MEMusedWired=$(cleanMEMused "$MEMusedWired")
+    # MEMusedWired=${MEMusedWired#*':'}  # remove 'pages wired down:'
+    # MEMusedWired=${MEMusedWired%'.'*}  # remove '.' at right side
+    # MEMusedWired=${MEMusedWired// /}   # remove all spaces
+    # MEMusedWired=$((MEMusedWired / 256))  # in MB - multiple # pages by 4096 bytes per pages
   MEMusedComp=$(vm_stat | grep 'occupied by compressor')
-    MEMusedComp=${MEMusedComp#*':'}  # remove 'pages wired down:'
-    MEMusedComp=${MEMusedComp%'.'*}  # remove '.' at right side
-    MEMusedComp=${MEMusedComp// /}   # remove all spaces
-    MEMusedComp=$((MEMusedComp / 256))  # in MB - multiple # pages by 4096 bytes per pages
+  MEMusedComp=$(cleanMEMused "$MEMusedComp")
+    # MEMusedComp=${MEMusedComp#*':'}  # remove 'pages wired down:'
+    # MEMusedComp=${MEMusedComp%'.'*}  # remove '.' at right side
+    # MEMusedComp=${MEMusedComp// /}   # remove all spaces
+    # MEMusedComp=$((MEMusedComp / 256))  # in MB - multiple # pages by 4096 bytes per pages
   MEMused=$((MEMusedApps + MEMusedWired + MEMusedComp))
   MemRatio=$(( (MEMused * 100) / MEMsizeMB))
   printf -v MEMusage "%s/%s MB (%.0f%%)" ${MEMused} ${MEMsizeMB} ${MemRatio}
