@@ -11,7 +11,7 @@
 #
 
 scriptname="sysis"
-scriptbuildnum="3.4.7.1"
+scriptbuildnum="3.4.7.2"
 scriptbuilddate="2017-03-31"
 
 ############################################################
@@ -301,10 +301,12 @@ setLinux() {
     CPUname=$(grep -m1 'model name' < /proc/cpuinfo)
     CPUname=$(cleanCPUname "$CPUname")
   fi
-  MEMsizeMB=$(free -m | awk '/^Mem:/{print $2}')
-    MEMsize=$(( MEMsizeMB / 925 ))
-    MEMsize="${MEMsize} GB"
-  MEMusage=$(free -m | awk 'NR==2{printf "%s/%s MB (%.0f%%)\n", $3,$2,$3*100/$2 }')
+  if [[ $(free 2> /dev/null) ]]; then
+    MEMsizeMB=$(free -m | awk '/^Mem:/{print $2}')
+      MEMsize=$(( MEMsizeMB / 925 ))
+      MEMsize="${MEMsize} GB"
+    MEMusage=$(free -m | awk 'NR==2{printf "%s/%s MB (%.0f%%)\n", $3,$2,$3*100/$2 }')
+  fi
   return 0
 }
 
