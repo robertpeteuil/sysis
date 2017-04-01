@@ -11,7 +11,7 @@
 #
 
 scriptname="sysis"
-scriptbuildnum="3.4.7"
+scriptbuildnum="3.4.7.1"
 scriptbuilddate="2017-03-31"
 
 ############################################################
@@ -235,7 +235,9 @@ setLinuxCommon() {
     CPUcores=$(lscpu | grep 'Core(s)')
       CPUcores=$(cleanVARtext "$CPUcores")
   fi
-  DISKusage=$(df -h | awk '$NF=="/"{printf "%d/%d GB (%s)\n", $3,$2,$5}')
+  if [[ $(df 2> /dev/null) ]]; then
+    DISKusage=$(df -h | awk '$NF=="/"{printf "%d/%d GB (%s)\n", $3,$2,$5}')
+  fi
   return 0
 }
 
