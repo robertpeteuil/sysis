@@ -3,7 +3,7 @@
 # sysis - Display Key System Information
 #
 #     Lightweight Cross-Platform Utility for:
-#         macOS, Linux, and Windows 10 wih Bash on Windows
+#         macOS, Linux, and Windows 10 Bash on Windows
 #
 #    from: https://github.com/robertpeteuil/sysis
 #
@@ -11,7 +11,7 @@
 #
 
 scriptname="sysis"
-scriptbuildnum="3.4.7.6"
+scriptbuildnum="3.4.8"
 scriptbuilddate="2017-04-09"
 
 ############################################################
@@ -90,8 +90,8 @@ printHelp() {
   echo -e "${CLRtitle}   OPTIONS"
   echo -e "${CLRtitle2}     -d\t${CLRwhite}: debug only report"
   echo -e "${CLRtitle2}     -n\t${CLRwhite}: network only report"
-  echo -e "${CLRtitle2}     -h\t${CLRwhite}: basic help"
-  echo -e "${CLRtitle2}     -V\t${CLRwhite}: display version"
+  echo -e "${CLRtitle2}     -h\t${CLRwhite}: help"
+  echo -e "${CLRtitle2}     -V\t${CLRwhite}: version info"
   echo -e "${CLRtitle2} --help\t${CLRwhite}: detailed help${CLRnormal}"
   if [[ "$1" ]]; then
     echo
@@ -124,8 +124,8 @@ getCommandTail() {
 
 cleanText() {
     local var=$*
-    var="${var%"${var##*[![:space:]]}"}"  # remove leading whitespace
-    var="${var#"${var%%[![:space:]]*}"}"  # remove trailing whitespace
+    var="${var%"${var##*[![:space:]]}"}"    # remove leading whitespace
+    var="${var#"${var%%[![:space:]]*}"}"    # remove trailing whitespace
     echo -n "$var"
 }
 
@@ -156,7 +156,7 @@ getNetwork() {
   # fetch LANIP if 'ifconfig' can be executed
   if [[ $(ifconfig -a 2> /dev/null) ]]; then
     case $OS in
-     Linux)  # note RPI only has awk 1.x installed
+     Linux)   # note RPI only has awk 1.x installed
         lanIP=$(ifconfig -a | awk '/(cast)/ {print $2}' | cut -d: -f2)
         ;;
      Darwin)  # filters virtual adapters (those with limited scope broadcast)
@@ -214,7 +214,7 @@ getSystem() {
 }
 
 setLinuxCommon() {
-  if [[ $LSBset == "TRUE" ]]; then  # use vals from lsb_release if possible
+  if [[ $LSBset == "TRUE" ]]; then  # plan a - use vals from lsb_release
     OSfullname="${LSBid} ${SYSkernal} ${LSBrel}"
     OScodename="${LSBcodename}"
   else                              # plan b - get vals from release doc
@@ -286,12 +286,11 @@ setRPI() {
         *) RPImodel="'Unknown Version'"; RPIman="Unknown"; RPIrel="Unknown";;
     esac
   HWrelease="${RPIrel} (${RPIman})"
-  else   # '/proc/cpuinfo' not found so RPI Model not known
+  else   # RPI Model not known
     RPImodel="'Unknown Version'"
   fi
   OSversion=${SYSkernalVer%"-"*}
   HWdevice="Raspberry Pi ${RPImodel}"
-  # MEMsize="${RPImem}"
   if [[ $(free 2> /dev/null) ]]; then
     DEVICEinfoExists=true
     MEMsize="$(free -m | awk '/^Mem:/{print $2}') MB"
@@ -315,7 +314,6 @@ setLinux() {
     DEVICEinfoExists=true
     MEMsizeMB=$(free -m | awk '/^Mem:/{print $2}')
     MEMsize="$(( MEMsizeMB / 925 )) GB"
-    # MEMsize="${MEMsize} GB"
     MEMusage=$(free -m | awk 'NR==2{printf "%s/%s MB (%.0f%%)\n", $3,$2,$3*100/$2 }')
   fi
   return 0
@@ -348,7 +346,7 @@ setMac() {
   esac
   HWdevice=${SYSplatform//,/.}
   HWrelease=""
-  # Mac HW Quieries - 'sysctl -n' return value, 'sysctl -a | grep cpu'
+  # Mac HW Quieries - 'sysctl -n' return string with item and value
   CPUname=$(sysctl -n machdep.cpu.brand_string)
   CPUname=$(cleanCPUname "$CPUname")
   CPUspeed=$(sysctl -n hw.cpufrequency_max)
@@ -452,15 +450,15 @@ reportSystem() {
     [[ -n $MEMsize ]] && echo -e "\t${CLRtitle}MEMORY\t\t${CLRwhite}${MEMsize}"
     [[ -n $MEMusage ]] && echo -e "\t${CLRtitle}MEM USAGE\t${CLRwhite}${MEMusage}"
     [[ -n $DISKusage ]] && echo -e "\t${CLRtitle}DISK USAGE\t${CLRwhite}${DISKusage}$CLRnormal"
-    echo
   fi
+  echo
   return 0
 }
 
 reportMain() {
   reportNetwork
   if [[ -z "$DeviceType" ]] || [[ "$mode" == "FORCE" ]]; then
-    # set VARS to rawest form
+    # set VARS to most raw form
     OSversion=${SYSkernalVer}
     CPUname=${SYSmachine}
     [[ "$SYSplatform" != "unknown" ]] && HWdevice=${SYSplatform}
@@ -482,14 +480,13 @@ getSystem
 
 if [[ "$OS" == "Linux" ]]; then
   if ([[ "$PROCarch" == "armhf" ]] || [[ $SYSmachine == armv* ]] || [[ "$OSTYPE" == "linux-gnueabihf" ]]); then
-    setRPI    # RPi unique extraction + some linux
+    setRPI                          # Some Linux common extraction + RPi unique
   else
-    setLinux  # pure Linux - standard linux info extraction
+    setLinux                        # Linux extraction (uses linux common + linux defaults)
   fi
-elif [[ "$OS" == "Darwin" ]]; then
-  setMac      # Mac unique info extraction
-else
-  # un-determined host type
+elif [[ "$OS" == "Darwin" ]]; then  # Mac unique extraction
+  setMac
+else                                # un-determined host type
   processExit "${CLRerror}Error${CLRwhite}: ${CLRwarning}Could not determine System Type${CLRwhite}"
 fi
 
