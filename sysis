@@ -11,7 +11,7 @@
 #
 
 scriptname="sysis"
-scriptbuildnum="3.4.8.1"
+scriptbuildnum="3.4.8.2"
 scriptbuilddate="2017-04-14"
 
 ############################################################
@@ -232,9 +232,10 @@ setLinuxCommon() {
       CPUspeed=$(cleanVARtext "$CPUspeed")
       CPUspeedBig=$((CPUspeed / 1000))
       CPUspeedSmall=$((CPUspeed % 1000))
-      CPUspeed="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz"
+      # CPUspeed="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz"
     CPUcores=$(lscpu | grep 'Core(s)')
       CPUcores=$(cleanVARtext "$CPUcores")
+    CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz (${CPUcores} Cores)"
   fi
   if [[ $(df 2> /dev/null) ]]; then
     DEVICEinfoExists=true
@@ -353,8 +354,9 @@ setMac() {
     CPUspeed=$((CPUspeed / 1000000))
     CPUspeedBig=$((CPUspeed / 1000))
     CPUspeedSmall=$((CPUspeed % 1000))
-    CPUspeed="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz"
   CPUcores=$(sysctl -n hw.ncpu)
+  # CPUspeed="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz"
+  CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz (${CPUcores} Cores)"
   MEMsizeMB=$(sysctl -n hw.memsize)
     # MEMadjust=$(( 1024 * 1024 ))
     MEMsizeMB=$((MEMsizeMB / (1024 * 1024) ))    # Mem in MB
@@ -445,8 +447,9 @@ reportSystem() {
     echo -e "\n\t${CLRheading}DEVICE\t\t${CLRheading2}${HWdevice}"
     [[ -n $HWrelease ]] && echo -e "\t${CLRtitle}RELEASE DATE\t${CLRwhite}${HWrelease}"
     [[ -n $CPUname ]] && echo -e "\t${CLRtitle}PROCESSOR\t${CLRwhite}${CPUname}"
-    [[ -n $CPUspeed ]] && echo -e "\t${CLRtitle}CPU SPEED\t${CLRwhite}${CPUspeed}"
-    [[ -n $CPUcores ]] && echo -e "\t${CLRtitle}CPU CORES\t${CLRwhite}${CPUcores}"
+    [[ -n $CPUinfo ]] && echo -e "\t${CLRtitle}PROC INFO\t${CLRwhite}${CPUinfo}"
+    # [[ -n $CPUspeed ]] && echo -e "\t${CLRtitle}CPU SPEED\t${CLRwhite}${CPUspeed}"
+    # [[ -n $CPUcores ]] && echo -e "\t${CLRtitle}CPU CORES\t${CLRwhite}${CPUcores}"
     # [[ -n $MEMsize ]] && echo -e "\t${CLRtitle}MEMORY\t\t${CLRwhite}${MEMsize}"
     [[ -n $MEMusage ]] && echo -e "\t${CLRtitle}MEM USAGE\t${CLRwhite}${MEMusage}"
     [[ -n $DISKusage ]] && echo -e "\t${CLRtitle}DISK USAGE\t${CLRwhite}${DISKusage}$CLRnormal"
