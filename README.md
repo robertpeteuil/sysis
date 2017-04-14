@@ -27,7 +27,7 @@ It was designed with the busy professional in mind:
     
 ### Execution:
 
-This is a command is executed simply by typing `sysis`
+The command is executed by typing `sysis`
 
 ```text
 USAGE: sysis [OPTIONS]
