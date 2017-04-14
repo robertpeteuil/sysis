@@ -11,8 +11,8 @@
 #
 
 scriptname="sysis"
-scriptbuildnum="3.4.8"
-scriptbuilddate="2017-04-09"
+scriptbuildnum="3.4.9"
+scriptbuilddate="2017-04-14"
 
 ############################################################
 ### VARS INITS
@@ -232,9 +232,9 @@ setLinuxCommon() {
       CPUspeed=$(cleanVARtext "$CPUspeed")
       CPUspeedBig=$((CPUspeed / 1000))
       CPUspeedSmall=$((CPUspeed % 1000))
-      CPUspeed="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz"
     CPUcores=$(lscpu | grep 'Core(s)')
       CPUcores=$(cleanVARtext "$CPUcores")
+    CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz (${CPUcores} Core)"
   fi
   if [[ $(df 2> /dev/null) ]]; then
     DEVICEinfoExists=true
@@ -285,7 +285,7 @@ setRPI() {
         *a32082) RPImodel="3B (1.2)"; RPIman="Sony"; RPIrel="Q4 2016";;
         *) RPImodel="'Unknown Version'"; RPIman="Unknown"; RPIrel="Unknown";;
     esac
-  HWrelease="${RPIrel} (${RPIman})"
+    HWrelease="${RPIrel} (${RPIman})"
   else   # RPI Model not known
     RPImodel="'Unknown Version'"
   fi
@@ -293,7 +293,6 @@ setRPI() {
   HWdevice="Raspberry Pi ${RPImodel}"
   if [[ $(free 2> /dev/null) ]]; then
     DEVICEinfoExists=true
-    MEMsize="$(free -m | awk '/^Mem:/{print $2}') MB"
     MEMusage=$(free -m | awk 'NR==2{printf "%s/%s MB (%d%%)\n", $3,$2,$3*100/$2 }')
   fi
   return 0
@@ -313,7 +312,6 @@ setLinux() {
   if [[ $(free 2> /dev/null) ]]; then
     DEVICEinfoExists=true
     MEMsizeMB=$(free -m | awk '/^Mem:/{print $2}')
-    MEMsize="$(( MEMsizeMB / 925 )) GB"
     MEMusage=$(free -m | awk 'NR==2{printf "%s/%s MB (%.0f%%)\n", $3,$2,$3*100/$2 }')
   fi
   return 0
@@ -353,12 +351,10 @@ setMac() {
     CPUspeed=$((CPUspeed / 1000000))
     CPUspeedBig=$((CPUspeed / 1000))
     CPUspeedSmall=$((CPUspeed % 1000))
-    CPUspeed="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz"
   CPUcores=$(sysctl -n hw.ncpu)
+  CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz (${CPUcores} Core)"
   MEMsizeMB=$(sysctl -n hw.memsize)
-    MEMadjust=$(( 1024 * 1024 ))
-    MEMsizeMB=$((MEMsizeMB / MEMadjust))    # Mem in MB
-  MEMsize="$((MEMsizeMB / 1024)) GB"        # Mem in GB
+    MEMsizeMB=$((MEMsizeMB / (1024 * 1024) ))    # Mem in MB
   #  Memory used = App Use + Wired use + Compressed use
   MEMusedApps=$(vm_stat | grep 'active')
     MEMusedApps=$(cleanVARtext "$MEMusedApps")
@@ -445,9 +441,7 @@ reportSystem() {
     echo -e "\n\t${CLRheading}DEVICE\t\t${CLRheading2}${HWdevice}"
     [[ -n $HWrelease ]] && echo -e "\t${CLRtitle}RELEASE DATE\t${CLRwhite}${HWrelease}"
     [[ -n $CPUname ]] && echo -e "\t${CLRtitle}PROCESSOR\t${CLRwhite}${CPUname}"
-    [[ -n $CPUspeed ]] && echo -e "\t${CLRtitle}CPU SPEED\t${CLRwhite}${CPUspeed}"
-    [[ -n $CPUcores ]] && echo -e "\t${CLRtitle}CPU CORES\t${CLRwhite}${CPUcores}"
-    [[ -n $MEMsize ]] && echo -e "\t${CLRtitle}MEMORY\t\t${CLRwhite}${MEMsize}"
+    [[ -n $CPUinfo ]] && echo -e "\t${CLRtitle}CPU INFO\t${CLRwhite}${CPUinfo}"
     [[ -n $MEMusage ]] && echo -e "\t${CLRtitle}MEM USAGE\t${CLRwhite}${MEMusage}"
     [[ -n $DISKusage ]] && echo -e "\t${CLRtitle}DISK USAGE\t${CLRwhite}${DISKusage}$CLRnormal"
   fi
@@ -482,7 +476,7 @@ if [[ "$OS" == "Linux" ]]; then
   if ([[ "$PROCarch" == "armhf" ]] || [[ $SYSmachine == armv* ]] || [[ "$OSTYPE" == "linux-gnueabihf" ]]); then
     setRPI                          # Some Linux common extraction + RPi unique
   else
-    setLinux                        # Linux extraction (uses linux common + linux defaults)
+    setLinux                        # Use linux common + linux defaults)
   fi
 elif [[ "$OS" == "Darwin" ]]; then  # Mac unique extraction
   setMac
