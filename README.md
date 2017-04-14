@@ -22,8 +22,9 @@ It was designed with the busy professional in mind:
 
   - Linux
   - macOS (OS X)
-  - Raspberry PI with HW Version Identification (see screenshot)
   - Windows 10 'Bash on Windows'  
+  - Raspberry PI with HW reversion info (see screenshot)
+
     
 ### Execution:
 
