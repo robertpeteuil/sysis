@@ -11,8 +11,8 @@
 #
 
 scriptname="sysis"
-scriptbuildnum="3.4.9"
-scriptbuilddate="2017-04-14"
+scriptbuildnum="3.4.10"
+scriptbuilddate="2017-05-28"
 
 ############################################################
 ### VARS INITS
@@ -31,28 +31,31 @@ EXITMESSAGE=""
 
 # turn on color if possible
 if test -t 1; then            # check if stdout is a terminal
-    ncolors=$(tput colors)    # see if it supports colors
-    if test -n "$ncolors" && test "$ncolors" -ge 8; then
-      # Set Colors
-        bold="$(tput bold)"
-        red="$(tput setaf 1)"
-        green="$(tput setaf 2)"
-        yellow="$(tput setaf 3)"
-        blue="$(tput setaf 4)"
-        magenta="$(tput setaf 5)"
-        cyan="$(tput setaf 6)"
-        white="$(tput setaf 7)"
-      # set color theme vars to allow for quick changing
-        CLRnormal="\033[0m"
-        CLRwhite=${bold}${white}
-        CLRheading=${bold}${blue}
-        CLRheading2=${bold}${green}
-        CLRtitle=${bold}${cyan}
-        CLRtitle2=${bold}${magenta}
-        CLRsuccess=${bold}${green}
-        CLRwarning=${bold}${yellow}
-        CLRerror=${bold}${red}
-    fi
+  if [ "$TERM" == "xterm-new" ]; then
+    TERM="xterm"
+  fi
+  ncolors=$(tput colors)    # see if it supports colors
+  if test -n "$ncolors" && test "$ncolors" -ge 8; then
+    # Set Colors
+    bold="$(tput bold)"
+    red="$(tput setaf 1)"
+    green="$(tput setaf 2)"
+    yellow="$(tput setaf 3)"
+    blue="$(tput setaf 4)"
+    magenta="$(tput setaf 5)"
+    cyan="$(tput setaf 6)"
+    white="$(tput setaf 7)"
+    # set color theme vars to allow for quick changing
+    CLRnormal="\033[0m"
+    CLRwhite=${bold}${white}
+    CLRheading=${bold}${blue}
+    CLRheading2=${bold}${green}
+    CLRtitle=${bold}${cyan}
+    CLRtitle2=${bold}${magenta}
+    CLRsuccess=${bold}${green}
+    CLRwarning=${bold}${yellow}
+    CLRerror=${bold}${red}
+  fi
 fi
 
 
