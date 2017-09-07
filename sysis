@@ -82,12 +82,12 @@ processAbort () {
   processExit
 }
 
-display_ver() {
+displayVer() {
   echo -en "${CLRheading2}${scriptname}${CLRwhite}  ver ${CLRtitle}${scriptbuildnum} ${CLRwhite}- ${CLRtitle}${scriptbuilddate}${CLRwhite}${CLRnormal}"
 }
 
 printHelp() {
-  display_ver
+  displayVer
   echo -e "\n${CLRwhite}Collect and print information on system, network and OS to standard output.\n"
   echo -e "${CLRtitle}usage: ${CLRwhite}${scriptname} ${CLRtitle2}[OPTIONS] [DEBUG]${CLRwhite}\n"
   echo -e "${CLRtitle}   OPTIONS"
@@ -115,7 +115,7 @@ getCommandTail() {
       -d)           mode="DEBUG";;
       -n)           mode="NET";;
       -h)           printHelp;;
-      -V)           display_ver; echo; processExit;;
+      -V)           displayVer; echo; processExit;;
       --help)       printHelp FULL;;
       --force)      mode="FORCE";;
       *)            printHelp;;
@@ -376,7 +376,7 @@ setMac() {
 }
 
 printTitle () {
-  display_ver
+  displayVer
   echo -en "${CLRwhite}  -  ${REPORTTITLE}"
   case ${mode} in
     DEBUG) echo -en "  ${CLRheading2}(DEBUG)${CLRnormal}";;
