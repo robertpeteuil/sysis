@@ -11,7 +11,7 @@
 **SYSIS is ideal for sysadmins, developers and IT Professionals who connect to dozens of systems daily and need to quickly gather information about the current system.**  It displays concise info for the Host, OS and System HW without the need to run multiple commands.  
 
 It was designed with the busy professional in mind:
-- Simple to use without required paramters
+- Simple to use without required parameters
 - Executes quickly by gathering only commonly needed information   
 
 ### sysis output on Multiple Operating Systems:
