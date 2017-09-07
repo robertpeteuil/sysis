@@ -11,8 +11,8 @@
 #
 
 scriptname="sysis"
-scriptbuildnum="3.4.10"
-scriptbuilddate="2017-05-28"
+scriptbuildnum="3.4.11"
+scriptbuilddate="2017-09-07"
 
 ############################################################
 ### VARS INITS
@@ -82,12 +82,12 @@ processAbort () {
   processExit
 }
 
-display_ver() {
+displayVer() {
   echo -en "${CLRheading2}${scriptname}${CLRwhite}  ver ${CLRtitle}${scriptbuildnum} ${CLRwhite}- ${CLRtitle}${scriptbuilddate}${CLRwhite}${CLRnormal}"
 }
 
 printHelp() {
-  display_ver
+  displayVer
   echo -e "\n${CLRwhite}Collect and print information on system, network and OS to standard output.\n"
   echo -e "${CLRtitle}usage: ${CLRwhite}${scriptname} ${CLRtitle2}[OPTIONS] [DEBUG]${CLRwhite}\n"
   echo -e "${CLRtitle}   OPTIONS"
@@ -115,7 +115,7 @@ getCommandTail() {
       -d)           mode="DEBUG";;
       -n)           mode="NET";;
       -h)           printHelp;;
-      -V)           display_ver; echo; processExit;;
+      -V)           displayVer; echo; processExit;;
       --help)       printHelp FULL;;
       --force)      mode="FORCE";;
       *)            printHelp;;
@@ -154,10 +154,13 @@ cleanVARtext() {
 }
 
 getNetwork() {
-  # fetch Internet IP
+  # Internet IP
   pubIP=$(curl -s ipinfo.io/ip)
-  # fetch LANIP if 'ifconfig' can be executed
-  if [[ $(ifconfig -a 2> /dev/null) ]]; then
+  # LANIP via 'ip' if possible
+  if [[ $(ip -4 address 2> /dev/null) ]]; then
+    lanIP=$(ip -4 address | awk '/brd/ {split($2, ip, /\//); print ip[1]}')
+  # else try 'ifconfig'
+  elif [[ $(ifconfig -a 2> /dev/null) ]]; then
     case $OS in
      Linux)   # note RPI only has awk 1.x installed
         lanIP=$(ifconfig -a | awk '/(cast)/ {print $2}' | cut -d: -f2)
@@ -166,7 +169,7 @@ getNetwork() {
         lanIP=$(ifconfig -a | awk '/(cast).([0-9]{1,3}\.){2}1\./ {print $2}')
         ;;
      FreeBSD|OpenBSD)
-        lanIP=$(ifconfig  | grep -E 'inet.[0-9]' | grep -v '127.0.0.1' | awk '{print $2}')
+        lanIP=$(ifconfig | grep -E 'inet.[0-9]' | grep -v '127.0.0.1' | awk '{print $2}')
         ;;
      SunOS)
         lanIP=$(ifconfig -a | grep inet | grep -v '127.0.0.1' | awk '{print $2}')
@@ -376,7 +379,7 @@ setMac() {
 }
 
 printTitle () {
-  display_ver
+  displayVer
   echo -en "${CLRwhite}  -  ${REPORTTITLE}"
   case ${mode} in
     DEBUG) echo -en "  ${CLRheading2}(DEBUG)${CLRnormal}";;

@@ -1,9 +1,0 @@
----
-engines:
-  shellcheck:
-    enabled: true
-ratings:
-  paths:
-  - "sysis"
-exclude_paths:
-  - "install.sh"
