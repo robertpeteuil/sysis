@@ -8,13 +8,13 @@
 
 ---
 
-**SYSIS is ideal for sysadmins, developers and IT Professionals who connect to dozens of systems daily and need to quickly gather information about the current system.**  SYSIS displays concise info for the Host, OS and System HW without the need to run multiple commands and utilities.  
+**SYSIS is ideal for sysadmins, developers and IT Professionals who connect to dozens of systems daily and need to quickly gather information about the current system.**  It displays concise info for the Host, OS and System HW without the need to run multiple commands.  
 
 It was designed with the busy professional in mind:
-- Simple to use and doesnt require paramters
+- Simple to use without required paramters
 - Executes quickly by gathering only commonly needed information   
 
-### sysis output on macOS and RasberryPi:
+### sysis output on Multiple Operating Systems:
 ![](https://cloud.githubusercontent.com/assets/1554603/25049131/09673d58-20f5-11e7-85dc-c330e96351b4.png)
 ![](https://cloud.githubusercontent.com/assets/1554603/25049136/11bb20aa-20f5-11e7-94e4-8c8580fbbe5e.png)
 
@@ -23,14 +23,29 @@ It was designed with the busy professional in mind:
   - Linux
   - macOS (OS X)
   - Windows 10 'Bash on Windows'  
-  - Raspberry PI with HW reversion info (see screenshot)
+  - Embedded Devices running Linux
 
+### Installation:
+
+Easily installed with curl:
+
+```shell
+bash -c "`curl -s -L https://raw.github.com/robertpeteuil/sysis/master/install.sh`"
+```
+
+
+Alternatively, the repo can be downloaded, then `cd` into the directory and run `./install.sh`
+
+```shell
+cd sysis
+./install.sh
+```
 
 ### Execution:
 
-The command is executed by typing `sysis`
+Executed by simply typing: `sysis`
 
-```text
+```shell
 USAGE: sysis [OPTIONS]
 
  OPTIONS:
@@ -41,18 +56,4 @@ USAGE: sysis [OPTIONS]
  --help	: detailed help
 ```
 
-### Installation:
 
-Can be install with curl
-
-```shell
-bash -c "`curl -s -L https://raw.github.com/robertpeteuil/sysis/master/install.sh`"
-```
-
-
-If the repo has been downloaded locally, cd into the directory and run install.sh
-
-```shell
-cd sysis
-./install.sh
-```
