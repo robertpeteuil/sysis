@@ -30,21 +30,21 @@ It was designed with the busy professional in mind:
 
 Easily installed with `curl` using this command:
 
-```shell
+```
 bash -c "`curl -s -L https://raw.github.com/robertpeteuil/sysis/master/install.sh`"
 ```
 
 
 Alternatively, the repo can be downloaded and installed locally.  If downloaded (or cloned), `cd` into the directory and run `./install.sh`
 
-```shell
+```
 cd sysis
 ./install.sh
 ```
 
 ### Usage and Options:
 
-```shell
+```
 USAGE: sysis [OPTIONS]
 
  OPTIONS:
