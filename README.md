@@ -8,10 +8,10 @@
 
 ---
 
-**SYSIS is ideal for sys-admins, developers and IT Professionals who connect to dozens of systems daily and need to quickly display information for the current host.**  It displays concise info for the Host, OS and System HW without the need to run host-specific commands.  
+**SYSIS provides a simple way to retrieve and display system information across multiple system types, by eliminating the need to use multiple commands that vary based on system-type.**  It is especially useful for sys-admins, developers and IT Professionals that frequently connect to multiple systems and require immediate knowledge of the current hosts info.
 
-It was designed with the busy professional in mind:
-- Simple to use (no parameters required)
+It was designed for maximum productivity:
+- Simple to use - it requires no parameters to use
 - Executes quickly by gathering only commonly needed information
    
 
@@ -55,4 +55,6 @@ USAGE: sysis [OPTIONS]
  --help	: detailed help
 ```
 
+### Project History:
 
+**SYSIS** is an acronym for "SYStem IS" and was originally written in 2015.  It was open-sourced in early 2017, and is actively maintained.
