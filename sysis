@@ -11,7 +11,7 @@
 #
 
 scriptname="sysis"
-scriptbuildnum="3.5.0"
+scriptbuildnum="3.5.1"
 scriptbuilddate="2017-10-17"
 
 ############################################################
@@ -155,13 +155,10 @@ cleanVARtext() {
 }
 
 getNetwork() {
-  # Internet IP
-  pubIP=$(curl -s ipinfo.io/ip)
-  # LANIP via 'ip' if possible
-  if [[ $(ip -4 address 2> /dev/null) ]]; then
+  pubIP=$(curl -s ipinfo.io/ip)  # Internet IP
+  if [[ $(ip -4 address 2> /dev/null) ]]; then  # LANIP via 'ip' if possible
     lanIP=$(ip -4 address | awk '/brd/ {split($2, ip, /\//); print ip[1]}')
-  # else try 'ifconfig'
-  elif [[ $(ifconfig -a 2> /dev/null) ]]; then
+  elif [[ $(ifconfig -a 2> /dev/null) ]]; then  # else try 'ifconfig'
     case $OS in
      Linux)   # note RPI only has awk 1.x installed
         lanIP=$(ifconfig -a | awk '/(cast)/ {print $2}' | cut -d: -f2)
@@ -180,8 +177,7 @@ getNetwork() {
         ;;
     esac
   fi
-  # if multi LanIPs put in array
-  if [[ -n $lanIP ]]; then
+  if [[ -n $lanIP ]]; then  # if multi LanIPs put in array
     count=0
     for i in $lanIP; do
       lanIPS[count]=$i
@@ -206,47 +202,31 @@ getSystem() {
   fi
   if [ -r /etc/os-release ]; then
     VALUESvia="FILE"
-    # LSBid="$(. /etc/os-release && echo "$NAME")"
-    # LSBdescrPRE=$(lsb_release -d 2> /dev/null)
     LSBrel="$(. /etc/os-release && echo "$PRETTY_NAME")"
-    # LSBrelPRE=$(lsb_release -r 2> /dev/null)
     LSBcodename="$(. /etc/os-release && echo "$VERSION")"
     LSBcodename=${LSBcodename#* (}
     LSBcodename=${LSBcodename%)}
-    # LSBallPRE=$(lsb_release -a 2> /dev/null)
   elif [[ $(lsb_release -h 2> /dev/null) ]]; then
     VALUESvia="LSB"
     LSBidPRE=$(lsb_release -i 2> /dev/null)
-    # LSBdescrPRE=$(lsb_release -d 2> /dev/null)
     LSBrelPRE=$(lsb_release -r 2> /dev/null)
     LSBcodenamePRE=$(lsb_release -c 2> /dev/null)
-    # LSBallPRE=$(lsb_release -a 2> /dev/null)
   	[[ -n $LSBidPRE ]] && LSBid=${LSBidPRE#*":"} && LSBid=$(cleanText "$LSBid")
-  	# [[ -n $LSBdescrPRE ]] && LSBdescr=${LSBdescrPRE#*":"} && LSBdescr=$(cleanText "$LSBdescr")
   	[[ -n $LSBrelPRE ]] && LSBrel=${LSBrelPRE#*":"} && LSBrel=$(cleanText "$LSBrel")
   	[[ -n $LSBcodenamePRE ]] && LSBcodename=${LSBcodenamePRE#*":"} && LSBcodename=$(cleanText "$LSBcodename")
-   # 	[[ -n $LSBallPRE ]] && LSBall=${LSBallPRE#*":"} && LSBall=$(cleanText "$LSBall")
   fi
   return 0
 }
 
 setLinuxCommon() {
-  if [[ $VALUESvia == "FILE" ]]; then  # plan a - use vals from file
+  if [[ $VALUESvia == "FILE" ]]; then   # plan a - use vals from file
     OSfullname="${LSBrel}"
     OScodename="${LSBcodename}"
   elif [[ $VALUESvia == "LSB" ]]; then  # plan b - use vals from lsb_release
-    # OSfullname="${LSBid} ${SYSkernal} ${LSBrel}"
-    # SYSkernal was always Linux, so commented out
     OSfullname="${LSBid} ${LSBrel}"
     OScodename="${LSBcodename}"
-  else                              # plan b - get vals from release doc
-    # if [ -e "/etc/*release" ]; then
-    #   OSrelease=$(awk '/^VERSION_ID=/ {split($1, ary, /"/); print ary[2]}' /etc/*release)
-    #   OSfullname="$(awk '/^ID=/ { print toupper(substr($name,4,1)) tolower(substr($name,5))}' /etc/*release) ${SYSkernal} ${OSrelease}"
-    #   OScodename=$(awk '/^VERSION=/ {split($0, ary, /(\()||(\))/); print toupper(substr(ary[2],1,1)) tolower(substr(ary[2],2)) }' /etc/*release)
-    # else                            # plan c - get OS name from uname
+  else                                  # plan c - get OS name from uname
     OSfullname="${SYSkernal}"
-    # fi
   fi
   if [ -e "/sys/devices/system/cpu/possible" ]; then
     DEVICEinfoExists=true
@@ -423,13 +403,10 @@ reportDebug() {
   echo -e "\t${CLRtitle}SYSplatform = \t${CLRwhite}${SYSplatform}\n"
   if [[ "$VALUESvia" == "FILE" ]]; then
     echo -e "\t${CLRheading}/ETC/OS-RELEASE${CLRwhite}"
-    # echo -e "\t${CLRtitle}LSBdescr = \t${CLRwhite}${LSBdescr}"
-    # echo -e "\t${CLRtitle}LSBid = \t${CLRwhite}${LSBid}"
     echo -e "\t${CLRtitle}LSBrel = \t${CLRwhite}${LSBrel}"
     echo -e "\t${CLRtitle}LSBcodename = \t${CLRwhite}${LSBcodename}${CLRnormal}\n"
   elif [[ "$VALUESvia" == "LSB" ]]; then
     echo -e "\t${CLRheading}LSB_RELEASE${CLRwhite}"
-    # echo -e "\t${CLRtitle}LSBdescr = \t${CLRwhite}${LSBdescr}"
     echo -e "\t${CLRtitle}LSBid = \t${CLRwhite}${LSBid}"
     echo -e "\t${CLRtitle}LSBrel = \t${CLRwhite}${LSBrel}"
     echo -e "\t${CLRtitle}LSBcodename = \t${CLRwhite}${LSBcodename}${CLRnormal}\n"
@@ -467,7 +444,6 @@ reportNetwork() {
 reportSystem() {
   echo -e "\t${CLRheading}OS\t\t${CLRheading2}${OSfullname}"
   [[ -n $OScodename ]] && echo -e "\t${CLRtitle}CODENAME\t${CLRwhite}${OScodename}"
-  # [[ -n $OSversion ]] && echo -e "\t${CLRtitle}OS VERSION\t${CLRwhite}${OSversion}"
   [[ -n $OSversion ]] && echo -e "\t${CLRtitle}${OSdetails}\t${CLRwhite}${OSversion}"
   if [ $DEVICEinfoExists ]; then
     echo -e "\n\t${CLRheading}DEVICE\t\t${CLRheading2}${HWdevice}"
