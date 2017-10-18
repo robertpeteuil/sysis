@@ -16,7 +16,7 @@ It was designed for maximum productivity:
    
 
 ### Example sysis output on Mac and Ubuntu:
-![](https://user-images.githubusercontent.com/1554603/31736305-348e9408-b3f9-11e7-9c38-32a924d45505.png) ![](https://user-images.githubusercontent.com/1554603/31737419-492d6da0-b3fc-11e7-802b-45841e1d770f.jpg)
+![](https://user-images.githubusercontent.com/1554603/31736305-348e9408-b3f9-11e7-9c38-32a924d45505.png) ![](https://user-images.githubusercontent.com/1554603/31737773-5f2648e2-b3fd-11e7-970f-d5ec5cf66c1a.jpg)
 
 ### Supported Platforms:
 
