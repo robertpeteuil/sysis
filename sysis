@@ -237,7 +237,6 @@ setLinuxCommon() {
   fi
   if [ -e "/sys/devices/system/cpu/possible" ]; then
     DEVICEinfoExists=true
-    # if [[ $(lscpu | grep -m1 'max MHz') ]]; then
     if lscpu | grep -q -m1 'max MHz'; then
       CPUspeed=$(lscpu | grep -m1 'max MHz')  # exists on adj proc
     else
@@ -249,11 +248,17 @@ setLinuxCommon() {
     CPUspeedSmall=$((CPUspeed % 1000))
     CPUcores=$(lscpu | grep 'Core(s)')
     CPUcores=$(cleanVARtext "$CPUcores")
-    CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz (${CPUcores} Core)"
+    CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz ${CLRnormal}${CLRwarning}(${CPUcores} Core)${CLRnormal}"
+    # Pre-color version
+    # CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz (${CPUcores} Core)"
   fi
   if [[ $(df 2> /dev/null) ]]; then
     DEVICEinfoExists=true
-    DISKusage=$(df -h | awk '$NF=="/"{printf "%d/%d GB (%s)\n", $3,$2,$5}')
+    DISKuse=$(df -h | awk '$NF=="/"{printf "%d/%d GB", $3,$2}')
+    DISKRatio=$(df -h | awk '$NF=="/"{printf "%s\n", $5}')
+    DISKusage="${DISKuse} ${CLRnormal}${CLRwarning}(${DISKRatio})${CLRnormal}"
+    # Pre-color version
+    # DISKusage=$(df -h | awk '$NF=="/"{printf "%d/%d GB (%s)\n", $3,$2,$5}')
   fi
   return 0
 }
@@ -310,7 +315,11 @@ setRPI() {
   CPUmeta="${CPUname} ${CPUinfo}"
   if [[ $(free 2> /dev/null) ]]; then
     DEVICEinfoExists=true
-    MEMusage=$(free -m | awk 'NR==2{printf "%s/%s MB (%d%%)\n", $3,$2,$3*100/$2 }')
+    MEMuse=$(free -m | awk 'NR==2{printf "%s/%s MB", $3,$2 }')
+    MemRatio=$(free -m | awk 'NR==2{printf "%.0f\n", $3*100/$2 }')
+    MEMusage="${MEMuse} ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
+    # Pre-color version
+    # MEMusage=$(free -m | awk 'NR==2{printf "%s/%s MB (%d%%)\n", $3,$2,$3*100/$2 }')
   fi
   return 0
 }
@@ -330,8 +339,13 @@ setLinux() {
   CPUmeta="${CPUname} ${CPUinfo}"
   if [[ $(free 2> /dev/null) ]]; then
     DEVICEinfoExists=true
-    MEMsizeMB=$(free -m | awk '/^Mem:/{print $2}')
-    MEMusage=$(free -m | awk 'NR==2{printf "%s/%s MB (%.0f%%)\n", $3,$2,$3*100/$2 }')
+    # no longer used:
+    # MEMsizeMB=$(free -m | awk '/^Mem:/{print $2}')
+    MEMuse=$(free -m | awk 'NR==2{printf "%s/%s MB", $3,$2 }')
+    MemRatio=$(free -m | awk 'NR==2{printf "%.0f\n", $3*100/$2 }')
+    MEMusage="${MEMuse} ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
+    # Pre-color version
+    # MEMusage=$(free -m | awk 'NR==2{printf "%s/%s MB (%.0f%%)\n", $3,$2,$3*100/$2 }')
   fi
   return 0
 }
@@ -370,10 +384,12 @@ setMac() {
   CPUname=$(cleanCPUname "$CPUname")
   CPUspeed=$(sysctl -n hw.cpufrequency_max)
     CPUspeed=$((CPUspeed / 1000000))
-    CPUspeedBig=$((CPUspeed / 1000))
-    CPUspeedSmall=$((CPUspeed % 1000))
+  CPUspeedBig=$((CPUspeed / 1000))
+  CPUspeedSmall=$((CPUspeed % 1000))
   CPUcores=$(sysctl -n hw.ncpu)
-  CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz (${CPUcores} Core)"
+  CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz ${CLRnormal}${CLRwarning}(${CPUcores} Core)${CLRnormal}"
+  # Pre-color version
+  # CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz (${CPUcores} Core)"
   CPUmeta="${CPUname} ${CPUinfo}"
   MEMsizeMB=$(sysctl -n hw.memsize)
     MEMsizeMB=$((MEMsizeMB / (1024 * 1024) ))    # Mem in MB
@@ -389,8 +405,14 @@ setMac() {
     MEMusedComp=$((MEMusedComp / 256))
   MEMused=$((MEMusedApps + MEMusedWired + MEMusedComp))
   MemRatio=$(( (MEMused * 100) / MEMsizeMB))
-  printf -v MEMusage "%s/%s MB (%.0f%%)" ${MEMused} ${MEMsizeMB} ${MemRatio}
-  DISKusage=$(df -h | awk '$NF=="/"{printf "%d/%d GB (%s)\n", $3,$2,$5}')
+  printf -v MEMusage "%s/%s MB" ${MEMused} ${MEMsizeMB}
+  # printf -v MEMusage "%s/%s MB (%.0f%%)" ${MEMused} ${MEMsizeMB} ${MemRatio}
+  MEMusage="${MEMusage} ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
+  DISKuse=$(df -h | awk '$NF=="/"{printf "%d/%d GB", $3,$2}')
+  DISKRatio=$(df -h | awk '$NF=="/"{printf "%s\n", $5}')
+  DISKusage="${DISKuse} ${CLRnormal}${CLRwarning}(${DISKRatio})${CLRnormal}"
+  # Pre-color version
+  # DISKusage=$(df -h | awk '$NF=="/"{printf "%d/%d GB (%s)\n", $3,$2,$5}')
   return 0
 }
 
@@ -409,36 +431,36 @@ printTitle () {
 
 reportDebug() {
   printTitle
-  echo -e "\t${CLRheading}BASH VARS"
-  echo -e "\t${CLRtitle}HOST = \t\t${CLRwhite}${MACHINE_NAME}"
-  echo -e "\t${CLRtitle}OS = \t\t${CLRwhite}${OS}"
-  echo -e "\t${CLRtitle}OS-TYPE =\t${CLRwhite}${OSTYPE}${CLRnormal}\n"
-  echo -e "\t${CLRheading}UNAME${CLRwhite}"
-  echo -e "\t${CLRtitle}SYSkernal = \t${CLRwhite}${SYSkernal}"
-  echo -e "\t${CLRtitle}SYSkernalVer = \t${CLRwhite}${SYSkernalVer}"
-  echo -e "\t${CLRtitle}SYSmachine = \t${CLRwhite}${SYSmachine}"
-  echo -e "\t${CLRtitle}SYSplatform = \t${CLRwhite}${SYSplatform}\n"
+  echo -e "\t${CLRheading}BASH VARS${CLRnormal}"
+  echo -e "\t${CLRtitle}HOST = \t\t${CLRwhite}${MACHINE_NAME}${CLRnormal}"
+  echo -e "\t${CLRtitle}OS = \t\t${CLRwhite}${OS}${CLRnormal}"
+  echo -e "\t${CLRtitle}OS-TYPE =\t${CLRwhite}${OSTYPE}${CLRnormal}${CLRnormal}\n"
+  echo -e "\t${CLRheading}UNAME${CLRwhite}${CLRnormal}"
+  echo -e "\t${CLRtitle}SYSkernal = \t${CLRwhite}${SYSkernal}${CLRnormal}"
+  echo -e "\t${CLRtitle}SYSkernalVer = \t${CLRwhite}${SYSkernalVer}${CLRnormal}"
+  echo -e "\t${CLRtitle}SYSmachine = \t${CLRwhite}${SYSmachine}${CLRnormal}"
+  echo -e "\t${CLRtitle}SYSplatform = \t${CLRwhite}${SYSplatform}${CLRnormal}\n"
   if [[ "$VALUESvia" == "FILE" ]]; then
-    echo -e "\t${CLRheading}/ETC/OS-RELEASE${CLRwhite}"
-    echo -e "\t${CLRtitle}LSBrel = \t${CLRwhite}${LSBrel}"
+    echo -e "\t${CLRheading}/ETC/OS-RELEASE${CLRwhite}${CLRnormal}"
+    echo -e "\t${CLRtitle}LSBrel = \t${CLRwhite}${LSBrel}${CLRnormal}"
     echo -e "\t${CLRtitle}LSBcodename = \t${CLRwhite}${LSBcodename}${CLRnormal}\n"
   elif [[ "$VALUESvia" == "LSB" ]]; then
-    echo -e "\t${CLRheading}LSB_RELEASE${CLRwhite}"
-    echo -e "\t${CLRtitle}LSBid = \t${CLRwhite}${LSBid}"
-    echo -e "\t${CLRtitle}LSBrel = \t${CLRwhite}${LSBrel}"
+    echo -e "\t${CLRheading}LSB_RELEASE${CLRwhite}${CLRnormal}"
+    echo -e "\t${CLRtitle}LSBid = \t${CLRwhite}${LSBid}${CLRnormal}"
+    echo -e "\t${CLRtitle}LSBrel = \t${CLRwhite}${LSBrel}${CLRnormal}"
     echo -e "\t${CLRtitle}LSBcodename = \t${CLRwhite}${LSBcodename}${CLRnormal}\n"
   fi
   if [[ "$DeviceType" == "RPI" ]]; then
     echo -e "\t${CLRheading}RPI VARS"
-    echo -e "\t${CLRtitle}RPi HW Rev =\t${CLRwhite}${RPIrev}"
-    echo -e "\t${CLRtitle}RPi Model =\t${CLRwhite}${RPImodel}"
-    echo -e "\t${CLRtitle}RPi Rel Date =\t${CLRwhite}${RPIrel}"
+    echo -e "\t${CLRtitle}RPi HW Rev =\t${CLRwhite}${RPIrev}${CLRnormal}"
+    echo -e "\t${CLRtitle}RPi Model =\t${CLRwhite}${RPImodel}${CLRnormal}"
+    echo -e "\t${CLRtitle}RPi Rel Date =\t${CLRwhite}${RPIrel}${CLRnormal}"
     echo -e "\t${CLRtitle}RPi Manuf =\t${CLRwhite}${RPIman}${CLRnormal}\n"
   elif [[ "$DeviceType" == "Mac" ]]; then
     echo -e "\t${CLRheading}MacOS VARS"
-    echo -e "\t${CLRtitle}Raw Version = \t${CLRwhite}${MacOSinitialVer}"
-    echo -e "\t${CLRtitle}Adj Version = \t${CLRwhite}${MacOSadjustedVer}"
-    echo -e "\t${CLRtitle}MacOS Ver = \t${CLRwhite}${MacOSmainVer}"
+    echo -e "\t${CLRtitle}Raw Version = \t${CLRwhite}${MacOSinitialVer}${CLRnormal}"
+    echo -e "\t${CLRtitle}Adj Version = \t${CLRwhite}${MacOSadjustedVer}${CLRnormal}"
+    echo -e "\t${CLRtitle}MacOS Ver = \t${CLRwhite}${MacOSmainVer}${CLRnormal}"
     echo -e "\t${CLRtitle}MacOS sub V = \t${CLRwhite}${MacOSsubVer}${CLRnormal}\n"
   fi
   return 0
@@ -459,26 +481,26 @@ reportNetwork() {
 }
 
 reportSystem() {
-  [[ -n $OSfullname ]] && echo -e "\t${CLRheading}OS\t\t${CLRheading2}${OSfullname}"
-  [[ -n $OScodename ]] && echo -e "\t${CLRtitle}CODENAME\t${CLRwhite}${OScodename}"
-  [[ -n $OSversion ]] && echo -e "\t${CLRtitle}${OSdetails}\t${CLRwhite}${OSversion}"
+  [[ -n $OSfullname ]] && echo -e "\t${CLRheading}OS\t\t${CLRheading2}${OSfullname}${CLRnormal}"
+  [[ -n $OScodename ]] && echo -e "\t${CLRtitle}CODENAME\t${CLRwhite}${OScodename}${CLRnormal}"
+  [[ -n $OSversion ]] && echo -e "\t${CLRtitle}${OSdetails}\t${CLRwhite}${OSversion}${CLRnormal}"
   if [ $DEVICEinfoExists ]; then
     echo
     if [[ -n $HWdevice ]]; then
-      echo -e "\t${CLRheading}DEVICE\t\t${CLRheading2}${HWdevice}"
+      echo -e "\t${CLRheading}DEVICE\t\t${CLRheading2}${HWdevice}${CLRnormal}"
       CLRsubsect1=${CLRtitle}
       CLRsubsect2=${CLRwhite}
     else
       CLRsubsect1=${CLRheading}
       CLRsubsect2=${CLRheading2}
     fi
-    [[ -n $HWrelease ]] && echo -e "\t${CLRtitle}RELEASE DATE\t${CLRwhite}${HWrelease}"
-    [[ -n $CPUmeta ]] && echo -e "\t${CLRsubsect1}CPU\t\t${CLRsubsect2}${CPUmeta}"
+    [[ -n $HWrelease ]] && echo -e "\t${CLRtitle}RELEASE DATE\t${CLRwhite}${HWrelease}${CLRnormal}"
+    [[ -n $CPUmeta ]] && echo -e "\t${CLRsubsect1}CPU\t\t${CLRsubsect2}${CPUmeta}${CLRnormal}"
     # [[ -n $CPUmeta ]] && echo -e "\t${CLRtitle}CPU\t\t${CLRwhite}${CPUmeta}"
     # [[ -n $CPUname ]] && echo -e "\t${CLRtitle}PROCESSOR\t${CLRwhite}${CPUname}"
     # [[ -n $CPUinfo ]] && echo -e "\t${CLRtitle}CPU INFO\t${CLRwhite}${CPUinfo}"
-    [[ -n $MEMusage ]] && echo -e "\t${CLRtitle}MEM USAGE\t${CLRwhite}${MEMusage}"
-    [[ -n $DISKusage ]] && echo -e "\t${CLRtitle}DISK USAGE\t${CLRwhite}${DISKusage}$CLRnormal"
+    [[ -n $MEMusage ]] && echo -e "\t${CLRtitle}MEM USAGE\t${CLRwhite}${MEMusage}${CLRnormal}"
+    [[ -n $DISKusage ]] && echo -e "\t${CLRtitle}DISK USAGE\t${CLRwhite}${DISKusage}${CLRnormal}"
   fi
   return 0
 }
