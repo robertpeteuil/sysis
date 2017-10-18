@@ -143,8 +143,12 @@ cleanCPUname() {
   tempCPUname=${tempCPUname%' @'*}          # remove speed
   tempCPUname=${tempCPUname%' v'*}          # remove version #
   tempCPUname=${tempCPUname%'  '*}          # remove model # that comes after 2 spaces
-  tempCPUname=${tempCPUname//' 0'/}          # remove 0 by itself
+  tempCPUname=${tempCPUname//' 0'/}         # remove space 0
   tempCPUname=$(cleanText "$tempCPUname")   # remove leading / trailine space
+  # at this point CPU MIGHT include model # P7350 or E5-1620
+  #   removed below since its not consistently present
+  tempCPUname=$(echo "$tempCPUname" | awk '{sub(/\s[[:alpha:]][[:alpha:]]?[0-9]{4}$/, ""); print $0}')  # remove processor rev P(A)XXXX ex: P47350
+  tempCPUname=$(echo "$tempCPUname" | awk '{sub(/\s[[:alpha:]][[:alpha:]]?[0-9]-[0-9]{4}$/, ""); print $0}')  # remove processor rev P(A)5-XXXX ex: E5-1620
   echo -n "$tempCPUname"
 }
 
@@ -244,7 +248,7 @@ setLinuxCommon() {
     CPUspeedBig=$((CPUspeed / 1000))
     CPUspeedSmall=$((CPUspeed % 1000))
     CPUcores=$(lscpu | grep 'Core(s)')
-      CPUcores=$(cleanVARtext "$CPUcores")
+    CPUcores=$(cleanVARtext "$CPUcores")
     CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz (${CPUcores} Core)"
   fi
   if [[ $(df 2> /dev/null) ]]; then
