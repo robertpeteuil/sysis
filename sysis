@@ -11,8 +11,8 @@
 #
 
 scriptname="sysis"
-scriptbuildnum="3.5.2"
-scriptbuilddate="2017-10-17"
+scriptbuildnum="3.6.0"
+scriptbuilddate="2017-10-18"
 
 ############################################################
 ### VARS INITS
@@ -145,10 +145,10 @@ cleanCPUname() {
   tempCPUname=${tempCPUname%'  '*}          # remove model # that comes after 2 spaces
   tempCPUname=${tempCPUname//' 0'/}         # remove space 0
   tempCPUname=$(cleanText "$tempCPUname")   # remove leading / trailine space
-  # at this point CPU MIGHT include model # P7350 or E5-1620
-  #   removed below since its not consistently present
-  tempCPUname=$(echo "$tempCPUname" | awk '{sub(/\s[[:alpha:]][[:alpha:]]?[0-9]{4}$/, ""); print $0}')  # remove processor rev P(A)XXXX ex: P47350
-  tempCPUname=$(echo "$tempCPUname" | awk '{sub(/\s[[:alpha:]][[:alpha:]]?[0-9]-[0-9]{4}$/, ""); print $0}')  # remove processor rev P(A)5-XXXX ex: E5-1620
+  # remove processor rev of style - P(A)XXXX ex: P47350
+  tempCPUname=$(echo "$tempCPUname" | awk '{sub(/\s[[:alpha:]][[:alpha:]]?[0-9]{4}$/, ""); print $0}')
+  # remove processor rev of style - P(A)5-XXXX ex: E5-1620
+  tempCPUname=$(echo "$tempCPUname" | awk '{sub(/\s[[:alpha:]][[:alpha:]]?[0-9]-[0-9]{4}$/, ""); print $0}')
   echo -n "$tempCPUname"
 }
 
@@ -166,7 +166,7 @@ getNetwork() {
     lanIP=$(ip -4 address | awk '/brd/ {split($2, ip, /\//); print ip[1]}')
   elif [[ $(ifconfig -a 2> /dev/null) ]]; then  # else try 'ifconfig'
     case $OS in
-     Linux)   # note RPI only has awk 1.x installed
+     Linux)   # note RPI may only have awk 1.x
         lanIP=$(ifconfig -a | awk '/(cast)/ {print $2}' | cut -d: -f2)
         ;;
      Darwin)  # filters virtual adapters (those with limited scope broadcast)
@@ -183,7 +183,7 @@ getNetwork() {
         ;;
     esac
   fi
-  if [[ -n $lanIP ]]; then  # if multi LanIPs put in array
+  if [[ -n $lanIP ]]; then  # if multiple LanIPs, use array
     count=0
     for i in $lanIP; do
       lanIPS[count]=$i
@@ -226,13 +226,13 @@ getSystem() {
 }
 
 setLinuxCommon() {
-  if [[ $VALUESvia == "FILE" ]]; then   # plan a - use vals from file
+  if [[ $VALUESvia == "FILE" ]]; then   # plan a - use file
     OSfullname="${LSBrel}"
     OScodename="${LSBcodename}"
-  elif [[ $VALUESvia == "LSB" ]]; then  # plan b - use vals from lsb_release
+  elif [[ $VALUESvia == "LSB" ]]; then  # plan b - use lsb_release
     OSfullname="${LSBid} ${LSBrel}"
     OScodename="${LSBcodename}"
-  else                                  # plan c - get OS name from uname
+  else                                  # plan c - use uname
     OSfullname="${SYSkernal}"
   fi
   if [ -e "/sys/devices/system/cpu/possible" ]; then
@@ -243,22 +243,18 @@ setLinuxCommon() {
       CPUspeed=$(lscpu | grep -m1 'MHz')
     fi
     CPUspeed=$(cleanVARtext "$CPUspeed")
-    CPUspeed=$((CPUspeed + 5))  # add 5 to avoid rounding errors
+    CPUspeed=$((CPUspeed + 5))  # add 5 to prevent rounding errors
     CPUspeedBig=$((CPUspeed / 1000))
     CPUspeedSmall=$((CPUspeed % 1000))
     CPUcores=$(lscpu | grep 'Core(s)')
     CPUcores=$(cleanVARtext "$CPUcores")
     CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz ${CLRnormal}${CLRwarning}(${CPUcores} Core)${CLRnormal}"
-    # Pre-color version
-    # CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz (${CPUcores} Core)"
   fi
   if [[ $(df 2> /dev/null) ]]; then
     DEVICEinfoExists=true
     DISKuse=$(df -h | awk '$NF=="/"{printf "%d/%d GB", $3,$2}')
     DISKRatio=$(df -h | awk '$NF=="/"{printf "%s\n", $5}')
     DISKusage="${DISKuse} ${CLRnormal}${CLRwarning}(${DISKRatio})${CLRnormal}"
-    # Pre-color version
-    # DISKusage=$(df -h | awk '$NF=="/"{printf "%d/%d GB (%s)\n", $3,$2,$5}')
   fi
   return 0
 }
@@ -318,8 +314,6 @@ setRPI() {
     MEMuse=$(free -m | awk 'NR==2{printf "%s/%s MB", $3,$2 }')
     MemRatio=$(free -m | awk 'NR==2{printf "%.0f\n", $3*100/$2 }')
     MEMusage="${MEMuse} ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
-    # Pre-color version
-    # MEMusage=$(free -m | awk 'NR==2{printf "%s/%s MB (%d%%)\n", $3,$2,$3*100/$2 }')
   fi
   return 0
 }
@@ -339,13 +333,9 @@ setLinux() {
   CPUmeta="${CPUname} ${CPUinfo}"
   if [[ $(free 2> /dev/null) ]]; then
     DEVICEinfoExists=true
-    # no longer used:
-    # MEMsizeMB=$(free -m | awk '/^Mem:/{print $2}')
     MEMuse=$(free -m | awk 'NR==2{printf "%s/%s MB", $3,$2 }')
     MemRatio=$(free -m | awk 'NR==2{printf "%.0f\n", $3*100/$2 }')
     MEMusage="${MEMuse} ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
-    # Pre-color version
-    # MEMusage=$(free -m | awk 'NR==2{printf "%s/%s MB (%.0f%%)\n", $3,$2,$3*100/$2 }')
   fi
   return 0
 }
@@ -388,8 +378,6 @@ setMac() {
   CPUspeedSmall=$((CPUspeed % 1000))
   CPUcores=$(sysctl -n hw.ncpu)
   CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz ${CLRnormal}${CLRwarning}(${CPUcores} Core)${CLRnormal}"
-  # Pre-color version
-  # CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz (${CPUcores} Core)"
   CPUmeta="${CPUname} ${CPUinfo}"
   MEMsizeMB=$(sysctl -n hw.memsize)
     MEMsizeMB=$((MEMsizeMB / (1024 * 1024) ))    # Mem in MB
@@ -406,13 +394,10 @@ setMac() {
   MEMused=$((MEMusedApps + MEMusedWired + MEMusedComp))
   MemRatio=$(( (MEMused * 100) / MEMsizeMB))
   printf -v MEMusage "%s/%s MB" ${MEMused} ${MEMsizeMB}
-  # printf -v MEMusage "%s/%s MB (%.0f%%)" ${MEMused} ${MEMsizeMB} ${MemRatio}
   MEMusage="${MEMusage} ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
   DISKuse=$(df -h | awk '$NF=="/"{printf "%d/%d GB", $3,$2}')
   DISKRatio=$(df -h | awk '$NF=="/"{printf "%s\n", $5}')
   DISKusage="${DISKuse} ${CLRnormal}${CLRwarning}(${DISKRatio})${CLRnormal}"
-  # Pre-color version
-  # DISKusage=$(df -h | awk '$NF=="/"{printf "%d/%d GB (%s)\n", $3,$2,$5}')
   return 0
 }
 
@@ -467,7 +452,6 @@ reportDebug() {
 }
 
 reportNetwork() {
-  # printTitle
   echo -e "\t${CLRheading}HOST\t\t${CLRheading2}${MACHINE_NAME}"
   [[ -n $SYSnode ]] && [[ "$SYSnode" != "$HOSTNAME" ]] && echo -e "\t${CLRheading}NODE\t\t${CLRheading2}${SYSnode}"
   if [[ $lanIP != "Unknown" ]]; then
@@ -496,9 +480,6 @@ reportSystem() {
     fi
     [[ -n $HWrelease ]] && echo -e "\t${CLRtitle}RELEASE DATE\t${CLRwhite}${HWrelease}${CLRnormal}"
     [[ -n $CPUmeta ]] && echo -e "\t${CLRsubsect1}CPU\t\t${CLRsubsect2}${CPUmeta}${CLRnormal}"
-    # [[ -n $CPUmeta ]] && echo -e "\t${CLRtitle}CPU\t\t${CLRwhite}${CPUmeta}"
-    # [[ -n $CPUname ]] && echo -e "\t${CLRtitle}PROCESSOR\t${CLRwhite}${CPUname}"
-    # [[ -n $CPUinfo ]] && echo -e "\t${CLRtitle}CPU INFO\t${CLRwhite}${CPUinfo}"
     [[ -n $MEMusage ]] && echo -e "\t${CLRtitle}MEM USAGE\t${CLRwhite}${MEMusage}${CLRnormal}"
     [[ -n $DISKusage ]] && echo -e "\t${CLRtitle}DISK USAGE\t${CLRwhite}${DISKusage}${CLRnormal}"
   fi
