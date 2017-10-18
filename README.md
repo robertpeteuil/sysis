@@ -15,9 +15,9 @@ It was designed for maximum productivity:
 - Executes quickly by gathering only commonly needed information
    
 
-### sysis output on Multiple Operating Systems:
-![](https://cloud.githubusercontent.com/assets/1554603/25049131/09673d58-20f5-11e7-85dc-c330e96351b4.png)
-![](https://cloud.githubusercontent.com/assets/1554603/25049136/11bb20aa-20f5-11e7-94e4-8c8580fbbe5e.png)
+### Example sysis output on Mac and Ubuntu:
+![](https://user-images.githubusercontent.com/1554603/31736305-348e9408-b3f9-11e7-9c38-32a924d45505.png)
+![](https://user-images.githubusercontent.com/1554603/31736336-4a32926e-b3f9-11e7-8e73-a00c27e5eafa.png)
 
 ### Supported Platforms:
 
