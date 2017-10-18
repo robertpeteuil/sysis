@@ -11,7 +11,7 @@
 #
 
 scriptname="sysis"
-scriptbuildnum="3.5.1"
+scriptbuildnum="3.5.2"
 scriptbuilddate="2017-10-17"
 
 ############################################################
@@ -137,11 +137,13 @@ cleanCPUname() {
   tempCPUname=${tempCPUname#*': '}          # strip left of ': '
   tempCPUname=${tempCPUname//'(R)'/}        # remove '(R)'
   tempCPUname=${tempCPUname//'(tm)'/}       # remove '(tm)'
-  tempCPUname=${tempCPUname/'(TM)'/}        # remove '(TM)'
-  tempCPUname=${tempCPUname/' CPU'/}        # remove ' CPU'
-  tempCPUname=${tempCPUname/' Processor'/}  # remove ' Processor'
+  tempCPUname=${tempCPUname//'(TM)'/}        # remove '(TM)'
+  tempCPUname=${tempCPUname//' CPU'/}        # remove ' CPU'
+  tempCPUname=${tempCPUname//' Processor'/}  # remove ' Processor'
   tempCPUname=${tempCPUname%' @'*}          # remove speed
-  tempCPUname=${tempCPUname%'  '*}          # remove model #
+  tempCPUname=${tempCPUname%' v'*}          # remove version #
+  tempCPUname=${tempCPUname%'  '*}          # remove model # that comes after 2 spaces
+  tempCPUname=${tempCPUname//' 0'/}          # remove 0 by itself
   tempCPUname=$(cleanText "$tempCPUname")   # remove leading / trailine space
   echo -n "$tempCPUname"
 }
@@ -204,6 +206,7 @@ getSystem() {
     VALUESvia="FILE"
     LSBrel="$(. /etc/os-release && echo "$PRETTY_NAME")"
     LSBcodename="$(. /etc/os-release && echo "$VERSION")"
+    LSBcodename=${LSBcodename#*', '}
     LSBcodename=${LSBcodename#* (}
     LSBcodename=${LSBcodename%)}
   elif [[ $(lsb_release -h 2> /dev/null) ]]; then
@@ -333,6 +336,7 @@ setMac() {
   OSversion="10.${MacOSadjustedVer}.${MacOSsubVer}"
   OSfullname="macOS ${MacOSmainVer}"
   case $MacOSmainVer in
+    10.13) OScodename="High Sierra";;
     10.12) OScodename="Sierra";;
     10.11) OScodename="El Capitan";;
     10.10) OScodename="Yosemite";;
