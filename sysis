@@ -307,6 +307,7 @@ setRPI() {
   fi
   OSversion=${SYSkernalVer%"-"*}
   HWdevice="Raspberry Pi ${RPImodel}"
+  CPUmeta="${CPUname} ${CPUinfo}"
   if [[ $(free 2> /dev/null) ]]; then
     DEVICEinfoExists=true
     MEMusage=$(free -m | awk 'NR==2{printf "%s/%s MB (%d%%)\n", $3,$2,$3*100/$2 }')
@@ -326,6 +327,7 @@ setLinux() {
     CPUname=$(grep -m1 'model name' < /proc/cpuinfo)
     CPUname=$(cleanCPUname "$CPUname")
   fi
+  CPUmeta="${CPUname} ${CPUinfo}"
   if [[ $(free 2> /dev/null) ]]; then
     DEVICEinfoExists=true
     MEMsizeMB=$(free -m | awk '/^Mem:/{print $2}')
@@ -372,6 +374,7 @@ setMac() {
     CPUspeedSmall=$((CPUspeed % 1000))
   CPUcores=$(sysctl -n hw.ncpu)
   CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz (${CPUcores} Core)"
+  CPUmeta="${CPUname} ${CPUinfo}"
   MEMsizeMB=$(sysctl -n hw.memsize)
     MEMsizeMB=$((MEMsizeMB / (1024 * 1024) ))    # Mem in MB
   #  Memory used = App Use + Wired use + Compressed use
@@ -461,10 +464,19 @@ reportSystem() {
   [[ -n $OSversion ]] && echo -e "\t${CLRtitle}${OSdetails}\t${CLRwhite}${OSversion}"
   if [ $DEVICEinfoExists ]; then
     echo
-    [[ -n $HWdevice ]] && echo -e "\t${CLRheading}DEVICE\t\t${CLRheading2}${HWdevice}"
+    if [[ -n $HWdevice ]]; then
+      echo -e "\t${CLRheading}DEVICE\t\t${CLRheading2}${HWdevice}"
+      CLRsubsect1=${CLRtitle}
+      CLRsubsect2=${CLRwhite}
+    else
+      CLRsubsect1=${CLRheading}
+      CLRsubsect2=${CLRheading2}
+    fi
     [[ -n $HWrelease ]] && echo -e "\t${CLRtitle}RELEASE DATE\t${CLRwhite}${HWrelease}"
-    [[ -n $CPUname ]] && echo -e "\t${CLRtitle}PROCESSOR\t${CLRwhite}${CPUname}"
-    [[ -n $CPUinfo ]] && echo -e "\t${CLRtitle}CPU INFO\t${CLRwhite}${CPUinfo}"
+    [[ -n $CPUmeta ]] && echo -e "\t${CLRsubsect1}CPU\t\t${CLRsubsect2}${CPUmeta}"
+    # [[ -n $CPUmeta ]] && echo -e "\t${CLRtitle}CPU\t\t${CLRwhite}${CPUmeta}"
+    # [[ -n $CPUname ]] && echo -e "\t${CLRtitle}PROCESSOR\t${CLRwhite}${CPUname}"
+    # [[ -n $CPUinfo ]] && echo -e "\t${CLRtitle}CPU INFO\t${CLRwhite}${CPUinfo}"
     [[ -n $MEMusage ]] && echo -e "\t${CLRtitle}MEM USAGE\t${CLRwhite}${MEMusage}"
     [[ -n $DISKusage ]] && echo -e "\t${CLRtitle}DISK USAGE\t${CLRwhite}${DISKusage}$CLRnormal"
   fi
