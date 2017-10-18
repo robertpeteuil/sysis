@@ -233,10 +233,15 @@ setLinuxCommon() {
   fi
   if [ -e "/sys/devices/system/cpu/possible" ]; then
     DEVICEinfoExists=true
-    CPUspeed=$(lscpu | grep -m1 'MHz')
-      CPUspeed=$(cleanVARtext "$CPUspeed")
-      CPUspeedBig=$((CPUspeed / 1000))
-      CPUspeedSmall=$((CPUspeed % 1000))
+    if [[ $(lscpu | grep -m1 'max MHz') ]]; then
+      CPUspeed=$(lscpu | grep -m1 'max MHz')  # exists on adj proc
+    else
+      CPUspeed=$(lscpu | grep -m1 'MHz')
+    fi
+    CPUspeed=$(cleanVARtext "$CPUspeed")  
+    CPUspeed=$((CPUspeed + 5))  # add 5 to avoid rounding errors
+    CPUspeedBig=$((CPUspeed / 1000))
+    CPUspeedSmall=$((CPUspeed % 1000))
     CPUcores=$(lscpu | grep 'Core(s)')
       CPUcores=$(cleanVARtext "$CPUcores")
     CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz (${CPUcores} Core)"
