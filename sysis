@@ -456,11 +456,12 @@ reportNetwork() {
 }
 
 reportSystem() {
-  echo -e "\t${CLRheading}OS\t\t${CLRheading2}${OSfullname}"
+  [[ -n $OSfullname ]] && echo -e "\t${CLRheading}OS\t\t${CLRheading2}${OSfullname}"
   [[ -n $OScodename ]] && echo -e "\t${CLRtitle}CODENAME\t${CLRwhite}${OScodename}"
   [[ -n $OSversion ]] && echo -e "\t${CLRtitle}${OSdetails}\t${CLRwhite}${OSversion}"
   if [ $DEVICEinfoExists ]; then
-    echo -e "\n\t${CLRheading}DEVICE\t\t${CLRheading2}${HWdevice}"
+    echo
+    [[ -n $HWdevice ]] && echo -e "\t${CLRheading}DEVICE\t\t${CLRheading2}${HWdevice}"
     [[ -n $HWrelease ]] && echo -e "\t${CLRtitle}RELEASE DATE\t${CLRwhite}${HWrelease}"
     [[ -n $CPUname ]] && echo -e "\t${CLRtitle}PROCESSOR\t${CLRwhite}${CPUname}"
     [[ -n $CPUinfo ]] && echo -e "\t${CLRtitle}CPU INFO\t${CLRwhite}${CPUinfo}"
