@@ -11,7 +11,7 @@
 #
 
 scriptname="sysis"
-scriptbuildnum="3.6.2"
+scriptbuildnum="3.6.3"
 scriptbuilddate="2017-12-23"
 
 ############################################################
@@ -163,7 +163,8 @@ cleanVARtext() {
 getNetwork() {
   pubIP=$(curl -s ipinfo.io/ip)  # Internet IP
   if [[ $(ip -4 address 2> /dev/null) ]]; then  # LANIP via 'ip' if possible
-    lanIP=$(ip -4 address | awk '/brd/ {split($2, ip, /\//); print ip[1]}')
+    # lanIP=$(ip -4 address | awk '/brd/ {split($2, ip, /\//); print ip[1]}')
+    lanIP=$(ip -4 address | awk '{if (index( $0, "state UP") >0) {getline; if (index( $0, "brd") >0) {split($2, ip, /\//); print ip[1]}}}')
   elif [[ $(ifconfig -a 2> /dev/null) ]]; then  # else try 'ifconfig'
     case $OS in
      Linux)   # note RPI may only have awk 1.x
