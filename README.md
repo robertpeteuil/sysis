@@ -1,7 +1,6 @@
 # SYSIS - the Lightweight System-Information Utility
 ### Quickly Display System Information for Varied Host Types
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/462b017e8f6b407d9783b1181b9ab869)](https://www.codacy.com/app/robertpeteuil/sysis?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=robertpeteuil/sysis&amp;utm_campaign=Badge_Grade)
-[![GitHub issues](https://img.shields.io/github/issues/robertpeteuil/sysis.svg)](https://github.com/robertpeteuil/sysis)
 [![GitHub release](https://img.shields.io/github/release/robertpeteuil/sysis.svg?colorB=2067b8)](https://github.com/robertpeteuil/sysis)
 [![lang](https://img.shields.io/badge/language-bash-89e051.svg?style=flat-square)](https://github.com/robertpeteuil/sysis)
 [![license](https://img.shields.io/github/license/robertpeteuil/sysis.svg?colorB=2067b8)](https://github.com/robertpeteuil/sysis)
@@ -15,9 +14,8 @@ It was designed for maximum productivity:
 - Executes quickly by gathering only commonly needed information
    
 
-### sysis output on Multiple Operating Systems:
-![](https://cloud.githubusercontent.com/assets/1554603/25049131/09673d58-20f5-11e7-85dc-c330e96351b4.png)
-![](https://cloud.githubusercontent.com/assets/1554603/25049136/11bb20aa-20f5-11e7-94e4-8c8580fbbe5e.png)
+### Example sysis output on Mac and Ubuntu:
+![](https://user-images.githubusercontent.com/1554603/31736305-348e9408-b3f9-11e7-9c38-32a924d45505.png) ![](https://user-images.githubusercontent.com/1554603/31737773-5f2648e2-b3fd-11e7-970f-d5ec5cf66c1a.jpg)
 
 ### Supported Platforms:
 
@@ -30,21 +28,21 @@ It was designed for maximum productivity:
 
 Easily installed with `curl` using this command:
 
-```
+``` shell
 bash -c "`curl -s -L https://raw.github.com/robertpeteuil/sysis/master/install.sh`"
 ```
 
 
 Alternatively, the repo can be downloaded and installed locally.  If downloaded (or cloned), `cd` into the directory and run `./install.sh`
 
-```
+``` shell
 cd sysis
 ./install.sh
 ```
 
 ### Usage and Options:
 
-```
+``` shell
 USAGE: sysis [OPTIONS]
 
  OPTIONS:
