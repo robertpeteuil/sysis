@@ -11,8 +11,8 @@
 #
 
 scriptname="sysis"
-scriptbuildnum="3.6.3"
-scriptbuilddate="2017-12-23"
+scriptbuildnum="3.7.0"
+scriptbuilddate="2017-12-30"
 
 ############################################################
 ### VARS INITS
@@ -173,12 +173,15 @@ getNetwork() {
   elif [[ $(ifconfig -a 2> /dev/null) ]]; then  # else try 'ifconfig'
     case $OS in
      Linux)   # note RPI may only have awk 1.x
-        lanIP=$(ifconfig -a | awk '/(cast)/ {print $2}' | cut -d: -f2)
+        # lanIP=$(ifconfig -a | awk '/(cast)/ {print $2}' | cut -d: -f2)
+        lanIP=$(ifconfig -a | awk '/(cast)/ {if (index( $0, "cast:0.0.0.0") ==0) print $2}' | cut -d: -f2)
         ;;
      Darwin)  # filters virtual adapters (those with limited scope broadcast)
         # lanIP=$(ifconfig -a | awk '/(cast).([0-9]{1,3}\.){3}/ {print $2}')
-        lanIP=$(ifconfig -a | awk 'BEGIN{n = 0} /^en/ {getline; do {if (index( $0, "ether ") >0) {macadd[n]=$2} else if (index( $0, "cast") >0) {ip4add[n]=$2} else if (index( $0, "inactive") >0) {break} else if (index( $0, "active") >0) {n++;break} getline} while (index( $0, "en") != 1)} END{ for (i=0; i<n; i++) print ip4add[i]}')
-        # lanMAC=$(ifconfig -a | awk 'BEGIN{n = 0} /^en/ {getline; do {if (index( $0, "ether ") >0) {macadd[n]=$2} else if (index( $0, "cast") >0) {ip4add[n]=$2} else if (index( $0, "inactive") >0) {break} else if (index( $0, "active") >0) {n++;break} getline} while (index( $0, "en") != 1)} END{ for (i=0; i<n; i++) print macadd[i]}')
+        lanINFO=$(ifconfig -a | awk 'BEGIN{n=0} /^[[:alnum:]]/ {if ($1 ~ /^vnic/) {next} else {nname[n]=$1; getline; if ($0 ~ /^[[:alnum:]]/) {nname[n]=$1; getline} {validIP=""; do {if ($0 ~ /inactive/) {break} else if ($0 ~ /ether /) {macadd[n]=$2} else if ($0 ~ /cast/) {ip4add[n]=$2; validIP="true"} else if ($0 ~ /active/ && validIP == "true") {n++;break} getline} while ($0 !~ /^[[:alnum:]]/)}}} END{for (i=0; i<n; i++) {split(nname[i], adname, ":"); print adname[1], ip4add[i], macadd[i]}}')
+        lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f1)
+        lanIP=$(echo -e "$lanINFO" | cut -d' ' -f2)
+        lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f3)
         ;;
      FreeBSD|OpenBSD)
         lanIP=$(ifconfig | grep -E 'inet.[0-9]' | grep -v '127.0.0.1' | awk '{print $2}')
@@ -191,10 +194,24 @@ getNetwork() {
         ;;
     esac
   fi
+  if [[ -n $lanNAME ]]; then  # if multiple lanNAME's, use array
+    count=0
+    for i in $lanNAME; do
+      lanNAMES[count]=$i
+      ((++count))
+    done
+  fi
   if [[ -n $lanIP ]]; then  # if multiple LanIPs, use array
     count=0
     for i in $lanIP; do
       lanIPS[count]=$i
+      ((++count))
+    done
+  fi
+  if [[ -n $lanMAC ]]; then  # if multiple lanMAC's, use array
+    count=0
+    for i in $lanMAC; do
+      lanMACS[count]=$i
       ((++count))
     done
   fi
@@ -350,7 +367,7 @@ setLinux() {
 
 setMac() {
   DeviceType="Mac"
-  OSdetails="OS VERSION"
+  OSdetails="VERSION  "
   DEVICEinfoExists=true
   MacOSinitialVer=${SYSkernalVer%%.*}
   MacOSadjustedVer=$((MacOSinitialVer-4))
@@ -358,23 +375,24 @@ setMac() {
   MacOSsubVer=${MacOSsubVer#*.}
   MacOSmainVer="10.${MacOSadjustedVer}"
   OSversion="10.${MacOSadjustedVer}.${MacOSsubVer}"
-  OSfullname="macOS ${MacOSmainVer}"
+  # OSfullname="macOS ${MacOSmainVer}"
   case $MacOSmainVer in
-    10.13) OScodename="High Sierra";;
-    10.12) OScodename="Sierra";;
-    10.11) OScodename="El Capitan";;
-    10.10) OScodename="Yosemite";;
-    10.9) OScodename="Mavericks";;
-    10.8) OScodename="Mountain Lion";;
-    10.7) OScodename="Lion";;
-    10.6) OScodename="Snow Leopard";;
-    10.5) OScodename="Leopard";;
-    10.4) OScodename="Tiger";;
-    10.3) OScodename="Panther";;
-    10.2) OScodename="Jaguar";;
-    10.1) OScodename="Puma";;
-    10.0) OScodename="Cheetah";;
+    10.13) OSname="High Sierra";;
+    10.12) OSname="Sierra";;
+    10.11) OSname="El Capitan";;
+    10.10) OSname="Yosemite";;
+    10.9) OSname="Mavericks";;
+    10.8) OSname="Mountain Lion";;
+    10.7) OSname="Lion";;
+    10.6) OSname="Snow Leopard";;
+    10.5) OSname="Leopard";;
+    10.4) OSname="Tiger";;
+    10.3) OSname="Panther";;
+    10.2) OSname="Jaguar";;
+    10.1) OSname="Puma";;
+    10.0) OSname="Cheetah";;
   esac
+  OSfullname="macOS ${OSname}"
   HWdevice=${SYSplatform//,/.}
   HWrelease=""
   # Mac HW Quieries - 'sysctl -n' return string with item and value
@@ -464,8 +482,19 @@ reportNetwork() {
   [[ -n $SYSnode ]] && [[ "$SYSnode" != "$HOSTNAME" ]] && echo -e "\t${CLRheading}NODE\t\t${CLRheading2}${SYSnode}"
   if [[ $lanIP != "Unknown" ]]; then
     for (( i=0; i<count; i=i+1 )); do
+      if [[ -n $lanNAME ]]; then
+        pad=$(printf '%0.1s' " "{1..15})
+        padlength=12
+        name="${lanNAMES[i]:0:12}"
+        lanTITLE=$(printf '%s IP%*.*s' "${name}" 0 $((padlength - ${#name})) "$pad")
+      else
+        lanTITLE="LAN IP \t"
+      fi
+      if [[ -n $lanMAC ]]; then
+        macID="\t${CLRwarning}(${lanMACS[i]})${CLRnormal}"
+      fi
       lanIP=${lanIPS[i]}
-      echo -e "\t${CLRtitle}LAN IP \t\t${CLRwhite}${lanIP}"
+      echo -e "\t${CLRtitle}${lanTITLE}\t${CLRwhite}${lanIP}${macID}"
     done
   fi
   [[ -n $pubIP ]] && echo -e "\t${CLRtitle}Internet IP \t${CLRwhite}${pubIP}${CLRnormal}\n"
