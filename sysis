@@ -11,14 +11,14 @@
 #
 
 scriptname="sysis"
-scriptbuildnum="3.7.2"
-scriptbuilddate="2017-12-30"
+scriptbuildnum="3.7.0a7"
+scriptbuilddate="2017-12-31"
 
 ############################################################
 ### VARS INITS
 
 OS=$(uname -s)
-MACHINE_NAME=$(hostname -s)
+MACHINE_NAME=$(hostname -f)
 
 # VARIABLES - OTHER
 REPORTTITLE="System Information"
@@ -49,11 +49,14 @@ if test -t 1; then            # check if stdout is a terminal
     CLRnormal="\033[0m"
     CLRwhite=${bold}${white}
     CLRheading=${bold}${blue}
-    CLRheading2=${bold}${green}
-    CLRtitle=${bold}${cyan}
+    # CLRheading2=${bold}${green}
+    CLRheading2=${green}
+    # CLRtitle=${bold}${cyan}
+    CLRtitle=${cyan}
     CLRtitle2=${bold}${magenta}
-    CLRsuccess=${bold}${green}
-    CLRwarning=${bold}${yellow}
+    CLRsuccess=${bold}${green}  # shellcheck disable SC2034
+    # CLRwarning=${bold}${yellow}
+    CLRwarning=${yellow}
     CLRerror=${bold}${red}
   fi
 fi
@@ -91,6 +94,7 @@ printHelp() {
   echo -e "\n${CLRwhite}Collect and print information on system, network and OS to standard output.\n"
   echo -e "${CLRtitle}usage: ${CLRwhite}${scriptname} ${CLRtitle2}[OPTIONS] [DEBUG]${CLRwhite}\n"
   echo -e "${CLRtitle}   OPTIONS"
+  echo -e "${CLRtitle2}     -c\t${CLRwhite}: compressed output (no seperation lines)"
   echo -e "${CLRtitle2}     -d\t${CLRwhite}: debug only report"
   echo -e "${CLRtitle2}     -n\t${CLRwhite}: network only report"
   echo -e "${CLRtitle2}     -h\t${CLRwhite}: help"
@@ -112,6 +116,7 @@ printHelp() {
 getCommandTail() {
   while [[ -n $1 ]]; do
     case $1 in
+      -c)           compressed="true";;
       -d)           mode="DEBUG";;
       -n)           mode="NET";;
       -h)           printHelp;;
@@ -240,6 +245,7 @@ getSystem() {
   if [ -r /etc/os-release ]; then
     VALUESvia="FILE"
     LSBrel="$(. /etc/os-release && echo "$PRETTY_NAME")"
+    LSBrel=${LSBrel%' ('*}     # strip right of ' (' to remove codename suffix (if present)
     LSBcodename="$(. /etc/os-release && echo "$VERSION")"
     LSBcodename=${LSBcodename#*', '}
     LSBcodename=${LSBcodename#* (}
@@ -253,21 +259,24 @@ getSystem() {
   	[[ -n $LSBrelPRE ]] && LSBrel=${LSBrelPRE#*":"} && LSBrel=$(cleanText "$LSBrel")
   	[[ -n $LSBcodenamePRE ]] && LSBcodename=${LSBcodenamePRE#*":"} && LSBcodename=$(cleanText "$LSBcodename")
   fi
+  LSBcodename=$(for i in $LSBcodename; do B=$(echo -n "${i:0:1}" | tr "[:lower:]" "[:upper:]")${i:1}; echo -n "${B} "; done)
+  LSBcodename=$(cleanText "$LSBcodename")
   return 0
 }
 
 setLinuxCommon() {
   if [[ $VALUESvia == "FILE" ]]; then   # plan a - use file
     OSfullname="${LSBrel}"
-    OScodename="${LSBcodename}"
+    [[ -n "$LSBcodename" ]] && OSfullname="${OSfullname} ${CLRwarning}(${LSBcodename})${CLRnormal}"
   elif [[ $VALUESvia == "LSB" ]]; then  # plan b - use lsb_release
     OSfullname="${LSBid} ${LSBrel}"
-    OScodename="${LSBcodename}"
+    [[ -n "$LSBcodename" ]] && OSfullname="${OSfullname} ${CLRwarning}(${LSBcodename})${CLRnormal}"
+    # OScodename="${LSBcodename}"
   else                                  # plan c - use uname
     OSfullname="${SYSkernal}"
   fi
   if [ -e "/sys/devices/system/cpu/possible" ]; then
-    DEVICEinfoExists=true
+    # DEVICEinfoExists=true
     if lscpu | grep -q -m1 'max MHz'; then
       CPUspeed=$(lscpu | grep -m1 'max MHz')  # exists on adj proc
     else
@@ -282,105 +291,108 @@ setLinuxCommon() {
     CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz ${CLRnormal}${CLRwarning}(${CPUcores} Core)${CLRnormal}"
   fi
   if [[ $(df 2> /dev/null) ]]; then
-    DEVICEinfoExists=true
+    # DEVICEinfoExists=true
     DISKuse=$(df -h | awk '$NF=="/"{printf "%d/%d GB", $3,$2}')
     DISKRatio=$(df -h | awk '$NF=="/"{printf "%s\n", $5}')
-    DISKusage="${DISKuse} ${CLRnormal}${CLRwarning}(${DISKRatio})${CLRnormal}"
+    DISKusage="${DISKuse}  ${CLRnormal}${CLRwarning}(${DISKRatio})${CLRnormal}"
   fi
   return 0
 }
 
 setRPI() {
   DeviceType="RPI"
-  OSdetails="KERNEL\t"
+  # OSdetails="KERNEL\t"
   setLinuxCommon
   if [ -e "/proc/cpuinfo" ]; then
-    DEVICEinfoExists=true
+    # DEVICEinfoExists=true
     RPIrev=$(awk '/Revision/ { sub(/^.+\:/, "") ; print $1 }' /proc/cpuinfo)
     CPUname=$(awk '/model\ name/ { sub(/-compatible/, ""); print ($4)" r"($7); exit}' /proc/cpuinfo)
     # RPI HW version source: http://elinux.org/RPi_HardwareHistory
     case "$RPIrev" in
         *beta) RPImodel="Beta"; RPIman="Beta"; RPIrel="Q1 2012";;
-        *002) RPImodel="B (1.0)"; RPIman="unknown"; RPIrel="Q1 2012";;
-        *003) RPImodel="B (1.0)"; RPIman="ECN 001"; RPIrel="Q3 2012";;
-        *004) RPImodel="B (2.0)"; RPIman="Sony"; RPIrel="Q3 2012";;
-        *005) RPImodel="B (2.0)"; RPIman="Qisda"; RPIrel="Q4 2012";;
-        *006) RPImodel="B (2.0)"; RPIman="Egoman"; RPIrel="Q4 2012";;
-        *007) RPImodel="A (2.0)"; RPIman="Egoman"; RPIrel="Q1 2013";;
-        *008) RPImodel="A (2.0)"; RPIman="Sony"; RPIrel="Q1 2013";;
-        *009) RPImodel="A (2.0)"; RPIman="Qisda"; RPIrel="Q1 2013";;
-        *00d) RPImodel="B (2.0)"; RPIman="Egoman"; RPIrel="Q4 2012";;
-        *00e) RPImodel="B (2.0)"; RPIman="Sony"; RPIrel="Q4 2012";;
-        *00f) RPImodel="B (2.0)"; RPIman="Qisda"; RPIrel="Q4 2012";;
-        *010) RPImodel="B+ (1.0)"; RPIman="Sony"; RPIrel="Q3 2014";;
+        *002) RPImodel="B [1.0]"; RPIman="unknown"; RPIrel="Q1 2012";;
+        *003) RPImodel="B [1.0]"; RPIman="ECN 001"; RPIrel="Q3 2012";;
+        *004) RPImodel="B [2.0]"; RPIman="Sony"; RPIrel="Q3 2012";;
+        *005) RPImodel="B [2.0]"; RPIman="Qisda"; RPIrel="Q4 2012";;
+        *006) RPImodel="B [2.0]"; RPIman="Egoman"; RPIrel="Q4 2012";;
+        *007) RPImodel="A [2.0]"; RPIman="Egoman"; RPIrel="Q1 2013";;
+        *008) RPImodel="A [2.0]"; RPIman="Sony"; RPIrel="Q1 2013";;
+        *009) RPImodel="A [2.0]"; RPIman="Qisda"; RPIrel="Q1 2013";;
+        *00d) RPImodel="B [2.0]"; RPIman="Egoman"; RPIrel="Q4 2012";;
+        *00e) RPImodel="B [2.0]"; RPIman="Sony"; RPIrel="Q4 2012";;
+        *00f) RPImodel="B [2.0]"; RPIman="Qisda"; RPIrel="Q4 2012";;
+        *010) RPImodel="B+ [1.0]"; RPIman="Sony"; RPIrel="Q3 2014";;
         *011) RPImodel="Compute Module"; RPIman="Sony"; RPIrel="Q2 2014";;
-        *012) RPImodel="A+ (1.0)"; RPIman="Sony"; RPIrel="Q4 2014";;
-        *013) RPImodel="B+ (1.2)"; RPIman="Embest"; RPIrel="Q1 2015";;
+        *012) RPImodel="A+ [1.0]"; RPIman="Sony"; RPIrel="Q4 2014";;
+        *013) RPImodel="B+ [1.2]"; RPIman="Embest"; RPIrel="Q1 2015";;
         *014) RPImodel="Compute Module"; RPIman="Sony"; RPIrel="Q1 2015";;
-        *015) RPImodel="A+ (1.0)"; RPIman="Sony"; RPIrel="Q1 2015";;
-        *a01040) RPImodel="2B (1.0)"; RPIman="Sony"; RPIrel="Unknown";;
-        *a01041) RPImodel="2B (1.1)"; RPIman="Sony"; RPIrel="Q1 2015";;
-        *a21041) RPImodel="2B (1.1)"; RPIman="Embest"; RPIrel="Q1 2015";;
-        *a22042) RPImodel="2B (1.2)"; RPIman="Embest"; RPIrel="Q3 2016";;
-        *900021) RPImodel="A+ (1.1)"; RPIman="Sony"; RPIrel="Q3 2016";;
-        *900032) RPImodel="B+ (1.2)"; RPIman="Sony"; RPIrel="Q2 2016";;
-        *900092) RPImodel="Zero (1.2)"; RPIman="Sony"; RPIrel="Q4 2015";;
-        *900093) RPImodel="Zero (1.3)"; RPIman="Embest"; RPIrel="Q4 2016";;
-        *9000c1) RPImodel="Zero W (1.1)"; RPIman="Sony"; RPIrel="Q1 2017";;
-        *a02082) RPImodel="3B (1.2)"; RPIman="Sony"; RPIrel="Q1 2016";;
+        *015) RPImodel="A+ [1.0]"; RPIman="Sony"; RPIrel="Q1 2015";;
+        *a01040) RPImodel="2B [1.0]"; RPIman="Sony"; RPIrel="Unknown";;
+        *a01041) RPImodel="2B [1.1]"; RPIman="Sony"; RPIrel="Q1 2015";;
+        *a21041) RPImodel="2B [1.1]"; RPIman="Embest"; RPIrel="Q1 2015";;
+        *a22042) RPImodel="2B [1.2]"; RPIman="Embest"; RPIrel="Q3 2016";;
+        *900021) RPImodel="A+ [1.1]"; RPIman="Sony"; RPIrel="Q3 2016";;
+        *900032) RPImodel="B+ [1.2]"; RPIman="Sony"; RPIrel="Q2 2016";;
+        *900092) RPImodel="Zero [1.2]"; RPIman="Sony"; RPIrel="Q4 2015";;
+        *900093) RPImodel="Zero [1.3]"; RPIman="Embest"; RPIrel="Q4 2016";;
+        *9000c1) RPImodel="Zero W [1.1]"; RPIman="Sony"; RPIrel="Q1 2017";;
+        *a02082) RPImodel="3B [1.2]"; RPIman="Sony"; RPIrel="Q1 2016";;
         *a020a0) RPImodel="Compute Module 3"; RPIman="Sony"; RPIrel="Q1 2017";;
-        *a22082) RPImodel="3B (1.2)"; RPIman="Embest"; RPIrel="Q1 2016";;
-        *a32082) RPImodel="3B (1.2)"; RPIman="Sony"; RPIrel="Q4 2016";;
+        *a22082) RPImodel="3B [1.2]"; RPIman="Embest"; RPIrel="Q1 2016";;
+        *a32082) RPImodel="3B [1.2]"; RPIman="Sony"; RPIrel="Q4 2016";;
         *) RPImodel="'Unknown Version'"; RPIman="Unknown"; RPIrel="Unknown";;
     esac
-    HWrelease="${RPIrel} (${RPIman})"
+    # HWrelease="${RPIrel} (${RPIman})"
   else   # RPI Model not known
     RPImodel="'Unknown Version'"
   fi
   OSversion=${SYSkernalVer%"-"*}
-  HWdevice="Raspberry Pi ${RPImodel}"
+  HWdevice="Raspberry Pi"
+  [[ ${RPImodel} != "'Unknown Version'" ]] && HWdevice="${HWdevice} ${RPImodel}"
+  [[ ${RPIrel} != "Unknown" ]] && HWdevice="${HWdevice} ${CLRwarning}(${RPIrel})${CLRnormal}"
   CPUmeta="${CPUname} ${CPUinfo}"
   if [[ $(free 2> /dev/null) ]]; then
-    DEVICEinfoExists=true
+    # DEVICEinfoExists=true
     MEMuse=$(free -m | awk 'NR==2{printf "%s/%s MB", $3,$2 }')
     MemRatio=$(free -m | awk 'NR==2{printf "%.0f\n", $3*100/$2 }')
-    MEMusage="${MEMuse} ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
+    MEMusage="${MEMuse}  ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
   fi
   return 0
 }
 
 setLinux() {
   DeviceType="Linux"
-  OSdetails="KERNEL\t"
+  # OSdetails="KERNEL\t"
   setLinuxCommon
   OSversion=${SYSkernalVer%"-"*}
   HWdevice=""
   HWrelease=""
   if [ -e "/proc/cpuinfo" ]; then
-    DEVICEinfoExists=true
+    # DEVICEinfoExists=true
     CPUname=$(grep -m1 'model name' < /proc/cpuinfo)
     CPUname=$(cleanCPUname "$CPUname")
   fi
   CPUmeta="${CPUname} ${CPUinfo}"
   if [[ $(free 2> /dev/null) ]]; then
-    DEVICEinfoExists=true
+    # DEVICEinfoExists=true
     MEMuse=$(free -m | awk 'NR==2{printf "%s/%s MB", $3,$2 }')
     MemRatio=$(free -m | awk 'NR==2{printf "%.0f\n", $3*100/$2 }')
-    MEMusage="${MEMuse} ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
+    MEMusage="${MEMuse}  ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
   fi
   return 0
 }
 
 setMac() {
   DeviceType="Mac"
-  OSdetails="VERSION  "
-  DEVICEinfoExists=true
+  # OSdetails="VERSION  "
+  # DEVICEinfoExists=true
   MacOSinitialVer=${SYSkernalVer%%.*}
   MacOSadjustedVer=$((MacOSinitialVer-4))
   MacOSsubVer=${SYSkernalVer%.*}
   MacOSsubVer=${MacOSsubVer#*.}
   MacOSmainVer="10.${MacOSadjustedVer}"
-  OSversion="10.${MacOSadjustedVer}.${MacOSsubVer}"
+  # OSversion="10.${MacOSadjustedVer}.${MacOSsubVer}"
+  MacOSver="10.${MacOSadjustedVer}.${MacOSsubVer}"
   # OSfullname="macOS ${MacOSmainVer}"
   case $MacOSmainVer in
     10.13) OSname="High Sierra";;
@@ -398,7 +410,7 @@ setMac() {
     10.1) OSname="Puma";;
     10.0) OSname="Cheetah";;
   esac
-  OSfullname="macOS ${OSname}"
+  OSfullname="macOS ${MacOSver} ${CLRwarning}(${OSname})${CLRnormal}"
   HWdevice=${SYSplatform//,/.}
   HWrelease=""
   # Mac HW Quieries - 'sysctl -n' return string with item and value
@@ -426,10 +438,10 @@ setMac() {
   MEMused=$((MEMusedApps + MEMusedWired + MEMusedComp))
   MemRatio=$(( (MEMused * 100) / MEMsizeMB))
   printf -v MEMusage "%s/%s MB" ${MEMused} ${MEMsizeMB}
-  MEMusage="${MEMusage} ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
+  MEMusage="${MEMusage}  ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
   DISKuse=$(df -h | awk '$NF=="/"{printf "%d/%d GB", $3,$2}')
   DISKRatio=$(df -h | awk '$NF=="/"{printf "%s\n", $5}')
-  DISKusage="${DISKuse} ${CLRnormal}${CLRwarning}(${DISKRatio})${CLRnormal}"
+  DISKusage="${DISKuse}  ${CLRnormal}${CLRwarning}(${DISKRatio})${CLRnormal}"
   return 0
 }
 
@@ -484,7 +496,7 @@ reportDebug() {
 }
 
 reportNetwork() {
-  echo -e "\t${CLRheading}HOST\t\t${CLRheading2}${MACHINE_NAME}"
+  echo -e "\t${CLRheading}HOSTNAME\t${CLRheading2}${MACHINE_NAME}"
   [[ -n $SYSnode ]] && [[ "$SYSnode" != "$HOSTNAME" ]] && echo -e "\t${CLRheading}NODE\t\t${CLRheading2}${SYSnode}"
   if [[ $lanIP != "Unknown" ]]; then
     for (( i=0; i<count; i=i+1 )); do
@@ -503,42 +515,53 @@ reportNetwork() {
       echo -e "\t${CLRtitle}${lanTITLE}\t${CLRwhite}${lanIP}${macID}"
     done
   fi
-  [[ -n $pubIP ]] && echo -e "\t${CLRtitle}Internet IP \t${CLRwhite}${pubIP}${CLRnormal}\n"
+  [[ -n $pubIP ]] && echo -e "\t${CLRtitle}Internet IP \t${CLRwhite}${pubIP}${CLRnormal}"
   return 0
 }
 
 reportSystem() {
-  [[ -n $OSfullname ]] && echo -e "\t${CLRheading}OS\t\t${CLRheading2}${OSfullname}${CLRnormal}"
-  [[ -n $OScodename ]] && echo -e "\t${CLRtitle}CODENAME\t${CLRwhite}${OScodename}${CLRnormal}"
-  [[ -n $OSversion ]] && echo -e "\t${CLRtitle}${OSdetails}\t${CLRwhite}${OSversion}${CLRnormal}"
-  if [ $DEVICEinfoExists ]; then
-    echo
-    if [[ -n $HWdevice ]]; then
-      echo -e "\t${CLRheading}DEVICE\t\t${CLRheading2}${HWdevice}${CLRnormal}"
-      CLRsubsect1=${CLRtitle}
-      CLRsubsect2=${CLRwhite}
-    else
-      CLRsubsect1=${CLRheading}
-      CLRsubsect2=${CLRheading2}
-    fi
-    [[ -n $HWrelease ]] && echo -e "\t${CLRtitle}RELEASE DATE\t${CLRwhite}${HWrelease}${CLRnormal}"
-    [[ -n $CPUmeta ]] && echo -e "\t${CLRsubsect1}CPU\t\t${CLRsubsect2}${CPUmeta}${CLRnormal}"
-    [[ -n $MEMusage ]] && echo -e "\t${CLRtitle}MEM USAGE\t${CLRwhite}${MEMusage}${CLRnormal}"
-    [[ -n $DISKusage ]] && echo -e "\t${CLRtitle}DISK USAGE\t${CLRwhite}${DISKusage}${CLRnormal}"
-  fi
+  # [[ -n $OSfullname ]] && echo -e "\t${CLRheading}OS\t\t${CLRheading2}${OSfullname}${CLRnormal}"
+  [[ -n $HWdevice ]] && echo -e "\t${CLRtitle}HW Device\t${CLRwhite}${HWdevice}${CLRnormal}"
+  [[ -n $CPUmeta ]] && echo -e "\t${CLRtitle}Processor\t${CLRwhite}${CPUmeta}${CLRnormal}"
+  [[ -n $OSfullname ]] && echo -e "\t${CLRtitle}OS\t\t${CLRwhite}${OSfullname}${CLRnormal}"
+  # [[ -n $OScodename ]] && echo -e "\t${CLRtitle}CODENAME\t${CLRwhite}${OScodename}${CLRnormal}"
+  [[ -n $OSversion ]] && echo -e "\t${CLRtitle}Kernel\t\t${CLRwhite}${OSversion}${CLRnormal}"
+  # [[ -n $OSversion ]] && echo -e "\t${CLRtitle}${OSdetails}\t${CLRwhite}${OSversion}${CLRnormal}"
+  [[ -n $HWrelease ]] && echo -e "\t${CLRtitle}Release Date\t${CLRwhite}${HWrelease}${CLRnormal}"
+  # [[ -n $CPUmeta ]] && echo -e "\t${CLRtitle}CPU\t\t${CLRwhite}${CPUmeta}${CLRnormal}"
+  [[ -z $compressed ]] && echo
+  [[ -n $MEMusage ]] && echo -e "\t${CLRtitle}Memory Use\t${CLRwhite}${MEMusage}${CLRnormal}"
+  # [[ -n $MEMusage ]] && echo -e "\t${CLRtitle}MEM USAGE\t${CLRwhite}${MEMusage}${CLRnormal}"
+  [[ -n $DISKusage ]] && echo -e "\t${CLRtitle}Disk Use\t${CLRwhite}${DISKusage}${CLRnormal}"
+  # [[ -n $DISKusage ]] && echo -e "\t${CLRtitle}DISK USAGE\t${CLRwhite}${DISKusage}${CLRnormal}"
+  # if [ $DEVICEinfoExists ]; then
+  #   # echo
+  #   if [[ -n $HWdevice ]]; then
+  #     # echo -e "\t${CLRtitle}HARDWARE\t${CLRheading2}${HWdevice}${CLRnormal}"
+  #     # echo -e "\t${CLRheading}DEVICE\t\t${CLRheading2}${HWdevice}${CLRnormal}"
+  #     CLRsubsect1=${CLRtitle}
+  #     CLRsubsect2=${CLRwhite}
+  #   else
+  #     CLRsubsect1=${CLRheading}
+  #     CLRsubsect2=${CLRheading2}
+  #   fi
+  #   [[ -n $HWrelease ]] && echo -e "\t${CLRtitle}RELEASE DATE\t${CLRwhite}${HWrelease}${CLRnormal}"
+  #   [[ -n $CPUmeta ]] && echo -e "\t${CLRsubsect1}CPU\t\t${CLRsubsect2}${CPUmeta}${CLRnormal}"
+  #   [[ -n $MEMusage ]] && echo -e "\t${CLRtitle}MEM USAGE\t${CLRwhite}${MEMusage}${CLRnormal}"
+  #   [[ -n $DISKusage ]] && echo -e "\t${CLRtitle}DISK USAGE\t${CLRwhite}${DISKusage}${CLRnormal}"
+  # fi
   return 0
 }
 
 reportMain() {
   reportNetwork
-  if [[ -z "$DeviceType" ]] || [[ "$mode" == "FORCE" ]]; then
-    # set VARS to most raw form
+  [[ -z $compressed ]] && echo
+  if [[ -z "$DeviceType" ]] || [[ "$mode" == "FORCE" ]]; then   # set VARS to most raw form
     OSversion=${SYSkernalVer}
     CPUname=${SYSmachine}
     [[ "$SYSplatform" != "unknown" ]] && HWdevice=${SYSplatform}
   fi
   reportSystem
-  echo
   return 0
 }
 
