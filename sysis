@@ -149,6 +149,7 @@ cleanCPUname() {
   tempCPUname=$(echo "$tempCPUname" | awk '{sub(/\s[[:alpha:]][[:alpha:]]?[0-9]{4}$/, ""); print $0}')
   # remove processor rev of style - P(A)5-XXXX ex: E5-1620
   tempCPUname=$(echo "$tempCPUname" | awk '{sub(/\s[[:alpha:]][[:alpha:]]?[0-9]-[0-9]{4}$/, ""); print $0}')
+  # remove processor rev of style "*-12A*", "*-123a*". "*-1234Z*"
   tempCPUname=$(echo "$tempCPUname" | awk '{sub(/-[0-9]{2,4}[a-zA-Z]/, ""); print $0}')
   echo -n "$tempCPUname"
 }
@@ -170,26 +171,26 @@ getNetwork() {
   fi
   if [[ $(ip -4 addr 2> /dev/null) ]]; then  # LANIP via 'ip' if possible
     # ip features may be limited on older systems
-    lanINFO=$(ip -d addr | awk 'BEGIN{n=0} /^[0-9]/ {if ($0 ~ /state UP/) { validIP=""; nname[n]=$2; getline; do {if ($0 ~ /bridge forward/ || $0 ~ /bridge_slave/) {break} if ($0 ~ /link\/ether/) {macadd[n]=$2} else if ($0 ~ /inet / && $0 ~ /scope global/) {ip4add[n]=$2; validIP="true"} else if ($0 ~ /inet6/ && $0 ~ /scope global/) {ip6add[n]=$2; validIP="true"} getline} while ($0 !~ /^[0-9]/)} if (validIP == "true") {n++; validIP=""}} END{for (i=0; i<n; i++) {split(ip4add[i], ip4, /\//); split(ip6add[i], ip6, /\//); split(nname[i], adname, ":"); print adname[1], ip4[1], macadd[i], ip6[1]}}')
-    lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f1)
-    lanIP=$(echo -e "$lanINFO" | cut -d' ' -f2)
-    lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f3)
+    lanINFO=$(ip -d addr | awk 'BEGIN{n=0} /^[0-9]/ {if ($0 ~ /state UP/) { validIP=""; nname[n]=$2; getline; do {if ($0 ~ /bridge forward/ || $0 ~ /bridge_slave/) {break} if ($0 ~ /link\/ether/) {macadd[n]=$2} else if ($0 ~ /inet / && $0 ~ /scope global/) {ip4add[n]=$2; validIP="true"} else if ($0 ~ /inet6/ && $0 ~ /scope global/) {ip6add[n]=$2; validIP="true"} getline} while ($0 !~ /^[0-9]/)} if (validIP == "true") {n++; validIP=""}} END{for (i=0; i<n; i++) {split(ip4add[i], ip4, /\//); split(ip6add[i], ip6, /\//); split(nname[i], adname, ":"); printf "%s n:%s 4:%s 6:%s\n", macadd[i], adname[1], ip4[1], ip6[1]}}')
+    lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f1)
+    lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f2)
+    lanIP=$(echo -e "$lanINFO" | cut -d' ' -f3)
     lanIP6=$(echo -e "$lanINFO" | cut -d' ' -f4)
   elif [[ $(ifconfig -a 2> /dev/null) ]]; then  # else try 'ifconfig'
     case $OS in
      Linux)   # removes virtual adapters named "virbr*" from results
         # awk limited on older systems (no support for [[:alnum:]])
-        lanINFO=$(ifconfig -a | awk 'BEGIN{n=0} /^[A-Za-z0-9]/ {if ($1 ~ /^virbr/) {next} else {nname[n]=$1; validIP=""; do {if ($0 ~ /^\s*$/) {break} else if ($0 ~ /HWaddr/) {macadd[n]=$5} else if ($0 ~ /cast/ && $0 !~ /cast:0\.0\.0\.0/) {ip4add[n]=$2; validIP="true"} else if ($0 ~ /inet6/ && $0 ~ /Scope:Global/) {ip6add[n]=$3; validIP="true"} getline} while ($0 !~ /^[A-Za-z0-9]/)} if (validIP == "true") {n++; validIP=""} } END{for (i=0; i<n; i++) {split(ip4add[i], ip4, ":"); split(ip6add[i], ip6, /\//); print nname[i], ip4[2], macadd[i], ip6[1]}}')
-        lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f1)
-        lanIP=$(echo -e "$lanINFO" | cut -d' ' -f2)
-        lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f3)
+        lanINFO=$(ifconfig -a | awk 'BEGIN{n=0} /^[A-Za-z0-9]/ {if ($1 ~ /^virbr/) {next} else {nname[n]=$1; validIP=""; do {if ($0 ~ /^\s*$/) {break} else if ($0 ~ /HWaddr/) {macadd[n]=$5} else if ($0 ~ /cast/ && $0 !~ /cast:0\.0\.0\.0/) {ip4add[n]=$2; validIP="true"} else if ($0 ~ /inet6/ && $0 ~ /Scope:Global/) {ip6add[n]=$3; validIP="true"} getline} while ($0 !~ /^[A-Za-z0-9]/)} if (validIP == "true") {n++; validIP=""} } END{for (i=0; i<n; i++) {split(ip4add[i], ip4, ":"); split(ip6add[i], ip6, /\//); printf "%s n:%s 4:%s 6:%s\n", macadd[i], nname[i], ip4[2], ip6[1]}}')
+        lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f1)
+        lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f2)
+        lanIP=$(echo -e "$lanINFO" | cut -d' ' -f3)
         lanIP6=$(echo -e "$lanINFO" | cut -d' ' -f4)
         ;;
      Darwin)  # removes virtual adapters named "vnic*" from results
-        lanINFO=$(ifconfig -a | awk 'BEGIN{n=0} /^[[:alnum:]]/ {if ($1 ~ /^vnic/) {next} else {split($1, tmpname, ":"); nname[n]=tmpname[1]; getline; if ($0 ~ /^[[:alnum:]]/) {split($1, tmpname, ":"); nname[n]=tmpname[1]; getline; validIP=""; active=""} {do {if ($0 ~ /inactive/) {break} else if ($0 ~ /ether /) {macadd[n]=$2} else if ($0 ~ /cast/) {ip4add[n]=$2; validIP="true"} else if ($0 ~ /inet6/ && index( $2, nname[n]) ==0) {ip6add[n]=$2; validIP="true"}else if ($0 ~ /active/) {active="true"; break} getline} while ($0 !~ /^[[:alnum:]]/)} if (validIP == "true" && active == "true") {n++; validIP=""; active=""} }} END{for (i=0; i<n; i++) {print nname[i], ip4add[i], macadd[i], ip6add[i]}}')
-        lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f1)
-        lanIP=$(echo -e "$lanINFO" | cut -d' ' -f2)
-        lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f3)
+        lanINFO=$(ifconfig -a | awk 'BEGIN{n=0} /^[[:alnum:]]/ {if ($1 ~ /^vnic/) {next} else {split($1, tmpname, ":"); nname[n]=tmpname[1]; getline; if ($0 ~ /^[[:alnum:]]/) {split($1, tmpname, ":"); nname[n]=tmpname[1]; getline; validIP=""; active=""} {do {if ($0 ~ /inactive/) {break} else if ($0 ~ /ether /) {macadd[n]=$2} else if ($0 ~ /cast/) {ip4add[n]=$2; validIP="true"} else if ($0 ~ /inet6/ && index( $2, nname[n]) ==0) {ip6add[n]=$2; validIP="true"}else if ($0 ~ /active/) {active="true"; break} getline} while ($0 !~ /^[[:alnum:]]/)} if (validIP == "true" && active == "true") {n++; validIP=""; active=""} }} END{for (i=0; i<n; i++) {printf "%s n:%s 4:%s 6:%s\n", macadd[i], nname[i], ip4add[i], ip6add[i]}}')
+        lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f1)
+        lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f2)
+        lanIP=$(echo -e "$lanINFO" | cut -d' ' -f3)
         lanIP6=$(echo -e "$lanINFO" | cut -d' ' -f4)
         ;;
      FreeBSD|OpenBSD)
@@ -203,31 +204,33 @@ getNetwork() {
         ;;
     esac
   fi
-  if [[ -n $lanNAME ]]; then  # if multiple lanNAME's, use array
+  # On Linux/Mac all data gathered, so lanMAC sets # of connections to list
+  if [[ -n $lanMAC ]]; then
+    lancount=0
+    for i in $lanMAC; do
+      lanMACS[lancount]=$i
+      ((++lancount))
+    done
+  fi
+  if [[ -n $lanNAME ]]; then
     count=0
     for i in $lanNAME; do
-      lanNAMES[count]=$i
+      lanNAMES[count]=${i#*':'}   # strip off prefix added by awk
       ((++count))
     done
   fi
-  if [[ -n $lanIP ]]; then  # if multiple LanIPs, use array
-    count=0
+  # On FreeBSD/OpenBSD/SunOS only IP4 is gathered and the var ip4count sets # of IPs to list
+  if [[ -n $lanIP ]]; then
+    ip4count=0
     for i in $lanIP; do
-      lanIPS[count]=$i
-      ((++count))
+      lanIPS[ip4count]=${i#*':'}  # strip off prefix added by awk (harmeless if not present)
+      ((++ip4count))
     done
   fi
-  if [[ -n $lanMAC ]]; then  # if multiple lanMAC's, use array
-    count=0
-    for i in $lanMAC; do
-      lanMACS[count]=$i
-      ((++count))
-    done
-  fi
-  if [[ -n $lanIP6 ]]; then  # if multiple lanIP6's, use array
+  if [[ -n $lanIP6 ]]; then
     count=0
     for i in $lanIP6; do
-      lanIP6S[count]=$i
+      lanIP6S[count]=${i#*':'}  # strip off prefix added by awk
       ((++count))
     done
   fi
@@ -276,7 +279,6 @@ setLinuxCommon() {
   elif [[ $VALUESvia == "LSB" ]]; then  # plan b - use lsb_release
     OSfullname="${LSBid} ${LSBrel}"
     [[ -n "$LSBcodename" ]] && OSfullname="${OSfullname}${CLRnormal}  ${CLRwarning}(${LSBcodename})${CLRnormal}"
-    # OScodename="${LSBcodename}"
   else                                  # plan c - use uname
     OSfullname="${SYSkernal}"
   fi
@@ -287,7 +289,7 @@ setLinuxCommon() {
       CPUspeed=$(lscpu | grep -m1 'MHz')
     fi
     CPUspeed=$(cleanVARtext "$CPUspeed")
-    CPUspeed=$((CPUspeed + 5))  # add 5 to prevent rounding errors
+    CPUspeed=$((CPUspeed + 5))                # add 5 to prevent rounding errors
     CPUspeedBig=$((CPUspeed / 1000))
     CPUspeedSmall=$((CPUspeed % 1000))
     CPUcores=$(lscpu | grep 'Core(s)')
@@ -343,14 +345,19 @@ setRPI() {
         *a32082) RPImodel="3B [1.2]"; RPIman="Sony"; RPIrel="Q4 2016";;
         *) RPImodel="'Unknown Version'"; RPIman="Unknown"; RPIrel="Unknown";;
     esac
-  else   # RPI Model not known
+    if [[ -n ${CPUinfo} ]]; then
+      CPUmeta="${CPUname} ${CPUinfo}"  # must be calculated in this if, otherwise vars arent defined
+    else
+      CPUmeta="${CPUname}"
+    fi
+  else   # /proc/cpuinfo not found - cannot lookup model #
     RPImodel="'Unknown Version'"
+    RPIrel="Unknown"
   fi
   OSkernel=${SYSkernalVer%"-"*}
   HWdevice="Raspberry Pi"
   [[ ${RPImodel} != "'Unknown Version'" ]] && HWdevice="${HWdevice} ${RPImodel}"
   [[ ${RPIrel} != "Unknown" ]] && HWdevice="${HWdevice}${CLRnormal}  ${CLRwarning}(${RPIrel})${CLRnormal}"
-  CPUmeta="${CPUname} ${CPUinfo}"
   if [[ $(free 2> /dev/null) ]]; then
     MEMuse=$(free -m | awk 'NR==2{printf "%s/%s MB", $3,$2 }')
     MemRatio=$(free -m | awk 'NR==2{printf "%.0f\n", $3*100/$2 }')
@@ -405,7 +412,6 @@ setMac() {
   OSfullname="macOS ${MacOSver}${CLRnormal}  ${CLRwarning}(${OSname})${CLRnormal}"
   HWdevice=${SYSplatform//,/.}
   HWrelease=""
-  # Mac HW Quieries - 'sysctl -n' return string with item and value
   CPUname=$(sysctl -n machdep.cpu.brand_string)
   CPUname=$(cleanCPUname "$CPUname")
   CPUspeed=$(sysctl -n hw.cpufrequency_max)
@@ -493,9 +499,10 @@ reportSysName() {
 
 reportNetwork() {
   [[ -n $SYSnode ]] && [[ "$SYSnode" != "$HOSTNAME" ]] && echo -e "\t${CLRheading}NODE\t\t${CLRheading2}${SYSnode}"
-  if [[ $lanIP != "Unknown" ]]; then
-    for (( i=0; i<count; i=i+1 )); do
-      if [[ -n $lanNAME ]]; then
+  if [[ -n ${lanMAC} ]]; then
+    for (( i=0; i<lancount; i=i+1 )); do
+      macID="${CLRwarning}(${lanMACS[i]})${CLRnormal}"
+      if [[ -n ${lanNAMES[i]} ]]; then
         pad=$(printf '%0.1s' " "{1..15})
         padlength=12
         name="${lanNAMES[i]:0:12}"
@@ -503,14 +510,22 @@ reportNetwork() {
       else
         lanTITLE="LAN IP \t"
       fi
-      if [[ -n $lanMAC ]]; then
-        macID="  ${CLRwarning}(${lanMACS[i]})${CLRnormal}"
+      if [[ -n ${lanIP6S[i]} ]]; then
+        lanIP6="${CLRtitle2}${lanIP6S[i]}${CLRnormal}  "
+      else
+        lanIP6=""
       fi
-      if [[ -n $lanIP6 ]]; then
-        lanIP6="  ${CLRtitle2}${lanIP6S[i]}${CLRnormal}"
+      if [[ -n ${lanIPS[i]} ]]; then
+        lanIP="${lanIPS[i]}  "
+      else
+        lanIP=""
       fi
-      lanIP=${lanIPS[i]}
-      echo -e "\t${CLRtitle}${lanTITLE}\t${CLRwhite}${lanIP}${CLRnormal}${lanIP6}${macID}"
+      echo -e "\t${CLRtitle}${lanTITLE}\t${CLRwhite}${lanIP}${CLRnormal}${lanIP6}${macID}${CLRnormal}"
+    done
+  elif [[ $lanIP != "Unknown" ]]; then   # for FreeBSD/OpenBSD/SunOS where full NW details aren't gathered
+    for (( i=0; i<ip4count; i=i+1 )); do
+      lanIP="${lanIPS[i]}"
+      echo -e "\t${CLRtitle}LAN IP \t\t${CLRwhite}${lanIP}${CLRnormal}"
     done
   fi
   [[ -n $pubIP ]] && echo -e "\t${CLRtitle}Internet IP \t${CLRwhite}${pubIP}${CLRnormal}"
