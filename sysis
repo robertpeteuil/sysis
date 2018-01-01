@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
 
 # sysis - Display Key System Information
+#   Copyright (C) 2017  Robert Peteuil  @RobertPeteuil
 #
 #     Lightweight Cross-Platform Utility for:
 #         macOS, Linux, and Windows 10 Bash on Windows
 #
 #    from: https://github.com/robertpeteuil/sysis
 #
-#  Author: Robert Peteuil   @RobertPeteuil
-#
+#    TODO: ipv6 support
+#          RPi64 (aarch64) - notes: https://github.com/raspberrypi/linux/issues/2110
 
 scriptname="sysis"
-scriptbuildnum="3.7.0a7"
+scriptbuildnum="3.7.0a9"
 scriptbuilddate="2017-12-31"
 
 ############################################################
 ### VARS INITS
 
 OS=$(uname -s)
-MACHINE_NAME=$(hostname -f)
+MACHINE_NAME=$(hostname -s)
 
-# VARIABLES - OTHER
 REPORTTITLE="System Information"
 EXITSTATUS=0
 EXITMESSAGE=""
@@ -49,14 +49,11 @@ if test -t 1; then            # check if stdout is a terminal
     CLRnormal="\033[0m"
     CLRwhite=${bold}${white}
     CLRheading=${bold}${blue}
-    # CLRheading2=${bold}${green}
-    CLRheading2=${green}
-    # CLRtitle=${bold}${cyan}
-    CLRtitle=${cyan}
+    CLRheading2=${CLRnormal}${green}
+    CLRtitle=${CLRnormal}${cyan}
     CLRtitle2=${bold}${magenta}
     CLRsuccess=${bold}${green}  # shellcheck disable SC2034
-    # CLRwarning=${bold}${yellow}
-    CLRwarning=${yellow}
+    CLRwarning=${CLRnormal}${yellow}
     CLRerror=${bold}${red}
   fi
 fi
@@ -132,36 +129,37 @@ getCommandTail() {
 
 cleanText() {
     local var=$*
-    var="${var%"${var##*[![:space:]]}"}"    # remove leading whitespace
-    var="${var#"${var%%[![:space:]]*}"}"    # remove trailing whitespace
+    var="${var%"${var##*[![:space:]]}"}"     # remove leading whitespace
+    var="${var#"${var%%[![:space:]]*}"}"     # remove trailing whitespace
     echo -n "$var"
 }
 
 cleanCPUname() {
   local tempCPUname=$1
-  tempCPUname=${tempCPUname#*': '}          # strip left of ': '
-  tempCPUname=${tempCPUname//'(R)'/}        # remove '(R)'
-  tempCPUname=${tempCPUname//'(tm)'/}       # remove '(tm)'
+  tempCPUname=${tempCPUname#*': '}           # strip left of ': '
+  tempCPUname=${tempCPUname//'(R)'/}         # remove '(R)'
+  tempCPUname=${tempCPUname//'(tm)'/}        # remove '(tm)'
   tempCPUname=${tempCPUname//'(TM)'/}        # remove '(TM)'
   tempCPUname=${tempCPUname//' CPU'/}        # remove ' CPU'
   tempCPUname=${tempCPUname//' Processor'/}  # remove ' Processor'
-  tempCPUname=${tempCPUname%' @'*}          # remove speed
-  tempCPUname=${tempCPUname%' v'*}          # remove version #
-  tempCPUname=${tempCPUname%'  '*}          # remove model # that comes after 2 spaces
-  tempCPUname=${tempCPUname//' 0'/}         # remove space 0
-  tempCPUname=$(cleanText "$tempCPUname")   # remove leading / trailine space
+  tempCPUname=${tempCPUname%' @'*}           # remove speed
+  tempCPUname=${tempCPUname%' v'*}           # remove version #
+  tempCPUname=${tempCPUname%'  '*}           # remove model # that comes after 2 spaces
+  tempCPUname=${tempCPUname//' 0'/}          # remove space 0
+  tempCPUname=$(cleanText "$tempCPUname")    # remove leading / trailine space
   # remove processor rev of style - P(A)XXXX ex: P47350
   tempCPUname=$(echo "$tempCPUname" | awk '{sub(/\s[[:alpha:]][[:alpha:]]?[0-9]{4}$/, ""); print $0}')
   # remove processor rev of style - P(A)5-XXXX ex: E5-1620
   tempCPUname=$(echo "$tempCPUname" | awk '{sub(/\s[[:alpha:]][[:alpha:]]?[0-9]-[0-9]{4}$/, ""); print $0}')
+  tempCPUname=$(echo "$tempCPUname" | awk '{sub(/-[0-9]{2,4}[a-zA-Z]/, ""); print $0}')
   echo -n "$tempCPUname"
 }
 
 cleanVARtext() {
   local unclearVARtext=$1
-  unclearVARtext=${unclearVARtext#*':'}     # strip left of ':'
-  unclearVARtext=${unclearVARtext%%'.'*}    # strip right of '.'
-  unclearVARtext=${unclearVARtext// /}      # remove spaces
+  unclearVARtext=${unclearVARtext#*':'}      # strip left of ':'
+  unclearVARtext=${unclearVARtext%%'.'*}     # strip right of '.'
+  unclearVARtext=${unclearVARtext// /}       # remove spaces
   echo -n "$unclearVARtext"
 }
 
@@ -174,25 +172,27 @@ getNetwork() {
   fi
   if [[ $(ip -4 addr 2> /dev/null) ]]; then  # LANIP via 'ip' if possible
     # ip features may be limited on older systems
-    # lanIP=$(ip -4 addr | awk '{if (index( $0, "state UP") >0) {getline; if (index( $0, "brd") >0) {split($2, ip, /\//); print ip[1]}}}')
-    lanINFO=$(ip -d addr | awk 'BEGIN{n=0} /^[0-9]/ {if ($0 ~ /state UP/) { nname[n]=$2; getline; validIP=""; do {if ($0 ~ /link\/ether/) {macadd[n]=$2} else if ($0 ~ /brd/) {ip4add[n]=$2; n++; break} getline} while ($0 !~ /^[0-9]/)}} END{for (i=0; i<n; i++) {split(ip4add[i], ip4, /\//); split(nname[i], adname, ":"); print adname[1], ip4[1], macadd[i]}}')
+    lanINFO=$(ip -d addr | awk 'BEGIN{n=0} /^[0-9]/ {if ($0 ~ /state UP/) { validIP=""; nname[n]=$2; getline; do {if ($0 ~ /bridge forward/) {break} if ($0 ~ /link\/ether/) {macadd[n]=$2} else if ($0 ~ /inet / && $0 ~ /scope global/) {ip4add[n]=$2; validIP="true"} else if ($0 ~ /inet6/ && $0 ~ /scope global/) {ip6add[n]=$2; validIP="true"} getline} while ($0 !~ /^[0-9]/)} if (validIP == "true") {n++; validIP=""}} END{for (i=0; i<n; i++) {split(ip4add[i], ip4, /\//); split(ip6add[i], ip6, /\//); split(nname[i], adname, ":"); print adname[1], ip4[1], macadd[i], ip6[1]}}')
     lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f1)
     lanIP=$(echo -e "$lanINFO" | cut -d' ' -f2)
     lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f3)
+    lanIP6=$(echo -e "$lanINFO" | cut -d' ' -f4)
   elif [[ $(ifconfig -a 2> /dev/null) ]]; then  # else try 'ifconfig'
     case $OS in
-     Linux)   # does not display virtual adapters named "virbr*"
-        # awk features may be limited on older systems
-        lanINFO=$(ifconfig -a | awk 'BEGIN{n=0} /^[A-Za-z0-9]/ {if ($1 ~ /^virbr/) {next} else {nname[n]=$1; validIP=""; do {if ($0 ~ /^\s*$/) {break} else if ($0 ~ /HWaddr/) {macadd[n]=$5} else if ($0 ~ /cast/ && $0 !~ /cast:0\.0\.0\.0/) {ip4add[n]=$2; n++; break} getline} while ($0 !~ /^[A-Za-z0-9]/)}} END{for (i=0; i<n; i++) {split(ip4add[i], ip4, ":"); print nname[i], ip4[2], macadd[i]}}')
+     Linux)   # removes virtual adapters named "virbr*" from results
+        # awk limited on older systems (no support for [[:alnum:]])
+        lanINFO=$(ifconfig -a | awk 'BEGIN{n=0} /^[A-Za-z0-9]/ {if ($1 ~ /^virbr/) {next} else {nname[n]=$1; validIP=""; do {if ($0 ~ /^\s*$/) {break} else if ($0 ~ /HWaddr/) {macadd[n]=$5} else if ($0 ~ /cast/ && $0 !~ /cast:0\.0\.0\.0/) {ip4add[n]=$2; validIP="true"} else if ($0 ~ /inet6/ && $0 ~ /Scope:Global/) {ip6add[n]=$3; validIP="true"} getline} while ($0 !~ /^[A-Za-z0-9]/)} if (validIP == "true") {n++; validIP=""} } END{for (i=0; i<n; i++) {split(ip4add[i], ip4, ":"); split(ip6add[i], ip6, /\//); print nname[i], ip4[2], macadd[i], ip6[1]}}')
         lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f1)
         lanIP=$(echo -e "$lanINFO" | cut -d' ' -f2)
         lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f3)
+        lanIP6=$(echo -e "$lanINFO" | cut -d' ' -f4)
         ;;
-     Darwin)  # does not display virtual adapters named "vnic*"
-        lanINFO=$(ifconfig -a | awk 'BEGIN{n=0} /^[[:alnum:]]/ {if ($1 ~ /^vnic/) {next} else {nname[n]=$1; getline; if ($0 ~ /^[[:alnum:]]/) {nname[n]=$1; getline} {validIP=""; do {if ($0 ~ /inactive/) {break} else if ($0 ~ /ether /) {macadd[n]=$2} else if ($0 ~ /cast/) {ip4add[n]=$2; validIP="true"} else if ($0 ~ /active/ && validIP == "true") {n++;break} getline} while ($0 !~ /^[[:alnum:]]/)}}} END{for (i=0; i<n; i++) {split(nname[i], adname, ":"); print adname[1], ip4add[i], macadd[i]}}')
+     Darwin)  # removes virtual adapters named "vnic*" from results
+        lanINFO=$(ifconfig -a | awk 'BEGIN{n=0} /^[[:alnum:]]/ {if ($1 ~ /^vnic/) {next} else {split($1, tmpname, ":"); nname[n]=tmpname[1]; getline; if ($0 ~ /^[[:alnum:]]/) {split($1, tmpname, ":"); nname[n]=tmpname[1]; getline; validIP=""; active=""} {do {if ($0 ~ /inactive/) {break} else if ($0 ~ /ether /) {macadd[n]=$2} else if ($0 ~ /cast/) {ip4add[n]=$2; validIP="true"} else if ($0 ~ /inet6/ && index( $2, nname[n]) ==0) {ip6add[n]=$2; validIP="true"}else if ($0 ~ /active/) {active="true"; break} getline} while ($0 !~ /^[[:alnum:]]/)} if (validIP == "true" && active == "true") {n++; validIP=""; active=""} }} END{for (i=0; i<n; i++) {print nname[i], ip4add[i], macadd[i], ip6add[i]}}')
         lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f1)
         lanIP=$(echo -e "$lanINFO" | cut -d' ' -f2)
         lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f3)
+        lanIP6=$(echo -e "$lanINFO" | cut -d' ' -f4)
         ;;
      FreeBSD|OpenBSD)
         lanIP=$(ifconfig | grep -E 'inet.[0-9]' | grep -v '127.0.0.1' | awk '{print $2}')
@@ -223,6 +223,13 @@ getNetwork() {
     count=0
     for i in $lanMAC; do
       lanMACS[count]=$i
+      ((++count))
+    done
+  fi
+  if [[ -n $lanIP6 ]]; then  # if multiple lanIP6's, use array
+    count=0
+    for i in $lanIP6; do
+      lanIP6S[count]=$i
       ((++count))
     done
   fi
@@ -267,16 +274,15 @@ getSystem() {
 setLinuxCommon() {
   if [[ $VALUESvia == "FILE" ]]; then   # plan a - use file
     OSfullname="${LSBrel}"
-    [[ -n "$LSBcodename" ]] && OSfullname="${OSfullname} ${CLRwarning}(${LSBcodename})${CLRnormal}"
+    [[ -n "$LSBcodename" ]] && OSfullname="${OSfullname}${CLRnormal}  ${CLRwarning}(${LSBcodename})${CLRnormal}"
   elif [[ $VALUESvia == "LSB" ]]; then  # plan b - use lsb_release
     OSfullname="${LSBid} ${LSBrel}"
-    [[ -n "$LSBcodename" ]] && OSfullname="${OSfullname} ${CLRwarning}(${LSBcodename})${CLRnormal}"
+    [[ -n "$LSBcodename" ]] && OSfullname="${OSfullname}${CLRnormal}  ${CLRwarning}(${LSBcodename})${CLRnormal}"
     # OScodename="${LSBcodename}"
   else                                  # plan c - use uname
     OSfullname="${SYSkernal}"
   fi
   if [ -e "/sys/devices/system/cpu/possible" ]; then
-    # DEVICEinfoExists=true
     if lscpu | grep -q -m1 'max MHz'; then
       CPUspeed=$(lscpu | grep -m1 'max MHz')  # exists on adj proc
     else
@@ -288,10 +294,9 @@ setLinuxCommon() {
     CPUspeedSmall=$((CPUspeed % 1000))
     CPUcores=$(lscpu | grep 'Core(s)')
     CPUcores=$(cleanVARtext "$CPUcores")
-    CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz ${CLRnormal}${CLRwarning}(${CPUcores} Core)${CLRnormal}"
+    CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz  ${CLRnormal}${CLRwarning}(${CPUcores} Core)${CLRnormal}"
   fi
   if [[ $(df 2> /dev/null) ]]; then
-    # DEVICEinfoExists=true
     DISKuse=$(df -h | awk '$NF=="/"{printf "%d/%d GB", $3,$2}')
     DISKRatio=$(df -h | awk '$NF=="/"{printf "%s\n", $5}')
     DISKusage="${DISKuse}  ${CLRnormal}${CLRwarning}(${DISKRatio})${CLRnormal}"
@@ -301,10 +306,8 @@ setLinuxCommon() {
 
 setRPI() {
   DeviceType="RPI"
-  # OSdetails="KERNEL\t"
   setLinuxCommon
   if [ -e "/proc/cpuinfo" ]; then
-    # DEVICEinfoExists=true
     RPIrev=$(awk '/Revision/ { sub(/^.+\:/, "") ; print $1 }' /proc/cpuinfo)
     CPUname=$(awk '/model\ name/ { sub(/-compatible/, ""); print ($4)" r"($7); exit}' /proc/cpuinfo)
     # RPI HW version source: http://elinux.org/RPi_HardwareHistory
@@ -342,17 +345,15 @@ setRPI() {
         *a32082) RPImodel="3B [1.2]"; RPIman="Sony"; RPIrel="Q4 2016";;
         *) RPImodel="'Unknown Version'"; RPIman="Unknown"; RPIrel="Unknown";;
     esac
-    # HWrelease="${RPIrel} (${RPIman})"
   else   # RPI Model not known
     RPImodel="'Unknown Version'"
   fi
-  OSversion=${SYSkernalVer%"-"*}
+  OSkernel=${SYSkernalVer%"-"*}
   HWdevice="Raspberry Pi"
   [[ ${RPImodel} != "'Unknown Version'" ]] && HWdevice="${HWdevice} ${RPImodel}"
-  [[ ${RPIrel} != "Unknown" ]] && HWdevice="${HWdevice} ${CLRwarning}(${RPIrel})${CLRnormal}"
+  [[ ${RPIrel} != "Unknown" ]] && HWdevice="${HWdevice}${CLRnormal}  ${CLRwarning}(${RPIrel})${CLRnormal}"
   CPUmeta="${CPUname} ${CPUinfo}"
   if [[ $(free 2> /dev/null) ]]; then
-    # DEVICEinfoExists=true
     MEMuse=$(free -m | awk 'NR==2{printf "%s/%s MB", $3,$2 }')
     MemRatio=$(free -m | awk 'NR==2{printf "%.0f\n", $3*100/$2 }')
     MEMusage="${MEMuse}  ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
@@ -362,19 +363,16 @@ setRPI() {
 
 setLinux() {
   DeviceType="Linux"
-  # OSdetails="KERNEL\t"
   setLinuxCommon
-  OSversion=${SYSkernalVer%"-"*}
+  OSkernel=${SYSkernalVer%"-"*}
   HWdevice=""
   HWrelease=""
   if [ -e "/proc/cpuinfo" ]; then
-    # DEVICEinfoExists=true
     CPUname=$(grep -m1 'model name' < /proc/cpuinfo)
     CPUname=$(cleanCPUname "$CPUname")
   fi
-  CPUmeta="${CPUname} ${CPUinfo}"
+  CPUmeta="${CPUname}${CLRnormal} ${CPUinfo}"
   if [[ $(free 2> /dev/null) ]]; then
-    # DEVICEinfoExists=true
     MEMuse=$(free -m | awk 'NR==2{printf "%s/%s MB", $3,$2 }')
     MemRatio=$(free -m | awk 'NR==2{printf "%.0f\n", $3*100/$2 }')
     MEMusage="${MEMuse}  ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
@@ -384,16 +382,12 @@ setLinux() {
 
 setMac() {
   DeviceType="Mac"
-  # OSdetails="VERSION  "
-  # DEVICEinfoExists=true
   MacOSinitialVer=${SYSkernalVer%%.*}
   MacOSadjustedVer=$((MacOSinitialVer-4))
   MacOSsubVer=${SYSkernalVer%.*}
   MacOSsubVer=${MacOSsubVer#*.}
   MacOSmainVer="10.${MacOSadjustedVer}"
-  # OSversion="10.${MacOSadjustedVer}.${MacOSsubVer}"
   MacOSver="10.${MacOSadjustedVer}.${MacOSsubVer}"
-  # OSfullname="macOS ${MacOSmainVer}"
   case $MacOSmainVer in
     10.13) OSname="High Sierra";;
     10.12) OSname="Sierra";;
@@ -410,7 +404,7 @@ setMac() {
     10.1) OSname="Puma";;
     10.0) OSname="Cheetah";;
   esac
-  OSfullname="macOS ${MacOSver} ${CLRwarning}(${OSname})${CLRnormal}"
+  OSfullname="macOS ${MacOSver}${CLRnormal}  ${CLRwarning}(${OSname})${CLRnormal}"
   HWdevice=${SYSplatform//,/.}
   HWrelease=""
   # Mac HW Quieries - 'sysctl -n' return string with item and value
@@ -421,7 +415,7 @@ setMac() {
   CPUspeedBig=$((CPUspeed / 1000))
   CPUspeedSmall=$((CPUspeed % 1000))
   CPUcores=$(sysctl -n hw.ncpu)
-  CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz ${CLRnormal}${CLRwarning}(${CPUcores} Core)${CLRnormal}"
+  CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz  ${CLRnormal}${CLRwarning}(${CPUcores} Core)${CLRnormal}"
   CPUmeta="${CPUname} ${CPUinfo}"
   MEMsizeMB=$(sysctl -n hw.memsize)
     MEMsizeMB=$((MEMsizeMB / (1024 * 1024) ))    # Mem in MB
@@ -495,8 +489,11 @@ reportDebug() {
   return 0
 }
 
+reportSysName() {
+  echo -e "\t${CLRheading}HOSTNAME\t${CLRheading2}${MACHINE_NAME}${CLRnormal}"
+}
+
 reportNetwork() {
-  echo -e "\t${CLRheading}HOSTNAME\t${CLRheading2}${MACHINE_NAME}"
   [[ -n $SYSnode ]] && [[ "$SYSnode" != "$HOSTNAME" ]] && echo -e "\t${CLRheading}NODE\t\t${CLRheading2}${SYSnode}"
   if [[ $lanIP != "Unknown" ]]; then
     for (( i=0; i<count; i=i+1 )); do
@@ -509,10 +506,13 @@ reportNetwork() {
         lanTITLE="LAN IP \t"
       fi
       if [[ -n $lanMAC ]]; then
-        macID="\t${CLRwarning}(${lanMACS[i]})${CLRnormal}"
+        macID="  ${CLRwarning}(${lanMACS[i]})${CLRnormal}"
+      fi
+      if [[ -n $lanIP6 ]]; then
+        lanIP6="  ${CLRtitle2}${lanIP6S[i]}${CLRnormal}"
       fi
       lanIP=${lanIPS[i]}
-      echo -e "\t${CLRtitle}${lanTITLE}\t${CLRwhite}${lanIP}${macID}"
+      echo -e "\t${CLRtitle}${lanTITLE}\t${CLRwhite}${lanIP}${CLRnormal}${lanIP6}${macID}"
     done
   fi
   [[ -n $pubIP ]] && echo -e "\t${CLRtitle}Internet IP \t${CLRwhite}${pubIP}${CLRnormal}"
@@ -520,44 +520,23 @@ reportNetwork() {
 }
 
 reportSystem() {
-  # [[ -n $OSfullname ]] && echo -e "\t${CLRheading}OS\t\t${CLRheading2}${OSfullname}${CLRnormal}"
   [[ -n $HWdevice ]] && echo -e "\t${CLRtitle}HW Device\t${CLRwhite}${HWdevice}${CLRnormal}"
-  [[ -n $CPUmeta ]] && echo -e "\t${CLRtitle}Processor\t${CLRwhite}${CPUmeta}${CLRnormal}"
   [[ -n $OSfullname ]] && echo -e "\t${CLRtitle}OS\t\t${CLRwhite}${OSfullname}${CLRnormal}"
-  # [[ -n $OScodename ]] && echo -e "\t${CLRtitle}CODENAME\t${CLRwhite}${OScodename}${CLRnormal}"
-  [[ -n $OSversion ]] && echo -e "\t${CLRtitle}Kernel\t\t${CLRwhite}${OSversion}${CLRnormal}"
-  # [[ -n $OSversion ]] && echo -e "\t${CLRtitle}${OSdetails}\t${CLRwhite}${OSversion}${CLRnormal}"
-  [[ -n $HWrelease ]] && echo -e "\t${CLRtitle}Release Date\t${CLRwhite}${HWrelease}${CLRnormal}"
-  # [[ -n $CPUmeta ]] && echo -e "\t${CLRtitle}CPU\t\t${CLRwhite}${CPUmeta}${CLRnormal}"
+  [[ -n $OSkernel ]] && echo -e "\t${CLRtitle}Kernel\t\t${CLRwhite}${OSkernel}${CLRnormal}"
   [[ -z $compressed ]] && echo
+  reportNetwork
+  [[ -z $compressed ]] && echo
+  [[ -n $HWrelease ]] && echo -e "\t${CLRtitle}Release Date\t${CLRwhite}${HWrelease}${CLRnormal}"
+  [[ -n $CPUmeta ]] && echo -e "\t${CLRtitle}Processor\t${CLRwhite}${CPUmeta}${CLRnormal}"
   [[ -n $MEMusage ]] && echo -e "\t${CLRtitle}Memory Use\t${CLRwhite}${MEMusage}${CLRnormal}"
-  # [[ -n $MEMusage ]] && echo -e "\t${CLRtitle}MEM USAGE\t${CLRwhite}${MEMusage}${CLRnormal}"
   [[ -n $DISKusage ]] && echo -e "\t${CLRtitle}Disk Use\t${CLRwhite}${DISKusage}${CLRnormal}"
-  # [[ -n $DISKusage ]] && echo -e "\t${CLRtitle}DISK USAGE\t${CLRwhite}${DISKusage}${CLRnormal}"
-  # if [ $DEVICEinfoExists ]; then
-  #   # echo
-  #   if [[ -n $HWdevice ]]; then
-  #     # echo -e "\t${CLRtitle}HARDWARE\t${CLRheading2}${HWdevice}${CLRnormal}"
-  #     # echo -e "\t${CLRheading}DEVICE\t\t${CLRheading2}${HWdevice}${CLRnormal}"
-  #     CLRsubsect1=${CLRtitle}
-  #     CLRsubsect2=${CLRwhite}
-  #   else
-  #     CLRsubsect1=${CLRheading}
-  #     CLRsubsect2=${CLRheading2}
-  #   fi
-  #   [[ -n $HWrelease ]] && echo -e "\t${CLRtitle}RELEASE DATE\t${CLRwhite}${HWrelease}${CLRnormal}"
-  #   [[ -n $CPUmeta ]] && echo -e "\t${CLRsubsect1}CPU\t\t${CLRsubsect2}${CPUmeta}${CLRnormal}"
-  #   [[ -n $MEMusage ]] && echo -e "\t${CLRtitle}MEM USAGE\t${CLRwhite}${MEMusage}${CLRnormal}"
-  #   [[ -n $DISKusage ]] && echo -e "\t${CLRtitle}DISK USAGE\t${CLRwhite}${DISKusage}${CLRnormal}"
-  # fi
   return 0
 }
 
 reportMain() {
-  reportNetwork
-  [[ -z $compressed ]] && echo
+  reportSysName
   if [[ -z "$DeviceType" ]] || [[ "$mode" == "FORCE" ]]; then   # set VARS to most raw form
-    OSversion=${SYSkernalVer}
+    OSkernel=${SYSkernalVer}
     CPUname=${SYSmachine}
     [[ "$SYSplatform" != "unknown" ]] && HWdevice=${SYSplatform}
   fi
@@ -573,7 +552,7 @@ reportMain() {
 getCommandTail "$@"
 
 getNetwork
-[[ $mode == "NET" ]] && reportNetwork && processExit
+[[ $mode == "NET" ]] && reportSysName && reportNetwork && processExit
 getSystem
 
 if [[ "$OS" == "Linux" ]]; then
