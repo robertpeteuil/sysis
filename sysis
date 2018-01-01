@@ -1,19 +1,17 @@
 #!/usr/bin/env bash
 
 # sysis - Display Key System Information
-#   Copyright (C) 2017  Robert Peteuil  @RobertPeteuil
+#   Copyright (C) 2014-2018  Robert Peteuil  @RobertPeteuil
 #
 #     Lightweight Cross-Platform Utility for:
 #         macOS, Linux, and Windows 10 Bash on Windows
 #
 #    from: https://github.com/robertpeteuil/sysis
-#
-#    TODO: ipv6 support
-#          RPi64 (aarch64) - notes: https://github.com/raspberrypi/linux/issues/2110
+
 
 scriptname="sysis"
-scriptbuildnum="3.7.0a9"
-scriptbuilddate="2017-12-31"
+scriptbuildnum="3.7.0"
+scriptbuilddate="2018-01-01"
 
 ############################################################
 ### VARS INITS
@@ -91,7 +89,7 @@ printHelp() {
   echo -e "\n${CLRwhite}Collect and print information on system, network and OS to standard output.\n"
   echo -e "${CLRtitle}usage: ${CLRwhite}${scriptname} ${CLRtitle2}[OPTIONS] [DEBUG]${CLRwhite}\n"
   echo -e "${CLRtitle}   OPTIONS"
-  echo -e "${CLRtitle2}     -c\t${CLRwhite}: compressed output (no seperation lines)"
+  echo -e "${CLRtitle2}     -c\t${CLRwhite}: compressed output (no separation lines)"
   echo -e "${CLRtitle2}     -d\t${CLRwhite}: debug only report"
   echo -e "${CLRtitle2}     -n\t${CLRwhite}: network only report"
   echo -e "${CLRtitle2}     -h\t${CLRwhite}: help"
@@ -172,7 +170,7 @@ getNetwork() {
   fi
   if [[ $(ip -4 addr 2> /dev/null) ]]; then  # LANIP via 'ip' if possible
     # ip features may be limited on older systems
-    lanINFO=$(ip -d addr | awk 'BEGIN{n=0} /^[0-9]/ {if ($0 ~ /state UP/) { validIP=""; nname[n]=$2; getline; do {if ($0 ~ /bridge forward/) {break} if ($0 ~ /link\/ether/) {macadd[n]=$2} else if ($0 ~ /inet / && $0 ~ /scope global/) {ip4add[n]=$2; validIP="true"} else if ($0 ~ /inet6/ && $0 ~ /scope global/) {ip6add[n]=$2; validIP="true"} getline} while ($0 !~ /^[0-9]/)} if (validIP == "true") {n++; validIP=""}} END{for (i=0; i<n; i++) {split(ip4add[i], ip4, /\//); split(ip6add[i], ip6, /\//); split(nname[i], adname, ":"); print adname[1], ip4[1], macadd[i], ip6[1]}}')
+    lanINFO=$(ip -d addr | awk 'BEGIN{n=0} /^[0-9]/ {if ($0 ~ /state UP/) { validIP=""; nname[n]=$2; getline; do {if ($0 ~ /bridge forward/ || $0 ~ /bridge_slave/) {break} if ($0 ~ /link\/ether/) {macadd[n]=$2} else if ($0 ~ /inet / && $0 ~ /scope global/) {ip4add[n]=$2; validIP="true"} else if ($0 ~ /inet6/ && $0 ~ /scope global/) {ip6add[n]=$2; validIP="true"} getline} while ($0 !~ /^[0-9]/)} if (validIP == "true") {n++; validIP=""}} END{for (i=0; i<n; i++) {split(ip4add[i], ip4, /\//); split(ip6add[i], ip6, /\//); split(nname[i], adname, ":"); print adname[1], ip4[1], macadd[i], ip6[1]}}')
     lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f1)
     lanIP=$(echo -e "$lanINFO" | cut -d' ' -f2)
     lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f3)
