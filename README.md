@@ -1,7 +1,7 @@
 # SYSIS - the Lightweight System-Information Utility
 ### Quickly Display System Information for Varied Host Types
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/462b017e8f6b407d9783b1181b9ab869)](https://www.codacy.com/app/robertpeteuil/sysis?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=robertpeteuil/sysis&amp;utm_campaign=Badge_Grade)
-[![GitHub release](https://img.shields.io/github/release/robertpeteuil/sysis.svg?colorB=2067b8)](https://github.com/robertpeteuil/sysis)
+[![GitHub release](https://img.shields.io/github/release/robertpeteuil/sysis.svg?colorB=2067b8)](https://github.com/robertpeteuil/sysis/blob/master/CHANGELOG.md)
 [![lang](https://img.shields.io/badge/language-bash-89e051.svg?style=flat-square)](https://github.com/robertpeteuil/sysis)
 [![license](https://img.shields.io/github/license/robertpeteuil/sysis.svg?colorB=2067b8)](https://github.com/robertpeteuil/sysis)
 
@@ -12,7 +12,7 @@
 It was designed for maximum productivity:
 - Simple to use - it requires no parameters to use
 - Executes quickly by gathering only commonly needed information
-   
+
 
 ### Example sysis output on Mac and Ubuntu:
 ![](https://user-images.githubusercontent.com/1554603/31736305-348e9408-b3f9-11e7-9c38-32a924d45505.png) ![](https://user-images.githubusercontent.com/1554603/31737773-5f2648e2-b3fd-11e7-970f-d5ec5cf66c1a.jpg)
@@ -46,6 +46,7 @@ cd sysis
 USAGE: sysis [OPTIONS]
 
  OPTIONS:
+     -c	: compressed output (no separation lines)
      -d	: debug only report
      -n	: network only report
      -h	: help
@@ -55,4 +56,4 @@ USAGE: sysis [OPTIONS]
 
 ### Project History:
 
-**SYSIS** is an acronym for "SYStem IS" and was originally written in 2015.  It was open-sourced in early 2017, and is actively maintained.
+**SYSIS**, an acronym for "SYStem IS", was originally written in 2014 and released as open-source in 2017. It's actively maintained and enhancements are continually added.

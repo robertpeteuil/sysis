@@ -1,18 +1,17 @@
 #!/usr/bin/env bash
 
 # sysis - Display Key System Information
+#   Copyright (C) 2014-2018  Robert Peteuil  @RobertPeteuil
 #
 #     Lightweight Cross-Platform Utility for:
 #         macOS, Linux, and Windows 10 Bash on Windows
 #
 #    from: https://github.com/robertpeteuil/sysis
-#
-#  Author: Robert Peteuil   @RobertPeteuil
-#
+
 
 scriptname="sysis"
-scriptbuildnum="3.6.3"
-scriptbuilddate="2017-12-23"
+scriptbuildnum="3.7.0"
+scriptbuilddate="2018-01-01"
 
 ############################################################
 ### VARS INITS
@@ -20,7 +19,6 @@ scriptbuilddate="2017-12-23"
 OS=$(uname -s)
 MACHINE_NAME=$(hostname -s)
 
-# VARIABLES - OTHER
 REPORTTITLE="System Information"
 EXITSTATUS=0
 EXITMESSAGE=""
@@ -49,11 +47,11 @@ if test -t 1; then            # check if stdout is a terminal
     CLRnormal="\033[0m"
     CLRwhite=${bold}${white}
     CLRheading=${bold}${blue}
-    CLRheading2=${bold}${green}
-    CLRtitle=${bold}${cyan}
+    CLRheading2=${CLRnormal}${green}
+    CLRtitle=${CLRnormal}${cyan}
     CLRtitle2=${bold}${magenta}
-    CLRsuccess=${bold}${green}
-    CLRwarning=${bold}${yellow}
+    CLRsuccess=${bold}${green}  # shellcheck disable SC2034
+    CLRwarning=${CLRnormal}${yellow}
     CLRerror=${bold}${red}
   fi
 fi
@@ -91,6 +89,7 @@ printHelp() {
   echo -e "\n${CLRwhite}Collect and print information on system, network and OS to standard output.\n"
   echo -e "${CLRtitle}usage: ${CLRwhite}${scriptname} ${CLRtitle2}[OPTIONS] [DEBUG]${CLRwhite}\n"
   echo -e "${CLRtitle}   OPTIONS"
+  echo -e "${CLRtitle2}     -c\t${CLRwhite}: compressed output (no separation lines)"
   echo -e "${CLRtitle2}     -d\t${CLRwhite}: debug only report"
   echo -e "${CLRtitle2}     -n\t${CLRwhite}: network only report"
   echo -e "${CLRtitle2}     -h\t${CLRwhite}: help"
@@ -112,6 +111,7 @@ printHelp() {
 getCommandTail() {
   while [[ -n $1 ]]; do
     case $1 in
+      -c)           compressed="true";;
       -d)           mode="DEBUG";;
       -n)           mode="NET";;
       -h)           printHelp;;
@@ -127,51 +127,71 @@ getCommandTail() {
 
 cleanText() {
     local var=$*
-    var="${var%"${var##*[![:space:]]}"}"    # remove leading whitespace
-    var="${var#"${var%%[![:space:]]*}"}"    # remove trailing whitespace
+    var="${var%"${var##*[![:space:]]}"}"     # remove leading whitespace
+    var="${var#"${var%%[![:space:]]*}"}"     # remove trailing whitespace
     echo -n "$var"
 }
 
 cleanCPUname() {
   local tempCPUname=$1
-  tempCPUname=${tempCPUname#*': '}          # strip left of ': '
-  tempCPUname=${tempCPUname//'(R)'/}        # remove '(R)'
-  tempCPUname=${tempCPUname//'(tm)'/}       # remove '(tm)'
+  tempCPUname=${tempCPUname#*': '}           # strip left of ': '
+  tempCPUname=${tempCPUname//'(R)'/}         # remove '(R)'
+  tempCPUname=${tempCPUname//'(tm)'/}        # remove '(tm)'
   tempCPUname=${tempCPUname//'(TM)'/}        # remove '(TM)'
   tempCPUname=${tempCPUname//' CPU'/}        # remove ' CPU'
   tempCPUname=${tempCPUname//' Processor'/}  # remove ' Processor'
-  tempCPUname=${tempCPUname%' @'*}          # remove speed
-  tempCPUname=${tempCPUname%' v'*}          # remove version #
-  tempCPUname=${tempCPUname%'  '*}          # remove model # that comes after 2 spaces
-  tempCPUname=${tempCPUname//' 0'/}         # remove space 0
-  tempCPUname=$(cleanText "$tempCPUname")   # remove leading / trailine space
+  tempCPUname=${tempCPUname%' @'*}           # remove speed
+  tempCPUname=${tempCPUname%' v'*}           # remove version #
+  tempCPUname=${tempCPUname%'  '*}           # remove model # that comes after 2 spaces
+  tempCPUname=${tempCPUname//' 0'/}          # remove space 0
+  tempCPUname=$(cleanText "$tempCPUname")    # remove leading / trailine space
   # remove processor rev of style - P(A)XXXX ex: P47350
   tempCPUname=$(echo "$tempCPUname" | awk '{sub(/\s[[:alpha:]][[:alpha:]]?[0-9]{4}$/, ""); print $0}')
   # remove processor rev of style - P(A)5-XXXX ex: E5-1620
   tempCPUname=$(echo "$tempCPUname" | awk '{sub(/\s[[:alpha:]][[:alpha:]]?[0-9]-[0-9]{4}$/, ""); print $0}')
+  # remove processor rev of style "*-12A*", "*-123a*". "*-1234Z*"
+  tempCPUname=$(echo "$tempCPUname" | awk '{sub(/-[0-9]{2,4}[a-zA-Z]/, ""); print $0}')
   echo -n "$tempCPUname"
 }
 
 cleanVARtext() {
   local unclearVARtext=$1
-  unclearVARtext=${unclearVARtext#*':'}     # strip left of ':'
-  unclearVARtext=${unclearVARtext%%'.'*}    # strip right of '.'
-  unclearVARtext=${unclearVARtext// /}      # remove spaces
+  unclearVARtext=${unclearVARtext#*':'}      # strip left of ':'
+  unclearVARtext=${unclearVARtext%%'.'*}     # strip right of '.'
+  unclearVARtext=${unclearVARtext// /}       # remove spaces
   echo -n "$unclearVARtext"
 }
 
 getNetwork() {
-  pubIP=$(curl -s ipinfo.io/ip)  # Internet IP
-  if [[ $(ip -4 address 2> /dev/null) ]]; then  # LANIP via 'ip' if possible
-    # lanIP=$(ip -4 address | awk '/brd/ {split($2, ip, /\//); print ip[1]}')
-    lanIP=$(ip -4 address | awk '{if (index( $0, "state UP") >0) {getline; if (index( $0, "brd") >0) {split($2, ip, /\//); print ip[1]}}}')
+  if [[ $(dig 2> /dev/null) ]]; then
+    pubIP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com | sed 's/"//g')
+  elif [[ $(curl -V 2> /dev/null) ]]; then
+    pubIP=$(curl -s https://wtfismyip.com/text)
+    # pubIP=$(curl -s ipinfo.io/ip)  # ipinfo.io no longer provides consistant results as of Nov 2017
+  fi
+  if [[ $(ip -4 addr 2> /dev/null) ]]; then  # LANIP via 'ip' if possible
+    # ip features may be limited on older systems
+    lanINFO=$(ip -d addr | awk 'BEGIN{n=0} /^[0-9]/ {if ($0 ~ /state UP/) { validIP=""; nname[n]=$2; getline; do {if ($0 ~ /bridge forward/ || $0 ~ /bridge_slave/) {break} if ($0 ~ /link\/ether/) {macadd[n]=$2} else if ($0 ~ /inet / && $0 ~ /scope global/) {ip4add[n]=$2; validIP="true"} else if ($0 ~ /inet6/ && $0 ~ /scope global/) {ip6add[n]=$2; validIP="true"} getline} while ($0 !~ /^[0-9]/)} if (validIP == "true") {n++; validIP=""}} END{for (i=0; i<n; i++) {split(ip4add[i], ip4, /\//); split(ip6add[i], ip6, /\//); split(nname[i], adname, ":"); printf "%s n:%s 4:%s 6:%s\n", macadd[i], adname[1], ip4[1], ip6[1]}}')
+    lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f1)
+    lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f2)
+    lanIP=$(echo -e "$lanINFO" | cut -d' ' -f3)
+    lanIP6=$(echo -e "$lanINFO" | cut -d' ' -f4)
   elif [[ $(ifconfig -a 2> /dev/null) ]]; then  # else try 'ifconfig'
     case $OS in
-     Linux)   # note RPI may only have awk 1.x
-        lanIP=$(ifconfig -a | awk '/(cast)/ {print $2}' | cut -d: -f2)
+     Linux)   # removes virtual adapters named "virbr*" from results
+        # awk limited on older systems (no support for [[:alnum:]])
+        lanINFO=$(ifconfig -a | awk 'BEGIN{n=0} /^[A-Za-z0-9]/ {if ($1 ~ /^virbr/) {next} else {nname[n]=$1; validIP=""; do {if ($0 ~ /^\s*$/) {break} else if ($0 ~ /HWaddr/) {macadd[n]=$5} else if ($0 ~ /cast/ && $0 !~ /cast:0\.0\.0\.0/) {ip4add[n]=$2; validIP="true"} else if ($0 ~ /inet6/ && $0 ~ /Scope:Global/) {ip6add[n]=$3; validIP="true"} getline} while ($0 !~ /^[A-Za-z0-9]/)} if (validIP == "true") {n++; validIP=""} } END{for (i=0; i<n; i++) {split(ip4add[i], ip4, ":"); split(ip6add[i], ip6, /\//); printf "%s n:%s 4:%s 6:%s\n", macadd[i], nname[i], ip4[2], ip6[1]}}')
+        lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f1)
+        lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f2)
+        lanIP=$(echo -e "$lanINFO" | cut -d' ' -f3)
+        lanIP6=$(echo -e "$lanINFO" | cut -d' ' -f4)
         ;;
-     Darwin)  # filters virtual adapters (those with limited scope broadcast)
-        lanIP=$(ifconfig -a | awk '/(cast).([0-9]{1,3}\.){3}/ {print $2}')
+     Darwin)  # removes virtual adapters named "vnic*" from results
+        lanINFO=$(ifconfig -a | awk 'BEGIN{n=0} /^[[:alnum:]]/ {if ($1 ~ /^vnic/) {next} else {split($1, tmpname, ":"); nname[n]=tmpname[1]; getline; if ($0 ~ /^[[:alnum:]]/) {split($1, tmpname, ":"); nname[n]=tmpname[1]; getline; validIP=""; active=""} {do {if ($0 ~ /inactive/) {break} else if ($0 ~ /ether /) {macadd[n]=$2} else if ($0 ~ /cast/) {ip4add[n]=$2; validIP="true"} else if ($0 ~ /inet6/ && index( $2, nname[n]) ==0) {ip6add[n]=$2; validIP="true"}else if ($0 ~ /active/) {active="true"; break} getline} while ($0 !~ /^[[:alnum:]]/)} if (validIP == "true" && active == "true") {n++; validIP=""; active=""} }} END{for (i=0; i<n; i++) {printf "%s n:%s 4:%s 6:%s\n", macadd[i], nname[i], ip4add[i], ip6add[i]}}')
+        lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f1)
+        lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f2)
+        lanIP=$(echo -e "$lanINFO" | cut -d' ' -f3)
+        lanIP6=$(echo -e "$lanINFO" | cut -d' ' -f4)
         ;;
      FreeBSD|OpenBSD)
         lanIP=$(ifconfig | grep -E 'inet.[0-9]' | grep -v '127.0.0.1' | awk '{print $2}')
@@ -184,10 +204,33 @@ getNetwork() {
         ;;
     esac
   fi
-  if [[ -n $lanIP ]]; then  # if multiple LanIPs, use array
+  # On Linux/Mac all data gathered, so lanMAC sets # of connections to list
+  if [[ -n $lanMAC ]]; then
+    lancount=0
+    for i in $lanMAC; do
+      lanMACS[lancount]=$i
+      ((++lancount))
+    done
+  fi
+  if [[ -n $lanNAME ]]; then
     count=0
+    for i in $lanNAME; do
+      lanNAMES[count]=${i#*':'}   # strip off prefix added by awk
+      ((++count))
+    done
+  fi
+  # On FreeBSD/OpenBSD/SunOS only IP4 is gathered and the var ip4count sets # of IPs to list
+  if [[ -n $lanIP ]]; then
+    ip4count=0
     for i in $lanIP; do
-      lanIPS[count]=$i
+      lanIPS[ip4count]=${i#*':'}  # strip off prefix added by awk (harmeless if not present)
+      ((++ip4count))
+    done
+  fi
+  if [[ -n $lanIP6 ]]; then
+    count=0
+    for i in $lanIP6; do
+      lanIP6S[count]=${i#*':'}  # strip off prefix added by awk
       ((++count))
     done
   fi
@@ -210,6 +253,7 @@ getSystem() {
   if [ -r /etc/os-release ]; then
     VALUESvia="FILE"
     LSBrel="$(. /etc/os-release && echo "$PRETTY_NAME")"
+    LSBrel=${LSBrel%' ('*}     # strip right of ' (' to remove codename suffix (if present)
     LSBcodename="$(. /etc/os-release && echo "$VERSION")"
     LSBcodename=${LSBcodename#*', '}
     LSBcodename=${LSBcodename#* (}
@@ -223,154 +267,151 @@ getSystem() {
   	[[ -n $LSBrelPRE ]] && LSBrel=${LSBrelPRE#*":"} && LSBrel=$(cleanText "$LSBrel")
   	[[ -n $LSBcodenamePRE ]] && LSBcodename=${LSBcodenamePRE#*":"} && LSBcodename=$(cleanText "$LSBcodename")
   fi
+  LSBcodename=$(for i in $LSBcodename; do B=$(echo -n "${i:0:1}" | tr "[:lower:]" "[:upper:]")${i:1}; echo -n "${B} "; done)
+  LSBcodename=$(cleanText "$LSBcodename")
   return 0
 }
 
 setLinuxCommon() {
   if [[ $VALUESvia == "FILE" ]]; then   # plan a - use file
     OSfullname="${LSBrel}"
-    OScodename="${LSBcodename}"
+    [[ -n "$LSBcodename" ]] && OSfullname="${OSfullname}${CLRnormal}  ${CLRwarning}(${LSBcodename})${CLRnormal}"
   elif [[ $VALUESvia == "LSB" ]]; then  # plan b - use lsb_release
     OSfullname="${LSBid} ${LSBrel}"
-    OScodename="${LSBcodename}"
+    [[ -n "$LSBcodename" ]] && OSfullname="${OSfullname}${CLRnormal}  ${CLRwarning}(${LSBcodename})${CLRnormal}"
   else                                  # plan c - use uname
     OSfullname="${SYSkernal}"
   fi
   if [ -e "/sys/devices/system/cpu/possible" ]; then
-    DEVICEinfoExists=true
     if lscpu | grep -q -m1 'max MHz'; then
       CPUspeed=$(lscpu | grep -m1 'max MHz')  # exists on adj proc
     else
       CPUspeed=$(lscpu | grep -m1 'MHz')
     fi
     CPUspeed=$(cleanVARtext "$CPUspeed")
-    CPUspeed=$((CPUspeed + 5))  # add 5 to prevent rounding errors
+    CPUspeed=$((CPUspeed + 5))                # add 5 to prevent rounding errors
     CPUspeedBig=$((CPUspeed / 1000))
     CPUspeedSmall=$((CPUspeed % 1000))
     CPUcores=$(lscpu | grep 'Core(s)')
     CPUcores=$(cleanVARtext "$CPUcores")
-    CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz ${CLRnormal}${CLRwarning}(${CPUcores} Core)${CLRnormal}"
+    CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz  ${CLRnormal}${CLRwarning}(${CPUcores} Core)${CLRnormal}"
   fi
   if [[ $(df 2> /dev/null) ]]; then
-    DEVICEinfoExists=true
     DISKuse=$(df -h | awk '$NF=="/"{printf "%d/%d GB", $3,$2}')
     DISKRatio=$(df -h | awk '$NF=="/"{printf "%s\n", $5}')
-    DISKusage="${DISKuse} ${CLRnormal}${CLRwarning}(${DISKRatio})${CLRnormal}"
+    DISKusage="${DISKuse}  ${CLRnormal}${CLRwarning}(${DISKRatio})${CLRnormal}"
   fi
   return 0
 }
 
 setRPI() {
   DeviceType="RPI"
-  OSdetails="KERNEL\t"
   setLinuxCommon
   if [ -e "/proc/cpuinfo" ]; then
-    DEVICEinfoExists=true
     RPIrev=$(awk '/Revision/ { sub(/^.+\:/, "") ; print $1 }' /proc/cpuinfo)
     CPUname=$(awk '/model\ name/ { sub(/-compatible/, ""); print ($4)" r"($7); exit}' /proc/cpuinfo)
     # RPI HW version source: http://elinux.org/RPi_HardwareHistory
     case "$RPIrev" in
         *beta) RPImodel="Beta"; RPIman="Beta"; RPIrel="Q1 2012";;
-        *002) RPImodel="B (1.0)"; RPIman="unknown"; RPIrel="Q1 2012";;
-        *003) RPImodel="B (1.0)"; RPIman="ECN 001"; RPIrel="Q3 2012";;
-        *004) RPImodel="B (2.0)"; RPIman="Sony"; RPIrel="Q3 2012";;
-        *005) RPImodel="B (2.0)"; RPIman="Qisda"; RPIrel="Q4 2012";;
-        *006) RPImodel="B (2.0)"; RPIman="Egoman"; RPIrel="Q4 2012";;
-        *007) RPImodel="A (2.0)"; RPIman="Egoman"; RPIrel="Q1 2013";;
-        *008) RPImodel="A (2.0)"; RPIman="Sony"; RPIrel="Q1 2013";;
-        *009) RPImodel="A (2.0)"; RPIman="Qisda"; RPIrel="Q1 2013";;
-        *00d) RPImodel="B (2.0)"; RPIman="Egoman"; RPIrel="Q4 2012";;
-        *00e) RPImodel="B (2.0)"; RPIman="Sony"; RPIrel="Q4 2012";;
-        *00f) RPImodel="B (2.0)"; RPIman="Qisda"; RPIrel="Q4 2012";;
-        *010) RPImodel="B+ (1.0)"; RPIman="Sony"; RPIrel="Q3 2014";;
+        *002) RPImodel="B [1.0]"; RPIman="unknown"; RPIrel="Q1 2012";;
+        *003) RPImodel="B [1.0]"; RPIman="ECN 001"; RPIrel="Q3 2012";;
+        *004) RPImodel="B [2.0]"; RPIman="Sony"; RPIrel="Q3 2012";;
+        *005) RPImodel="B [2.0]"; RPIman="Qisda"; RPIrel="Q4 2012";;
+        *006) RPImodel="B [2.0]"; RPIman="Egoman"; RPIrel="Q4 2012";;
+        *007) RPImodel="A [2.0]"; RPIman="Egoman"; RPIrel="Q1 2013";;
+        *008) RPImodel="A [2.0]"; RPIman="Sony"; RPIrel="Q1 2013";;
+        *009) RPImodel="A [2.0]"; RPIman="Qisda"; RPIrel="Q1 2013";;
+        *00d) RPImodel="B [2.0]"; RPIman="Egoman"; RPIrel="Q4 2012";;
+        *00e) RPImodel="B [2.0]"; RPIman="Sony"; RPIrel="Q4 2012";;
+        *00f) RPImodel="B [2.0]"; RPIman="Qisda"; RPIrel="Q4 2012";;
+        *010) RPImodel="B+ [1.0]"; RPIman="Sony"; RPIrel="Q3 2014";;
         *011) RPImodel="Compute Module"; RPIman="Sony"; RPIrel="Q2 2014";;
-        *012) RPImodel="A+ (1.0)"; RPIman="Sony"; RPIrel="Q4 2014";;
-        *013) RPImodel="B+ (1.2)"; RPIman="Embest"; RPIrel="Q1 2015";;
+        *012) RPImodel="A+ [1.0]"; RPIman="Sony"; RPIrel="Q4 2014";;
+        *013) RPImodel="B+ [1.2]"; RPIman="Embest"; RPIrel="Q1 2015";;
         *014) RPImodel="Compute Module"; RPIman="Sony"; RPIrel="Q1 2015";;
-        *015) RPImodel="A+ (1.0)"; RPIman="Sony"; RPIrel="Q1 2015";;
-        *a01040) RPImodel="2B (1.0)"; RPIman="Sony"; RPIrel="Unknown";;
-        *a01041) RPImodel="2B (1.1)"; RPIman="Sony"; RPIrel="Q1 2015";;
-        *a21041) RPImodel="2B (1.1)"; RPIman="Embest"; RPIrel="Q1 2015";;
-        *a22042) RPImodel="2B (1.2)"; RPIman="Embest"; RPIrel="Q3 2016";;
-        *900021) RPImodel="A+ (1.1)"; RPIman="Sony"; RPIrel="Q3 2016";;
-        *900032) RPImodel="B+ (1.2)"; RPIman="Sony"; RPIrel="Q2 2016";;
-        *900092) RPImodel="Zero (1.2)"; RPIman="Sony"; RPIrel="Q4 2015";;
-        *900093) RPImodel="Zero (1.3)"; RPIman="Embest"; RPIrel="Q4 2016";;
-        *9000c1) RPImodel="Zero W (1.1)"; RPIman="Sony"; RPIrel="Q1 2017";;
-        *a02082) RPImodel="3B (1.2)"; RPIman="Sony"; RPIrel="Q1 2016";;
+        *015) RPImodel="A+ [1.0]"; RPIman="Sony"; RPIrel="Q1 2015";;
+        *a01040) RPImodel="2B [1.0]"; RPIman="Sony"; RPIrel="Unknown";;
+        *a01041) RPImodel="2B [1.1]"; RPIman="Sony"; RPIrel="Q1 2015";;
+        *a21041) RPImodel="2B [1.1]"; RPIman="Embest"; RPIrel="Q1 2015";;
+        *a22042) RPImodel="2B [1.2]"; RPIman="Embest"; RPIrel="Q3 2016";;
+        *900021) RPImodel="A+ [1.1]"; RPIman="Sony"; RPIrel="Q3 2016";;
+        *900032) RPImodel="B+ [1.2]"; RPIman="Sony"; RPIrel="Q2 2016";;
+        *900092) RPImodel="Zero [1.2]"; RPIman="Sony"; RPIrel="Q4 2015";;
+        *900093) RPImodel="Zero [1.3]"; RPIman="Embest"; RPIrel="Q4 2016";;
+        *9000c1) RPImodel="Zero W [1.1]"; RPIman="Sony"; RPIrel="Q1 2017";;
+        *a02082) RPImodel="3B [1.2]"; RPIman="Sony"; RPIrel="Q1 2016";;
         *a020a0) RPImodel="Compute Module 3"; RPIman="Sony"; RPIrel="Q1 2017";;
-        *a22082) RPImodel="3B (1.2)"; RPIman="Embest"; RPIrel="Q1 2016";;
-        *a32082) RPImodel="3B (1.2)"; RPIman="Sony"; RPIrel="Q4 2016";;
+        *a22082) RPImodel="3B [1.2]"; RPIman="Embest"; RPIrel="Q1 2016";;
+        *a32082) RPImodel="3B [1.2]"; RPIman="Sony"; RPIrel="Q4 2016";;
         *) RPImodel="'Unknown Version'"; RPIman="Unknown"; RPIrel="Unknown";;
     esac
-    HWrelease="${RPIrel} (${RPIman})"
-  else   # RPI Model not known
+    if [[ -n ${CPUinfo} ]]; then
+      CPUmeta="${CPUname} ${CPUinfo}"  # must be calculated in this if, otherwise vars arent defined
+    else
+      CPUmeta="${CPUname}"
+    fi
+  else   # /proc/cpuinfo not found - cannot lookup model #
     RPImodel="'Unknown Version'"
+    RPIrel="Unknown"
   fi
-  OSversion=${SYSkernalVer%"-"*}
-  HWdevice="Raspberry Pi ${RPImodel}"
-  CPUmeta="${CPUname} ${CPUinfo}"
+  OSkernel=${SYSkernalVer%"-"*}
+  HWdevice="Raspberry Pi"
+  [[ ${RPImodel} != "'Unknown Version'" ]] && HWdevice="${HWdevice} ${RPImodel}"
+  [[ ${RPIrel} != "Unknown" ]] && HWdevice="${HWdevice}${CLRnormal}  ${CLRwarning}(${RPIrel})${CLRnormal}"
   if [[ $(free 2> /dev/null) ]]; then
-    DEVICEinfoExists=true
     MEMuse=$(free -m | awk 'NR==2{printf "%s/%s MB", $3,$2 }')
     MemRatio=$(free -m | awk 'NR==2{printf "%.0f\n", $3*100/$2 }')
-    MEMusage="${MEMuse} ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
+    MEMusage="${MEMuse}  ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
   fi
   return 0
 }
 
 setLinux() {
   DeviceType="Linux"
-  OSdetails="KERNEL\t"
   setLinuxCommon
-  OSversion=${SYSkernalVer%"-"*}
+  OSkernel=${SYSkernalVer%"-"*}
   HWdevice=""
   HWrelease=""
   if [ -e "/proc/cpuinfo" ]; then
-    DEVICEinfoExists=true
     CPUname=$(grep -m1 'model name' < /proc/cpuinfo)
     CPUname=$(cleanCPUname "$CPUname")
   fi
-  CPUmeta="${CPUname} ${CPUinfo}"
+  CPUmeta="${CPUname}${CLRnormal} ${CPUinfo}"
   if [[ $(free 2> /dev/null) ]]; then
-    DEVICEinfoExists=true
     MEMuse=$(free -m | awk 'NR==2{printf "%s/%s MB", $3,$2 }')
     MemRatio=$(free -m | awk 'NR==2{printf "%.0f\n", $3*100/$2 }')
-    MEMusage="${MEMuse} ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
+    MEMusage="${MEMuse}  ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
   fi
   return 0
 }
 
 setMac() {
   DeviceType="Mac"
-  OSdetails="OS VERSION"
-  DEVICEinfoExists=true
   MacOSinitialVer=${SYSkernalVer%%.*}
   MacOSadjustedVer=$((MacOSinitialVer-4))
   MacOSsubVer=${SYSkernalVer%.*}
   MacOSsubVer=${MacOSsubVer#*.}
   MacOSmainVer="10.${MacOSadjustedVer}"
-  OSversion="10.${MacOSadjustedVer}.${MacOSsubVer}"
-  OSfullname="macOS ${MacOSmainVer}"
+  MacOSver="10.${MacOSadjustedVer}.${MacOSsubVer}"
   case $MacOSmainVer in
-    10.13) OScodename="High Sierra";;
-    10.12) OScodename="Sierra";;
-    10.11) OScodename="El Capitan";;
-    10.10) OScodename="Yosemite";;
-    10.9) OScodename="Mavericks";;
-    10.8) OScodename="Mountain Lion";;
-    10.7) OScodename="Lion";;
-    10.6) OScodename="Snow Leopard";;
-    10.5) OScodename="Leopard";;
-    10.4) OScodename="Tiger";;
-    10.3) OScodename="Panther";;
-    10.2) OScodename="Jaguar";;
-    10.1) OScodename="Puma";;
-    10.0) OScodename="Cheetah";;
+    10.13) OSname="High Sierra";;
+    10.12) OSname="Sierra";;
+    10.11) OSname="El Capitan";;
+    10.10) OSname="Yosemite";;
+    10.9) OSname="Mavericks";;
+    10.8) OSname="Mountain Lion";;
+    10.7) OSname="Lion";;
+    10.6) OSname="Snow Leopard";;
+    10.5) OSname="Leopard";;
+    10.4) OSname="Tiger";;
+    10.3) OSname="Panther";;
+    10.2) OSname="Jaguar";;
+    10.1) OSname="Puma";;
+    10.0) OSname="Cheetah";;
   esac
+  OSfullname="macOS ${MacOSver}${CLRnormal}  ${CLRwarning}(${OSname})${CLRnormal}"
   HWdevice=${SYSplatform//,/.}
   HWrelease=""
-  # Mac HW Quieries - 'sysctl -n' return string with item and value
   CPUname=$(sysctl -n machdep.cpu.brand_string)
   CPUname=$(cleanCPUname "$CPUname")
   CPUspeed=$(sysctl -n hw.cpufrequency_max)
@@ -378,7 +419,7 @@ setMac() {
   CPUspeedBig=$((CPUspeed / 1000))
   CPUspeedSmall=$((CPUspeed % 1000))
   CPUcores=$(sysctl -n hw.ncpu)
-  CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz ${CLRnormal}${CLRwarning}(${CPUcores} Core)${CLRnormal}"
+  CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz  ${CLRnormal}${CLRwarning}(${CPUcores} Core)${CLRnormal}"
   CPUmeta="${CPUname} ${CPUinfo}"
   MEMsizeMB=$(sysctl -n hw.memsize)
     MEMsizeMB=$((MEMsizeMB / (1024 * 1024) ))    # Mem in MB
@@ -395,10 +436,10 @@ setMac() {
   MEMused=$((MEMusedApps + MEMusedWired + MEMusedComp))
   MemRatio=$(( (MEMused * 100) / MEMsizeMB))
   printf -v MEMusage "%s/%s MB" ${MEMused} ${MEMsizeMB}
-  MEMusage="${MEMusage} ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
+  MEMusage="${MEMusage}  ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
   DISKuse=$(df -h | awk '$NF=="/"{printf "%d/%d GB", $3,$2}')
   DISKRatio=$(df -h | awk '$NF=="/"{printf "%s\n", $5}')
-  DISKusage="${DISKuse} ${CLRnormal}${CLRwarning}(${DISKRatio})${CLRnormal}"
+  DISKusage="${DISKuse}  ${CLRnormal}${CLRwarning}(${DISKRatio})${CLRnormal}"
   return 0
 }
 
@@ -452,51 +493,67 @@ reportDebug() {
   return 0
 }
 
+reportSysName() {
+  echo -e "\t${CLRheading}HOSTNAME\t${CLRheading2}${MACHINE_NAME}${CLRnormal}"
+}
+
 reportNetwork() {
-  echo -e "\t${CLRheading}HOST\t\t${CLRheading2}${MACHINE_NAME}"
   [[ -n $SYSnode ]] && [[ "$SYSnode" != "$HOSTNAME" ]] && echo -e "\t${CLRheading}NODE\t\t${CLRheading2}${SYSnode}"
-  if [[ $lanIP != "Unknown" ]]; then
-    for (( i=0; i<count; i=i+1 )); do
-      lanIP=${lanIPS[i]}
-      echo -e "\t${CLRtitle}LAN IP \t\t${CLRwhite}${lanIP}"
+  if [[ -n ${lanMAC} ]]; then
+    for (( i=0; i<lancount; i=i+1 )); do
+      macID="${CLRwarning}(${lanMACS[i]})${CLRnormal}"
+      if [[ -n ${lanNAMES[i]} ]]; then
+        pad=$(printf '%0.1s' " "{1..15})
+        padlength=12
+        name="${lanNAMES[i]:0:12}"
+        lanTITLE=$(printf '%s IP%*.*s' "${name}" 0 $((padlength - ${#name})) "$pad")
+      else
+        lanTITLE="LAN IP \t"
+      fi
+      if [[ -n ${lanIP6S[i]} ]]; then
+        lanIP6="${CLRtitle2}${lanIP6S[i]}${CLRnormal}  "
+      else
+        lanIP6=""
+      fi
+      if [[ -n ${lanIPS[i]} ]]; then
+        lanIP="${lanIPS[i]}  "
+      else
+        lanIP=""
+      fi
+      echo -e "\t${CLRtitle}${lanTITLE}\t${CLRwhite}${lanIP}${CLRnormal}${lanIP6}${macID}${CLRnormal}"
+    done
+  elif [[ $lanIP != "Unknown" ]]; then   # for FreeBSD/OpenBSD/SunOS where full NW details aren't gathered
+    for (( i=0; i<ip4count; i=i+1 )); do
+      lanIP="${lanIPS[i]}"
+      echo -e "\t${CLRtitle}LAN IP \t\t${CLRwhite}${lanIP}${CLRnormal}"
     done
   fi
-  [[ -n $pubIP ]] && echo -e "\t${CLRtitle}Internet IP \t${CLRwhite}${pubIP}${CLRnormal}\n"
+  [[ -n $pubIP ]] && echo -e "\t${CLRtitle}Internet IP \t${CLRwhite}${pubIP}${CLRnormal}"
   return 0
 }
 
 reportSystem() {
-  [[ -n $OSfullname ]] && echo -e "\t${CLRheading}OS\t\t${CLRheading2}${OSfullname}${CLRnormal}"
-  [[ -n $OScodename ]] && echo -e "\t${CLRtitle}CODENAME\t${CLRwhite}${OScodename}${CLRnormal}"
-  [[ -n $OSversion ]] && echo -e "\t${CLRtitle}${OSdetails}\t${CLRwhite}${OSversion}${CLRnormal}"
-  if [ $DEVICEinfoExists ]; then
-    echo
-    if [[ -n $HWdevice ]]; then
-      echo -e "\t${CLRheading}DEVICE\t\t${CLRheading2}${HWdevice}${CLRnormal}"
-      CLRsubsect1=${CLRtitle}
-      CLRsubsect2=${CLRwhite}
-    else
-      CLRsubsect1=${CLRheading}
-      CLRsubsect2=${CLRheading2}
-    fi
-    [[ -n $HWrelease ]] && echo -e "\t${CLRtitle}RELEASE DATE\t${CLRwhite}${HWrelease}${CLRnormal}"
-    [[ -n $CPUmeta ]] && echo -e "\t${CLRsubsect1}CPU\t\t${CLRsubsect2}${CPUmeta}${CLRnormal}"
-    [[ -n $MEMusage ]] && echo -e "\t${CLRtitle}MEM USAGE\t${CLRwhite}${MEMusage}${CLRnormal}"
-    [[ -n $DISKusage ]] && echo -e "\t${CLRtitle}DISK USAGE\t${CLRwhite}${DISKusage}${CLRnormal}"
-  fi
+  [[ -n $HWdevice ]] && echo -e "\t${CLRtitle}HW Device\t${CLRwhite}${HWdevice}${CLRnormal}"
+  [[ -n $OSfullname ]] && echo -e "\t${CLRtitle}OS\t\t${CLRwhite}${OSfullname}${CLRnormal}"
+  [[ -n $OSkernel ]] && echo -e "\t${CLRtitle}Kernel\t\t${CLRwhite}${OSkernel}${CLRnormal}"
+  [[ -z $compressed ]] && echo
+  reportNetwork
+  [[ -z $compressed ]] && echo
+  [[ -n $HWrelease ]] && echo -e "\t${CLRtitle}Release Date\t${CLRwhite}${HWrelease}${CLRnormal}"
+  [[ -n $CPUmeta ]] && echo -e "\t${CLRtitle}Processor\t${CLRwhite}${CPUmeta}${CLRnormal}"
+  [[ -n $MEMusage ]] && echo -e "\t${CLRtitle}Memory Use\t${CLRwhite}${MEMusage}${CLRnormal}"
+  [[ -n $DISKusage ]] && echo -e "\t${CLRtitle}Disk Use\t${CLRwhite}${DISKusage}${CLRnormal}"
   return 0
 }
 
 reportMain() {
-  reportNetwork
-  if [[ -z "$DeviceType" ]] || [[ "$mode" == "FORCE" ]]; then
-    # set VARS to most raw form
-    OSversion=${SYSkernalVer}
+  reportSysName
+  if [[ -z "$DeviceType" ]] || [[ "$mode" == "FORCE" ]]; then   # set VARS to most raw form
+    OSkernel=${SYSkernalVer}
     CPUname=${SYSmachine}
     [[ "$SYSplatform" != "unknown" ]] && HWdevice=${SYSplatform}
   fi
   reportSystem
-  echo
   return 0
 }
 
@@ -508,7 +565,7 @@ reportMain() {
 getCommandTail "$@"
 
 getNetwork
-[[ $mode == "NET" ]] && reportNetwork && processExit
+[[ $mode == "NET" ]] && reportSysName && reportNetwork && processExit
 getSystem
 
 if [[ "$OS" == "Linux" ]]; then
