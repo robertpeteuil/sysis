@@ -30,11 +30,12 @@ It was designed for maximum productivity:
 
 ### Installation:
 
-The script itself is a single Bash script, so there are many ways it can be installed: downloading and running the installer, cloning the repo locally and running the installer, or manually downloading it.
-- Using the installer is recommended, as it installs the latest release
-- Downloading the script manually retrieves the latest commit on the master branch 
+Sysis can be installed multiple ways:
+- Download and run installer
+- Clone the repo and run installer
+- Manual download
 
-**Download and Run Installation Script (requires `curl`):**
+**Download and run installer**
 - Download the installation script
 - Verify the contents of the script you downloaded matches the contents of install.sh
 - Run the installation script
@@ -45,7 +46,7 @@ curl -fsSL https://raw.github.com/robertpeteuil/sysis/master/install.sh -o insta
 sh install.sh
 ```
 
-**Install by cloning the repo and running installer locally:**
+**Clone the repo and run installer**
 - clone the repo, optionally specifying `--depth=1` to make the download fast and use less disk space
 - cd into the repo directory
 - run the installation script
@@ -57,7 +58,7 @@ cd sysis
 ./install.sh
 ```
 
-**Install by manually downloading the script and placing it in the $PATH (requires `curl`)**
+**Manual download**
 - This method downloads the latest commit on master, whereas the installation script downloads the latest release.
 
 ``` shell
@@ -74,7 +75,7 @@ For the purpose of this utility, there are two scenarios where executing a scrip
 
 In general, executing hosted scripts is not secure because the scripts are executed without a chance to inspect them. Fortunately, the security risks can be mitigated by performing actions specific to each scenario.
 
-**Preperations for Using Hosted Installation Script**
+**Preparations for Using Hosted Installation Script**
 This is the easier of the two scenarios to address because you will only run the installer once and don't need to consider future changes.
 - review the [installer](https://github.com/robertpeteuil/sysis/blob/master/install.sh) and ensure its safe and meets your security standards
 - After review, the hosted installation script can be executed with the command below.  
