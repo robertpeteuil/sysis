@@ -9,11 +9,11 @@
 
 **SYSIS provides a simple way to retrieve and display system information across multiple system types, by eliminating the need to use multiple OS specific commands.**  It is especially useful for sys-admins, developers and IT Professionals who maintain  simultaneous connections to multiple hosts, as it allows rapid retrieval of system info for any host.
 
-It was designed for maximum productivity:
-- Simple to use and requires no parameters to use (no parameters to research learn and memorize)
-- Executes quickly by focusing on the most commonly needed information
-- Includes Network Connection Details - Adapter Name, IPv4 (if assigned), IPv6 (if assigned), and MAC Address
-  - Details on Network Info are described in the [CHANGELOG](https://github.com/robertpeteuil/sysis/blob/master/CHANGELOG.md)
+Designed for maximum productivity:
+- Simple to use and requires no parameters
+- Executes quickly by focusing on most commonly needed information
+- Includes Network Connection Details - Adapter Name, IPv4 Address, IPv6 Address, and MAC Address
+  - Details about Network Info are described in the [CHANGELOG](https://github.com/robertpeteuil/sysis/blob/master/CHANGELOG.md)
 
 ### macOS with 2 NICs: "en1" with IPv4 & IPv6, "en2" with IPv4
 ![](https://user-images.githubusercontent.com/1554603/34471519-22988876-ef09-11e7-8ac8-ea45959e7691.png)
