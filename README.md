@@ -15,10 +15,10 @@ It was designed for maximum productivity:
 - Includes Network Connection Details - Adapter Name, IPv4 (if assigned), IPv6 (if assigned), and MAC Address
   - Details on Network Info are described in the [CHANGELOG](https://github.com/robertpeteuil/sysis/blob/master/CHANGELOG.md)
 
-### macOS with 2 NICs: "en1" has IPv4 & IPv6 Addresses, "en2" has only IPv4 address
+### macOS with 2 NICs: "en1" with IPv4 & IPv6, "en2" with IPv4
 ![](https://user-images.githubusercontent.com/1554603/34471519-22988876-ef09-11e7-8ac8-ea45959e7691.png)
 
-### Ubuntu with 1 NIC: "enp0s10" has both IPv4 & IPv6 Addresses
+### Ubuntu with 1 NIC: "enp0s10" with IPv4 & IPv6
 ![](https://user-images.githubusercontent.com/1554603/34471525-329da544-ef09-11e7-9a46-b9836302b422.png)
 
 ### Supported Platforms:
