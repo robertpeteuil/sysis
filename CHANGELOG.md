@@ -4,8 +4,8 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-- Consider adding ARM 64 support
+## [Unreleased] - TBD
+- Consider ARM 64 support
   - Challenges to consider: https://github.com/raspberrypi/linux/issues/2110
 
 ## [v3.7.0] - 2018-01-01
