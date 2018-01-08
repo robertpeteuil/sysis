@@ -43,7 +43,7 @@ Sysis can be installed multiple ways:
 
 ``` shell
 curl -fsSL https://raw.github.com/robertpeteuil/sysis/master/install.sh -o install.sh
-sh install.sh
+bash install.sh
 ```
 
 **Clone the repo and run installer**
