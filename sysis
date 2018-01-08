@@ -10,8 +10,8 @@
 
 
 scriptname="sysis"
-scriptbuildnum="3.7.0"
-scriptbuilddate="2018-01-01"
+scriptbuildnum="3.7.1"
+scriptbuilddate="2018-01-08"
 
 ############################################################
 ### VARS INITS
@@ -187,7 +187,8 @@ getNetwork() {
         lanIP6=$(echo -e "$lanINFO" | cut -d' ' -f4)
         ;;
      Darwin)  # removes virtual adapters named "vnic*" from results
-        lanINFO=$(ifconfig -a | awk 'BEGIN{n=0} /^[[:alnum:]]/ {if ($1 ~ /^vnic/) {next} else {split($1, tmpname, ":"); nname[n]=tmpname[1]; getline; if ($0 ~ /^[[:alnum:]]/) {split($1, tmpname, ":"); nname[n]=tmpname[1]; getline; validIP=""; active=""} {do {if ($0 ~ /inactive/) {break} else if ($0 ~ /ether /) {macadd[n]=$2} else if ($0 ~ /cast/) {ip4add[n]=$2; validIP="true"} else if ($0 ~ /inet6/ && index( $2, nname[n]) ==0) {ip6add[n]=$2; validIP="true"}else if ($0 ~ /active/) {active="true"; break} getline} while ($0 !~ /^[[:alnum:]]/)} if (validIP == "true" && active == "true") {n++; validIP=""; active=""} }} END{for (i=0; i<n; i++) {printf "%s n:%s 4:%s 6:%s\n", macadd[i], nname[i], ip4add[i], ip6add[i]}}')
+        lanINFO=$(ifconfig -a | tac | awk 'BEGIN{n=0; m=0} /status: active/ {validIP=0; nonVirt=0; {do {if ($0~ /^vnic/) {next} else if ($0 ~ /^[[:alnum:]]/) {split($1, tmpname, ":"); nname[n]=tmpname[1]; nonVirt=1; break} else if ($0 ~ /cast/) {ip4add[n]=$2; validIP=1} else if ($0 ~ /inet6/) {ip6temp[m]=$2; m++} else if ($0 ~ /ether /) {macadd[n]=$2}} while (getline == 1)} {for (i=0; i<m; i++) {if (index(ip6temp[i], nname[n]) ==0) {ip6add[n]=ip6temp[i]; validIP=1} m=0}} if (validIP == 1 && nonVirt == 1) {n++}} END{for (i=n-1; i>=0; i--) {printf "%s n:%s 4:%s 6:%s\n", macadd[i], nname[i], ip4add[i], ip6add[i]}}')
+        # lanINFO=$(ifconfig -a | awk 'BEGIN{n=0} /^[[:alnum:]]/ {if ($1 ~ /^vnic/) {next} else {split($1, tmpname, ":"); nname[n]=tmpname[1]; getline; if ($0 ~ /^[[:alnum:]]/) {split($1, tmpname, ":"); nname[n]=tmpname[1]; getline; validIP=""; active=""} {do {if ($0 ~ /inactive/) {break} else if ($0 ~ /ether /) {macadd[n]=$2} else if ($0 ~ /cast/) {ip4add[n]=$2; validIP="true"} else if ($0 ~ /inet6/ && index( $2, nname[n]) ==0) {ip6add[n]=$2; validIP="true"}else if ($0 ~ /active/) {active="true"; break} getline} while ($0 !~ /^[[:alnum:]]/)} if (validIP == "true" && active == "true") {n++; validIP=""; active=""} }} END{for (i=0; i<n; i++) {printf "%s n:%s 4:%s 6:%s\n", macadd[i], nname[i], ip4add[i], ip6add[i]}}')
         lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f1)
         lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f2)
         lanIP=$(echo -e "$lanINFO" | cut -d' ' -f3)
