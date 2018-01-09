@@ -10,7 +10,7 @@
 
 
 scriptname="sysis"
-scriptbuildnum="3.7.2-c"
+scriptbuildnum="3.7.2"
 scriptbuilddate="2018-01-09"
 
 ############################################################
@@ -145,13 +145,6 @@ cleanCPUname() {
   tempCPUname=${tempCPUname%'  '*}           # remove model # that comes after 2 spaces
   tempCPUname=${tempCPUname//' 0'/}          # remove space 0
   tempCPUname=$(cleanText "$tempCPUname")    # remove leading / trailine space
-  # CPU Version Stripping
-  # remove processor rev of style - P(A)XXXX ex: P47350
-  # tempCPUname=$(echo "$tempCPUname" | awk '{sub(/\s[[:alpha:]][[:alpha:]]?[0-9]{4}$/, ""); print $0}')
-  # remove processor rev of style - P(A)5-XXXX ex: E5-1620
-  # tempCPUname=$(echo "$tempCPUname" | awk '{sub(/\s[[:alpha:]][[:alpha:]]?[0-9]-[0-9]{4}$/, ""); print $0}')
-  # remove processor rev of style "*-12A*", "*-123a*". "*-1234Z*"
-  # tempCPUname=$(echo "$tempCPUname" | awk '{sub(/-[0-9]{2,4}[a-zA-Z]/, ""); print $0}')
   echo -n "$tempCPUname"
 }
 
@@ -173,7 +166,6 @@ getNetwork() {
   if [[ $(ip -4 addr 2> /dev/null) ]]; then  # LANIP via 'ip' if possible
     # ip features may be limited on older systems
     lanINFO=$(ip -d addr | tac | awk 'BEGIN{n=0} /^[^0-9]/ {validIP=0; bridgeIP=0; if ($0 !~ /bridge.forward_delay/ && $0 !~ /bridge_slave/) { do {if ($0 ~ /^[0-9]/ && $0 ~ /state DOWN/) {validIP=0; bridgeIP=0; break} else if ($0 ~ /link\/ether/) {macadd[n]=$2} else if ($0 ~ /inet / && $0 ~ /scope global/) {ip4add[n]=$2; validIP=1} else if ($0 ~ /inet6/ && $0 ~ /scope global/) {ip6add[n]=$2; validIP=1} else if ($0 ~ /bridge forward/ || $0 ~ /bridge_slave/) {bridgeIP=1} else if ($0 ~ /^[0-9]/) {nname[n]=$2; break} } while (getline ==1)} if (validIP==1 && bridgeIP==0) {n++; validIP=0} else {bridgeIP=0}} END{for (i=n-1; i>=0; i--) {split(ip4add[i], ip4, /\//); split(ip6add[i], ip6, /\//); split(nname[i], adname, ":"); printf "%s n:%s 4:%s 6:%s\n", macadd[i], adname[1], ip4[1], ip6[1]}}')
-    # lanINFO=$(ip -d addr | awk 'BEGIN{n=0} /^[0-9]/ {if ($0 ~ /state UP/) { validIP=""; nname[n]=$2; getline; do {if ($0 ~ /bridge forward/ || $0 ~ /bridge_slave/) {break} if ($0 ~ /link\/ether/) {macadd[n]=$2} else if ($0 ~ /inet / && $0 ~ /scope global/) {ip4add[n]=$2; validIP="true"} else if ($0 ~ /inet6/ && $0 ~ /scope global/) {ip6add[n]=$2; validIP="true"} getline} while ($0 !~ /^[0-9]/)} if (validIP == "true") {n++; validIP=""}} END{for (i=0; i<n; i++) {split(ip4add[i], ip4, /\//); split(ip6add[i], ip6, /\//); split(nname[i], adname, ":"); printf "%s n:%s 4:%s 6:%s\n", macadd[i], adname[1], ip4[1], ip6[1]}}')
     lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f1)
     lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f2)
     lanIP=$(echo -e "$lanINFO" | cut -d' ' -f3)
@@ -183,7 +175,6 @@ getNetwork() {
      Linux)   # removes virtual adapters named "virbr*" from results
         # awk limited on older systems (no support for [[:alnum:]])
         lanINFO=$(ifconfig -a | awk 'BEGIN{n=0} /^[A-Za-z0-9]/ {if ($1 ~ /^virbr/) {next} else {nname[n]=$1; validIP=0; nicON=0; do {if ($0 ~ /^\s*$/) {break} else if ($0 ~ /UP BROADCAST RUNNING/) {nicON=1} else if ($0 ~ /HWaddr/) {macadd[n]=$5} else if ($0 ~ /cast/ && $0 !~ /cast:0\.0\.0\.0/) {ip4add[n]=$2; validIP=1} else if ($0 ~ /inet6/ && $0 ~ /Scope:Global/) {ip6add[n]=$3; validIP=1} getline} while ($0 !~ /^[A-Za-z0-9]/)} if (validIP==1 && nicON==1) {n++; validIP=0; nicON=0} } END{for (i=0; i<n; i++) {split(ip4add[i], ip4, ":"); split(ip6add[i], ip6, /\//); printf "%s n:%s 4:%s 6:%s\n", macadd[i], nname[i], ip4[2], ip6[1]}}')
-        # lanINFO=$(ifconfig -a | awk 'BEGIN{n=0} /^[A-Za-z0-9]/ {if ($1 ~ /^virbr/) {next} else {nname[n]=$1; validIP=""; do {if ($0 ~ /^\s*$/) {break} else if ($0 ~ /HWaddr/) {macadd[n]=$5} else if ($0 ~ /cast/ && $0 !~ /cast:0\.0\.0\.0/) {ip4add[n]=$2; validIP="true"} else if ($0 ~ /inet6/ && $0 ~ /Scope:Global/) {ip6add[n]=$3; validIP="true"} getline} while ($0 !~ /^[A-Za-z0-9]/)} if (validIP == "true") {n++; validIP=""} } END{for (i=0; i<n; i++) {split(ip4add[i], ip4, ":"); split(ip6add[i], ip6, /\//); printf "%s n:%s 4:%s 6:%s\n", macadd[i], nname[i], ip4[2], ip6[1]}}')
         lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f1)
         lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f2)
         lanIP=$(echo -e "$lanINFO" | cut -d' ' -f3)
@@ -191,7 +182,6 @@ getNetwork() {
         ;;
      Darwin)  # removes virtual adapters named "vnic*" from results
         lanINFO=$(ifconfig -a | tac | awk 'BEGIN{n=0; m=0} /status: active/ {validIP=0; nonVirt=0; {do {if ($0~ /^vnic/) {next} else if ($0 ~ /^[[:alnum:]]/) {split($1, tmpname, ":"); nname[n]=tmpname[1]; nonVirt=1; break} else if ($0 ~ /cast/) {ip4add[n]=$2; validIP=1} else if ($0 ~ /inet6/) {ip6temp[m]=$2; m++} else if ($0 ~ /ether /) {macadd[n]=$2}} while (getline == 1)} {for (i=0; i<m; i++) {if (index(ip6temp[i], nname[n]) ==0) {ip6add[n]=ip6temp[i]; validIP=1} m=0}} if (validIP == 1 && nonVirt == 1) {n++}} END{for (i=n-1; i>=0; i--) {printf "%s n:%s 4:%s 6:%s\n", macadd[i], nname[i], ip4add[i], ip6add[i]}}')
-        # lanINFO=$(ifconfig -a | awk 'BEGIN{n=0} /^[[:alnum:]]/ {if ($1 ~ /^vnic/) {next} else {split($1, tmpname, ":"); nname[n]=tmpname[1]; getline; if ($0 ~ /^[[:alnum:]]/) {split($1, tmpname, ":"); nname[n]=tmpname[1]; getline; validIP=""; active=""} {do {if ($0 ~ /inactive/) {break} else if ($0 ~ /ether /) {macadd[n]=$2} else if ($0 ~ /cast/) {ip4add[n]=$2; validIP="true"} else if ($0 ~ /inet6/ && index( $2, nname[n]) ==0) {ip6add[n]=$2; validIP="true"}else if ($0 ~ /active/) {active="true"; break} getline} while ($0 !~ /^[[:alnum:]]/)} if (validIP == "true" && active == "true") {n++; validIP=""; active=""} }} END{for (i=0; i<n; i++) {printf "%s n:%s 4:%s 6:%s\n", macadd[i], nname[i], ip4add[i], ip6add[i]}}')
         lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f1)
         lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f2)
         lanIP=$(echo -e "$lanINFO" | cut -d' ' -f3)
