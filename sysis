@@ -10,8 +10,8 @@
 
 
 scriptname="sysis"
-scriptbuildnum="3.7.2"
-scriptbuilddate="2018-01-09"
+scriptbuildnum="3.7.3"
+scriptbuilddate="2018-01-10"
 
 ############################################################
 ### VARS INITS
@@ -370,7 +370,7 @@ setLinux() {
     CPUname=$(grep -m1 'model name' < /proc/cpuinfo)
     CPUname=$(cleanCPUname "$CPUname")
   fi
-  CPUmeta="${CPUname}${CLRnormal} ${CPUinfo}"
+  CPUmeta="${CPUname} ${CPUinfo}"
   if [[ $(free 2> /dev/null) ]]; then
     MEMuse=$(free -m | awk 'NR==2{printf "%s/%s MB", $3,$2 }')
     MemRatio=$(free -m | awk 'NR==2{printf "%.0f\n", $3*100/$2 }')
