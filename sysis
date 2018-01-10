@@ -10,7 +10,7 @@
 
 
 scriptname="sysis"
-scriptbuildnum="3.7.3"
+scriptbuildnum="3.7.4a"
 scriptbuilddate="2018-01-10"
 
 ############################################################
@@ -165,7 +165,8 @@ getNetwork() {
   fi
   if [[ $(ip -4 addr 2> /dev/null) ]]; then  # LANIP via 'ip' if possible
     # ip features may be limited on older systems
-    lanINFO=$(ip -d addr | tac | awk 'BEGIN{n=0} /^[^0-9]/ {validIP=0; bridgeIP=0; if ($0 !~ /bridge.forward_delay/ && $0 !~ /bridge_slave/) { do {if ($0 ~ /^[0-9]/ && $0 ~ /state DOWN/) {validIP=0; bridgeIP=0; break} else if ($0 ~ /link\/ether/) {macadd[n]=$2} else if ($0 ~ /inet / && $0 ~ /scope global/) {ip4add[n]=$2; validIP=1} else if ($0 ~ /inet6/ && $0 ~ /scope global/) {ip6add[n]=$2; validIP=1} else if ($0 ~ /bridge forward/ || $0 ~ /bridge_slave/) {bridgeIP=1} else if ($0 ~ /^[0-9]/) {nname[n]=$2; break} } while (getline ==1)} if (validIP==1 && bridgeIP==0) {n++; validIP=0} else {bridgeIP=0}} END{for (i=n-1; i>=0; i--) {split(ip4add[i], ip4, /\//); split(ip6add[i], ip6, /\//); split(nname[i], adname, ":"); printf "%s n:%s 4:%s 6:%s\n", macadd[i], adname[1], ip4[1], ip6[1]}}')
+    lanINFO=$(ip -d addr | tac | awk 'BEGIN{n=0} /^[^0-9]/ {validIP=0; bridgeIP=0; if ($0 !~ /bridge.forward_delay/ && $0 !~ /bridge_slave/) { do {if ($0 ~ /^[0-9]/) {if(($0 ~ /\<.+NO-CARRIER.+\>/ || $0 ~ /\<.+LOOPBACK.+\>/) || ($0 !~ /\<.?BROADCAST.?\>/)) {validIP=0; bridgeIP=0; break}} if ($0 ~ /link\/ether/) {macadd[n]=$2} else if ($0 ~ /inet / && $0 ~ /scope global/) {ip4add[n]=$2; validIP=1} else if ($0 ~ /inet6/ && $0 ~ /scope global/) {ip6add[n]=$2; validIP=1} else if ($0 ~ /bridge forward/ || $0 ~ /bridge_slave/) {bridgeIP=1} else if ($0 ~ /^[0-9]/) {nname[n]=$2; break} } while (getline ==1)} if (validIP==1 && bridgeIP==0) {n++; validIP=0} else {bridgeIP=0}} END{for (i=n-1; i>=0; i--) {split(ip4add[i], ip4, /\//); split(ip6add[i], ip6, /\//); split(nname[i], adname, ":"); printf "%s n:%s 4:%s 6:%s\n", macadd[i], adname[1], ip4[1], ip6[1]}}')
+    # lanINFO=$(ip -d addr | tac | awk 'BEGIN{n=0} /^[^0-9]/ {validIP=0; bridgeIP=0; if ($0 !~ /bridge.forward_delay/ && $0 !~ /bridge_slave/) { do {if ($0 ~ /^[0-9]/ && $0 ~ /state DOWN/) {validIP=0; bridgeIP=0; break} else if ($0 ~ /link\/ether/) {macadd[n]=$2} else if ($0 ~ /inet / && $0 ~ /scope global/) {ip4add[n]=$2; validIP=1} else if ($0 ~ /inet6/ && $0 ~ /scope global/) {ip6add[n]=$2; validIP=1} else if ($0 ~ /bridge forward/ || $0 ~ /bridge_slave/) {bridgeIP=1} else if ($0 ~ /^[0-9]/) {nname[n]=$2; break} } while (getline ==1)} if (validIP==1 && bridgeIP==0) {n++; validIP=0} else {bridgeIP=0}} END{for (i=n-1; i>=0; i--) {split(ip4add[i], ip4, /\//); split(ip6add[i], ip6, /\//); split(nname[i], adname, ":"); printf "%s n:%s 4:%s 6:%s\n", macadd[i], adname[1], ip4[1], ip6[1]}}')
     lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f1)
     lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f2)
     lanIP=$(echo -e "$lanINFO" | cut -d' ' -f3)
