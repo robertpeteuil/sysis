@@ -506,16 +506,18 @@ reportNetwork() {
         lanTITLE="LAN IP \t"
       fi
       if [[ -n ${lanIP6S[i]} ]]; then
-        lanIP6="${CLRtitle2}${lanIP6S[i]}${CLRnormal}  "
+        lanIP6="${CLRtitle2}${lanIP6S[i]}${CLRnormal} "
+        lanIP6space=" "
       else
         lanIP6=""
+        lanIP6space=""
       fi
       if [[ -n ${lanIPS[i]} ]]; then
-        lanIP="${lanIPS[i]}  "
+        lanIP="${lanIPS[i]} "
       else
         lanIP=""
       fi
-      echo -e "\t${CLRtitle}${lanTITLE}\t${CLRwhite}${lanIP}${CLRnormal}${lanIP6}${macID}${CLRnormal}"
+      echo -e "\t${CLRtitle}${lanTITLE}\t${CLRwhite}${lanIP}${CLRnormal}${lanIP6space}${lanIP6}${lanIP6space}${macID}${CLRnormal}"
     done
   elif [[ $lanIP != "Unknown" ]]; then   # for FreeBSD/OpenBSD/SunOS where full NW details aren't gathered
     for (( i=0; i<ip4count; i=i+1 )); do
