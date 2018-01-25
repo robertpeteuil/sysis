@@ -10,8 +10,8 @@
 
 
 scriptname="sysis"
-scriptbuildnum="3.7.4a"
-scriptbuilddate="2018-01-10"
+scriptbuildnum="3.7.4b"
+scriptbuilddate="2018-01-25"
 
 ############################################################
 ### VARS INITS
@@ -234,11 +234,11 @@ getNetwork() {
 
 getSystem() {
   if [[ $(uname 2> /dev/null) ]]; then
-  	SYSnode=$(uname -n 2> /dev/null)
-  	SYSkernal=$(uname -s 2> /dev/null)
-  	SYSkernalVer=$(uname -r 2> /dev/null)
-  	SYSmachine=$(uname -m 2> /dev/null)
-  	SYSplatform=$(uname -i 2> /dev/null)
+    SYSnode=$(uname -n 2> /dev/null)
+    SYSkernal=$(uname -s 2> /dev/null)
+    SYSkernalVer=$(uname -r 2> /dev/null)
+    SYSmachine=$(uname -m 2> /dev/null)
+    SYSplatform=$(uname -i 2> /dev/null)
   else
     processExit "cannot execute ${CLRwarning}'uname'${CLRwhite}"
   fi
@@ -270,10 +270,10 @@ getSystem() {
 setLinuxCommon() {
   if [[ $VALUESvia == "FILE" ]]; then   # plan a - use file
     OSfullname="${LSBrel}"
-    [[ -n "$LSBcodename" ]] && OSfullname="${OSfullname}${CLRnormal}  ${CLRwarning}(${LSBcodename})${CLRnormal}"
+    [[ -n "$LSBcodename" ]] && OSfullname="${OSfullname}${CLRnormal} ${CLRwarning}(${LSBcodename})${CLRnormal}"
   elif [[ $VALUESvia == "LSB" ]]; then  # plan b - use lsb_release
     OSfullname="${LSBid} ${LSBrel}"
-    [[ -n "$LSBcodename" ]] && OSfullname="${OSfullname}${CLRnormal}  ${CLRwarning}(${LSBcodename})${CLRnormal}"
+    [[ -n "$LSBcodename" ]] && OSfullname="${OSfullname}${CLRnormal} ${CLRwarning}(${LSBcodename})${CLRnormal}"
   else                                  # plan c - use uname
     OSfullname="${SYSkernal}"
   fi
@@ -289,12 +289,12 @@ setLinuxCommon() {
     CPUspeedSmall=$((CPUspeed % 1000))
     CPUcores=$(lscpu | grep 'Core(s)')
     CPUcores=$(cleanVARtext "$CPUcores")
-    CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz  ${CLRnormal}${CLRwarning}(${CPUcores} Core)${CLRnormal}"
+    CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz ${CLRnormal}${CLRwarning}(${CPUcores} Core)${CLRnormal}"
   fi
   if [[ $(df 2> /dev/null) ]]; then
     DISKuse=$(df -h | awk '$NF=="/"{printf "%d/%d GB", $3,$2}')
     DISKRatio=$(df -h | awk '$NF=="/"{printf "%s\n", $5}')
-    DISKusage="${DISKuse}  ${CLRnormal}${CLRwarning}(${DISKRatio})${CLRnormal}"
+    DISKusage="${DISKuse} ${CLRnormal}${CLRwarning}(${DISKRatio})${CLRnormal}"
   fi
   return 0
 }
@@ -356,7 +356,7 @@ setRPI() {
   if [[ $(free 2> /dev/null) ]]; then
     MEMuse=$(free -m | awk 'NR==2{printf "%s/%s MB", $3,$2 }')
     MemRatio=$(free -m | awk 'NR==2{printf "%.0f\n", $3*100/$2 }')
-    MEMusage="${MEMuse}  ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
+    MEMusage="${MEMuse} ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
   fi
   return 0
 }
@@ -375,7 +375,7 @@ setLinux() {
   if [[ $(free 2> /dev/null) ]]; then
     MEMuse=$(free -m | awk 'NR==2{printf "%s/%s MB", $3,$2 }')
     MemRatio=$(free -m | awk 'NR==2{printf "%.0f\n", $3*100/$2 }')
-    MEMusage="${MEMuse}  ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
+    MEMusage="${MEMuse} ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
   fi
   return 0
 }
@@ -404,7 +404,7 @@ setMac() {
     10.1) OSname="Puma";;
     10.0) OSname="Cheetah";;
   esac
-  OSfullname="macOS ${MacOSver}${CLRnormal}  ${CLRwarning}(${OSname})${CLRnormal}"
+  OSfullname="macOS ${MacOSver}${CLRnormal} ${CLRwarning}(${OSname})${CLRnormal}"
   HWdevice=${SYSplatform//,/.}
   HWrelease=""
   CPUname=$(sysctl -n machdep.cpu.brand_string)
@@ -414,7 +414,7 @@ setMac() {
   CPUspeedBig=$((CPUspeed / 1000))
   CPUspeedSmall=$((CPUspeed % 1000))
   CPUcores=$(sysctl -n hw.ncpu)
-  CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz  ${CLRnormal}${CLRwarning}(${CPUcores} Core)${CLRnormal}"
+  CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz ${CLRnormal}${CLRwarning}(${CPUcores} Core)${CLRnormal}"
   CPUmeta="${CPUname} ${CPUinfo}"
   MEMsizeMB=$(sysctl -n hw.memsize)
     MEMsizeMB=$((MEMsizeMB / (1024 * 1024) ))    # Mem in MB
@@ -431,10 +431,10 @@ setMac() {
   MEMused=$((MEMusedApps + MEMusedWired + MEMusedComp))
   MemRatio=$(( (MEMused * 100) / MEMsizeMB))
   printf -v MEMusage "%s/%s MB" ${MEMused} ${MEMsizeMB}
-  MEMusage="${MEMusage}  ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
+  MEMusage="${MEMusage} ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
   DISKuse=$(df -h | awk '$NF=="/"{printf "%d/%d GB", $3,$2}')
   DISKRatio=$(df -h | awk '$NF=="/"{printf "%s\n", $5}')
-  DISKusage="${DISKuse}  ${CLRnormal}${CLRwarning}(${DISKRatio})${CLRnormal}"
+  DISKusage="${DISKuse} ${CLRnormal}${CLRwarning}(${DISKRatio})${CLRnormal}"
   return 0
 }
 
@@ -489,7 +489,7 @@ reportDebug() {
 }
 
 reportSysName() {
-  echo -e "\t${CLRheading}HOSTNAME\t${CLRheading2}${MACHINE_NAME}${CLRnormal}"
+  echo -e "\t${CLRtitle}Hostname\t${CLRheading2}${MACHINE_NAME}${CLRnormal}"
 }
 
 reportNetwork() {
