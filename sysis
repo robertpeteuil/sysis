@@ -10,7 +10,7 @@
 
 
 scriptname="sysis"
-scriptbuildnum="3.7.4b"
+scriptbuildnum="3.7.4c"
 scriptbuilddate="2018-01-25"
 
 ############################################################
@@ -43,16 +43,18 @@ if test -t 1; then            # check if stdout is a terminal
     magenta="$(tput setaf 5)"
     cyan="$(tput setaf 6)"
     white="$(tput setaf 7)"
+    clrreset="\033[0m"
     # set color theme vars to allow for quick changing
-    CLRnormal="\033[0m"
-    CLRwhite=${bold}${white}
-    CLRheading=${bold}${blue}
-    CLRheading2=${CLRnormal}${green}
-    CLRtitle=${CLRnormal}${cyan}
-    CLRtitle2=${bold}${magenta}
-    CLRsuccess=${bold}${green}  # shellcheck disable SC2034
-    CLRwarning=${CLRnormal}${yellow}
-    CLRerror=${bold}${red}
+    CLRnormal="${clrreset}"
+    CLRdefault="${bold}${clrreset}"  # fix for white background
+    # CLRdefault=${bold}${white}
+    CLRheading="${bold}${blue}"
+    CLRheading2="${clrreset}${green}"
+    CLRtitle="${clrreset}${cyan}"
+    CLRtitle2="${bold}${magenta}"
+    CLRsuccess="${bold}${green}"  # shellcheck disable SC2034
+    CLRwarning="${clrreset}${yellow}"
+    CLRerror="${bold}${red}"
   fi
 fi
 
@@ -75,35 +77,35 @@ processExit () {    # error message can be sent to function when calling
 
 processAbort () {
   local var=$*
-  [[ -n $var ]] && EXITMESSAGE="${CLRerror}AZBORT${CLRwhite} - ${var}${CLRnormal}"
+  [[ -n $var ]] && EXITMESSAGE="${CLRerror}AZBORT${CLRdefault} - ${var}${CLRnormal}"
   EXITSTATUS=2
   processExit
 }
 
 displayVer() {
-  echo -en "${CLRheading2}${scriptname}${CLRwhite}  ver ${CLRtitle}${scriptbuildnum} ${CLRwhite}- ${CLRtitle}${scriptbuilddate}${CLRwhite}${CLRnormal}"
+  echo -en "${CLRheading2}${scriptname}${CLRdefault}  ver ${CLRtitle}${scriptbuildnum} ${CLRdefault}- ${CLRtitle}${scriptbuilddate}${CLRdefault}${CLRnormal}"
 }
 
 printHelp() {
   displayVer
-  echo -e "\n${CLRwhite}Collect and print information on system, network and OS to standard output.\n"
-  echo -e "${CLRtitle}usage: ${CLRwhite}${scriptname} ${CLRtitle2}[OPTIONS] [DEBUG]${CLRwhite}\n"
+  echo -e "\n${CLRdefault}Collect and print information on system, network and OS to standard output.\n"
+  echo -e "${CLRtitle}usage: ${CLRdefault}${scriptname} ${CLRtitle2}[OPTIONS] [DEBUG]${CLRdefault}\n"
   echo -e "${CLRtitle}   OPTIONS"
-  echo -e "${CLRtitle2}     -c\t${CLRwhite}: compressed output (no separation lines)"
-  echo -e "${CLRtitle2}     -d\t${CLRwhite}: debug only report"
-  echo -e "${CLRtitle2}     -n\t${CLRwhite}: network only report"
-  echo -e "${CLRtitle2}     -h\t${CLRwhite}: help"
-  echo -e "${CLRtitle2}     -V\t${CLRwhite}: version info"
-  echo -e "${CLRtitle2} --help\t${CLRwhite}: detailed help${CLRnormal}"
+  echo -e "${CLRtitle2}     -c\t${CLRdefault}: compressed output (no separation lines)"
+  echo -e "${CLRtitle2}     -d\t${CLRdefault}: debug only report"
+  echo -e "${CLRtitle2}     -n\t${CLRdefault}: network only report"
+  echo -e "${CLRtitle2}     -h\t${CLRdefault}: help"
+  echo -e "${CLRtitle2}     -V\t${CLRdefault}: version info"
+  echo -e "${CLRtitle2} --help\t${CLRdefault}: detailed help${CLRnormal}"
   if [[ "$1" ]]; then
     echo
     echo -e "${CLRtitle}   DEBUG"
-    echo -e "${CLRtitle2}--force\t${CLRwhite}: force report as 'unknown' type"
+    echo -e "${CLRtitle2}--force\t${CLRdefault}: force report as 'unknown' type"
     echo
     echo -e "${CLRtitle}   EXIT STATUS"
-    echo -e "${CLRtitle2}      0   ${CLRwhite}if OK,"
-    echo -e "${CLRtitle2}      1   ${CLRwhite}if minor problems (e.g., cannot access subdirectory),"
-    echo -e "${CLRtitle2}      2   ${CLRwhite}if serious trouble (e.g., cannot access command-line argument).${CLRnormal}"
+    echo -e "${CLRtitle2}      0   ${CLRdefault}if OK,"
+    echo -e "${CLRtitle2}      1   ${CLRdefault}if minor problems (e.g., cannot access subdirectory),"
+    echo -e "${CLRtitle2}      2   ${CLRdefault}if serious trouble (e.g., cannot access command-line argument).${CLRnormal}"
   fi
   processExit
 }
@@ -240,7 +242,7 @@ getSystem() {
     SYSmachine=$(uname -m 2> /dev/null)
     SYSplatform=$(uname -i 2> /dev/null)
   else
-    processExit "cannot execute ${CLRwarning}'uname'${CLRwhite}"
+    processExit "cannot execute ${CLRwarning}'uname'${CLRdefault}"
   fi
   if [[ $(dpkg --help 2> /dev/null) ]]; then
     PROCarch=$(dpkg --print-architecture)
@@ -440,7 +442,7 @@ setMac() {
 
 printTitle () {
   displayVer
-  echo -en "${CLRwhite}  -  ${REPORTTITLE}"
+  echo -en "${CLRdefault}  -  ${REPORTTITLE}"
   case ${mode} in
     DEBUG) echo -en "  ${CLRheading2}(DEBUG)${CLRnormal}";;
     FORCE) echo -en "  ${CLRheading2}(FORCED 'UNKNOWN')${CLRnormal}";;
@@ -454,36 +456,36 @@ printTitle () {
 reportDebug() {
   printTitle
   echo -e "\t${CLRheading}BASH VARS${CLRnormal}"
-  echo -e "\t${CLRtitle}HOST = \t\t${CLRwhite}${MACHINE_NAME}${CLRnormal}"
-  echo -e "\t${CLRtitle}OS = \t\t${CLRwhite}${OS}${CLRnormal}"
-  echo -e "\t${CLRtitle}OS-TYPE =\t${CLRwhite}${OSTYPE}${CLRnormal}${CLRnormal}\n"
-  echo -e "\t${CLRheading}UNAME${CLRwhite}${CLRnormal}"
-  echo -e "\t${CLRtitle}SYSkernal = \t${CLRwhite}${SYSkernal}${CLRnormal}"
-  echo -e "\t${CLRtitle}SYSkernalVer = \t${CLRwhite}${SYSkernalVer}${CLRnormal}"
-  echo -e "\t${CLRtitle}SYSmachine = \t${CLRwhite}${SYSmachine}${CLRnormal}"
-  echo -e "\t${CLRtitle}SYSplatform = \t${CLRwhite}${SYSplatform}${CLRnormal}\n"
+  echo -e "\t${CLRtitle}HOST = \t\t${CLRdefault}${MACHINE_NAME}${CLRnormal}"
+  echo -e "\t${CLRtitle}OS = \t\t${CLRdefault}${OS}${CLRnormal}"
+  echo -e "\t${CLRtitle}OS-TYPE =\t${CLRdefault}${OSTYPE}${CLRnormal}${CLRnormal}\n"
+  echo -e "\t${CLRheading}UNAME${CLRdefault}${CLRnormal}"
+  echo -e "\t${CLRtitle}SYSkernal = \t${CLRdefault}${SYSkernal}${CLRnormal}"
+  echo -e "\t${CLRtitle}SYSkernalVer = \t${CLRdefault}${SYSkernalVer}${CLRnormal}"
+  echo -e "\t${CLRtitle}SYSmachine = \t${CLRdefault}${SYSmachine}${CLRnormal}"
+  echo -e "\t${CLRtitle}SYSplatform = \t${CLRdefault}${SYSplatform}${CLRnormal}\n"
   if [[ "$VALUESvia" == "FILE" ]]; then
-    echo -e "\t${CLRheading}/ETC/OS-RELEASE${CLRwhite}${CLRnormal}"
-    echo -e "\t${CLRtitle}LSBrel = \t${CLRwhite}${LSBrel}${CLRnormal}"
-    echo -e "\t${CLRtitle}LSBcodename = \t${CLRwhite}${LSBcodename}${CLRnormal}\n"
+    echo -e "\t${CLRheading}/ETC/OS-RELEASE${CLRdefault}${CLRnormal}"
+    echo -e "\t${CLRtitle}LSBrel = \t${CLRdefault}${LSBrel}${CLRnormal}"
+    echo -e "\t${CLRtitle}LSBcodename = \t${CLRdefault}${LSBcodename}${CLRnormal}\n"
   elif [[ "$VALUESvia" == "LSB" ]]; then
-    echo -e "\t${CLRheading}LSB_RELEASE${CLRwhite}${CLRnormal}"
-    echo -e "\t${CLRtitle}LSBid = \t${CLRwhite}${LSBid}${CLRnormal}"
-    echo -e "\t${CLRtitle}LSBrel = \t${CLRwhite}${LSBrel}${CLRnormal}"
-    echo -e "\t${CLRtitle}LSBcodename = \t${CLRwhite}${LSBcodename}${CLRnormal}\n"
+    echo -e "\t${CLRheading}LSB_RELEASE${CLRdefault}${CLRnormal}"
+    echo -e "\t${CLRtitle}LSBid = \t${CLRdefault}${LSBid}${CLRnormal}"
+    echo -e "\t${CLRtitle}LSBrel = \t${CLRdefault}${LSBrel}${CLRnormal}"
+    echo -e "\t${CLRtitle}LSBcodename = \t${CLRdefault}${LSBcodename}${CLRnormal}\n"
   fi
   if [[ "$DeviceType" == "RPI" ]]; then
     echo -e "\t${CLRheading}RPI VARS"
-    echo -e "\t${CLRtitle}RPi HW Rev =\t${CLRwhite}${RPIrev}${CLRnormal}"
-    echo -e "\t${CLRtitle}RPi Model =\t${CLRwhite}${RPImodel}${CLRnormal}"
-    echo -e "\t${CLRtitle}RPi Rel Date =\t${CLRwhite}${RPIrel}${CLRnormal}"
-    echo -e "\t${CLRtitle}RPi Manuf =\t${CLRwhite}${RPIman}${CLRnormal}\n"
+    echo -e "\t${CLRtitle}RPi HW Rev =\t${CLRdefault}${RPIrev}${CLRnormal}"
+    echo -e "\t${CLRtitle}RPi Model =\t${CLRdefault}${RPImodel}${CLRnormal}"
+    echo -e "\t${CLRtitle}RPi Rel Date =\t${CLRdefault}${RPIrel}${CLRnormal}"
+    echo -e "\t${CLRtitle}RPi Manuf =\t${CLRdefault}${RPIman}${CLRnormal}\n"
   elif [[ "$DeviceType" == "Mac" ]]; then
     echo -e "\t${CLRheading}MacOS VARS"
-    echo -e "\t${CLRtitle}Raw Version = \t${CLRwhite}${MacOSinitialVer}${CLRnormal}"
-    echo -e "\t${CLRtitle}Adj Version = \t${CLRwhite}${MacOSadjustedVer}${CLRnormal}"
-    echo -e "\t${CLRtitle}MacOS Ver = \t${CLRwhite}${MacOSmainVer}${CLRnormal}"
-    echo -e "\t${CLRtitle}MacOS sub V = \t${CLRwhite}${MacOSsubVer}${CLRnormal}\n"
+    echo -e "\t${CLRtitle}Raw Version = \t${CLRdefault}${MacOSinitialVer}${CLRnormal}"
+    echo -e "\t${CLRtitle}Adj Version = \t${CLRdefault}${MacOSadjustedVer}${CLRnormal}"
+    echo -e "\t${CLRtitle}MacOS Ver = \t${CLRdefault}${MacOSmainVer}${CLRnormal}"
+    echo -e "\t${CLRtitle}MacOS sub V = \t${CLRdefault}${MacOSsubVer}${CLRnormal}\n"
   fi
   return 0
 }
@@ -517,29 +519,29 @@ reportNetwork() {
       else
         lanIP=""
       fi
-      echo -e "\t${CLRtitle}${lanTITLE}\t${CLRwhite}${lanIP}${CLRnormal}${lanIP6space}${lanIP6}${lanIP6space}${macID}${CLRnormal}"
+      echo -e "\t${CLRtitle}${lanTITLE}\t${CLRdefault}${lanIP}${CLRnormal}${lanIP6space}${lanIP6}${lanIP6space}${macID}${CLRnormal}"
     done
   elif [[ $lanIP != "Unknown" ]]; then   # for FreeBSD/OpenBSD/SunOS where full NW details aren't gathered
     for (( i=0; i<ip4count; i=i+1 )); do
       lanIP="${lanIPS[i]}"
-      echo -e "\t${CLRtitle}LAN IP \t\t${CLRwhite}${lanIP}${CLRnormal}"
+      echo -e "\t${CLRtitle}LAN IP \t\t${CLRdefault}${lanIP}${CLRnormal}"
     done
   fi
-  [[ -n $pubIP ]] && echo -e "\t${CLRtitle}Internet IP \t${CLRwhite}${pubIP}${CLRnormal}"
+  [[ -n $pubIP ]] && echo -e "\t${CLRtitle}Internet IP \t${CLRdefault}${pubIP}${CLRnormal}"
   return 0
 }
 
 reportSystem() {
-  [[ -n $HWdevice ]] && echo -e "\t${CLRtitle}HW Device\t${CLRwhite}${HWdevice}${CLRnormal}"
-  [[ -n $OSfullname ]] && echo -e "\t${CLRtitle}OS\t\t${CLRwhite}${OSfullname}${CLRnormal}"
-  [[ -n $OSkernel ]] && echo -e "\t${CLRtitle}Kernel\t\t${CLRwhite}${OSkernel}${CLRnormal}"
+  [[ -n $HWdevice ]] && echo -e "\t${CLRtitle}HW Device\t${CLRdefault}${HWdevice}${CLRnormal}"
+  [[ -n $OSfullname ]] && echo -e "\t${CLRtitle}OS\t\t${CLRdefault}${OSfullname}${CLRnormal}"
+  [[ -n $OSkernel ]] && echo -e "\t${CLRtitle}Kernel\t\t${CLRdefault}${OSkernel}${CLRnormal}"
   [[ -z $compressed ]] && echo
   reportNetwork
   [[ -z $compressed ]] && echo
-  [[ -n $HWrelease ]] && echo -e "\t${CLRtitle}Release Date\t${CLRwhite}${HWrelease}${CLRnormal}"
-  [[ -n $CPUmeta ]] && echo -e "\t${CLRtitle}Processor\t${CLRwhite}${CPUmeta}${CLRnormal}"
-  [[ -n $MEMusage ]] && echo -e "\t${CLRtitle}Memory Use\t${CLRwhite}${MEMusage}${CLRnormal}"
-  [[ -n $DISKusage ]] && echo -e "\t${CLRtitle}Disk Use\t${CLRwhite}${DISKusage}${CLRnormal}"
+  [[ -n $HWrelease ]] && echo -e "\t${CLRtitle}Release Date\t${CLRdefault}${HWrelease}${CLRnormal}"
+  [[ -n $CPUmeta ]] && echo -e "\t${CLRtitle}Processor\t${CLRdefault}${CPUmeta}${CLRnormal}"
+  [[ -n $MEMusage ]] && echo -e "\t${CLRtitle}Memory Use\t${CLRdefault}${MEMusage}${CLRnormal}"
+  [[ -n $DISKusage ]] && echo -e "\t${CLRtitle}Disk Use\t${CLRdefault}${DISKusage}${CLRnormal}"
   return 0
 }
 
@@ -574,7 +576,7 @@ if [[ "$OS" == "Linux" ]]; then
 elif [[ "$OS" == "Darwin" ]]; then  # Mac unique extraction
   setMac
 else                                # un-determined host type
-  processExit "${CLRerror}Error${CLRwhite}: ${CLRwarning}Could not determine System Type${CLRwhite}"
+  processExit "${CLRerror}Error${CLRdefault}: ${CLRwarning}Could not determine System Type${CLRdefault}"
 fi
 
 [[ "$mode" == "DEBUG" ]] && reportDebug && processExit
