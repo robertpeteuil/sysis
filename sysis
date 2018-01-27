@@ -32,7 +32,7 @@ if test -t 1; then            # check if stdout is a terminal
   if [ "$TERM" == "xterm-new" ]; then
     TERM="xterm"
   fi
-  ncolors=$(tput colors)    # Zsee if it supports colors
+  ncolors=$(tput colors)    # check if it supports colors
   if test -n "$ncolors" && test "$ncolors" -ge 8; then
     # Set Colors
     bold="$(tput bold)"
@@ -145,7 +145,7 @@ cleanCPUname() {
   tempCPUname=${tempCPUname%' v'*}           # remove version #
   tempCPUname=${tempCPUname%'  '*}           # remove model # that comes after 2 spaces
   tempCPUname=${tempCPUname//' 0'/}          # remove space 0
-  tempCPUname=$(cleanText "$tempCPUname")    # remove leading / trailine space
+  tempCPUname=$(cleanText "$tempCPUname")    # remove leading / trailing space
   echo -n "$tempCPUname"
 }
 
@@ -162,7 +162,7 @@ getNetwork() {
     pubIP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com | sed 's/"//g')
   elif [[ $(curl -V 2> /dev/null) ]]; then
     pubIP=$(curl -s https://wtfismyip.com/text)
-    # pubIP=$(curl -s ipinfo.io/ip)  # ipinfo.io no longer provides consistant results as of Nov 2017
+    # pubIP=$(curl -s ipinfo.io/ip)  # ipinfo.io no longer provides consistent results as of Nov 2017
   fi
   if [[ $(ip -4 addr 2> /dev/null) ]]; then  # LANIP via 'ip' if possible
     # ip features may be limited on older systems
@@ -279,7 +279,7 @@ setLinuxCommon() {
   fi
   if [ -e "/sys/devices/system/cpu/possible" ]; then
     if lscpu | grep -q -m1 'max MHz'; then
-      CPUspeed=$(lscpu | grep -m1 'max MHz')  # exists on adj proc
+      CPUspeed=$(lscpu | grep -m1 'max MHz')  # exists on adj. proc
     else
       CPUspeed=$(lscpu | grep -m1 'MHz')
     fi
@@ -341,7 +341,7 @@ setRPI() {
         *) RPImodel="'Unknown Version'"; RPIman="Unknown"; RPIrel="Unknown";;
     esac
     if [[ -n ${CPUinfo} ]]; then
-      CPUmeta="${CPUname} ${CPUinfo}"  # must be calculated in this if, otherwise vars arent defined
+      CPUmeta="${CPUname} ${CPUinfo}"  # must be calculated in this if, otherwise vars aren't defined
     else
       CPUmeta="${CPUname}"
     fi
@@ -417,7 +417,7 @@ setMac() {
   CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz ${CLRnormal}${CLRwarning}(${CPUcores} Core)${CLRnormal}"
   CPUmeta="${CPUname} ${CPUinfo}"
   MEMsizeMB=$(sysctl -n hw.memsize)
-    MEMsizeMB=$((MEMsizeMB / (1024 * 1024) ))    # Mem in MB
+    MEMsizeMB=$((MEMsizeMB / (1024 * 1024) ))    # Memory in MB
   #  Memory used = App Use + Wired use + Compressed use
   MEMusedApps=$(vm_stat | grep 'active')
     MEMusedApps=$(cleanVARtext "$MEMusedApps")
