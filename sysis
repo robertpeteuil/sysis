@@ -528,7 +528,7 @@ reportNetwork() {
 }
 
 reportSystem() {
-  [[ -n $HWdevice ]] && echo -e "\t${CLRtitle}Device\t${CLRdefault}${HWdevice}${CLRnormal}"
+  [[ -n $HWdevice ]] && echo -e "\t${CLRtitle}Device\t\t${CLRdefault}${HWdevice}${CLRnormal}"
   [[ -n $OSfullname ]] && echo -e "\t${CLRtitle}OS\t\t${CLRdefault}${OSfullname}${CLRnormal}"
   [[ -n $OSkernel ]] && echo -e "\t${CLRtitle}Kernel\t\t${CLRdefault}${OSkernel}${CLRnormal}"
   [[ -z $compressed ]] && echo
