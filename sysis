@@ -10,8 +10,8 @@
 
 
 scriptname="sysis"
-scriptbuildnum="3.7.4"
-scriptbuilddate="2018-01-26"
+scriptbuildnum="3.7.5"
+scriptbuilddate="2018-02-13"
 
 ############################################################
 ### VARS INITS
@@ -528,7 +528,7 @@ reportNetwork() {
 }
 
 reportSystem() {
-  [[ -n $HWdevice ]] && echo -e "\t${CLRtitle}HW Device\t${CLRdefault}${HWdevice}${CLRnormal}"
+  [[ -n $HWdevice ]] && echo -e "\t${CLRtitle}Device\t${CLRdefault}${HWdevice}${CLRnormal}"
   [[ -n $OSfullname ]] && echo -e "\t${CLRtitle}OS\t\t${CLRdefault}${OSfullname}${CLRnormal}"
   [[ -n $OSkernel ]] && echo -e "\t${CLRtitle}Kernel\t\t${CLRdefault}${OSkernel}${CLRnormal}"
   [[ -z $compressed ]] && echo
