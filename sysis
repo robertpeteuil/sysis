@@ -10,8 +10,8 @@
 
 
 scriptname="sysis"
-scriptbuildnum="3.7.4"
-scriptbuilddate="2018-01-26"
+scriptbuildnum="3.7.5"
+scriptbuilddate="2018-02-13"
 
 ############################################################
 ### VARS INITS
@@ -32,7 +32,7 @@ if test -t 1; then            # check if stdout is a terminal
   if [ "$TERM" == "xterm-new" ]; then
     TERM="xterm"
   fi
-  ncolors=$(tput colors)    # Zsee if it supports colors
+  ncolors=$(tput colors)    # check if it supports colors
   if test -n "$ncolors" && test "$ncolors" -ge 8; then
     # Set Colors
     bold="$(tput bold)"
@@ -145,7 +145,7 @@ cleanCPUname() {
   tempCPUname=${tempCPUname%' v'*}           # remove version #
   tempCPUname=${tempCPUname%'  '*}           # remove model # that comes after 2 spaces
   tempCPUname=${tempCPUname//' 0'/}          # remove space 0
-  tempCPUname=$(cleanText "$tempCPUname")    # remove leading / trailine space
+  tempCPUname=$(cleanText "$tempCPUname")    # remove leading / trailing space
   echo -n "$tempCPUname"
 }
 
@@ -162,7 +162,7 @@ getNetwork() {
     pubIP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com | sed 's/"//g')
   elif [[ $(curl -V 2> /dev/null) ]]; then
     pubIP=$(curl -s https://wtfismyip.com/text)
-    # pubIP=$(curl -s ipinfo.io/ip)  # ipinfo.io no longer provides consistant results as of Nov 2017
+    # pubIP=$(curl -s ipinfo.io/ip)  # ipinfo.io no longer provides consistent results as of Nov 2017
   fi
   if [[ $(ip -4 addr 2> /dev/null) ]]; then  # LANIP via 'ip' if possible
     # ip features may be limited on older systems
@@ -172,32 +172,32 @@ getNetwork() {
     lanIP=$(echo -e "$lanINFO" | cut -d' ' -f3)
     lanIP6=$(echo -e "$lanINFO" | cut -d' ' -f4)
   elif [[ $(ifconfig -a 2> /dev/null) ]]; then  # else try 'ifconfig'
-    case $OS in
-     Linux)   # removes virtual adapters named "virbr*" from results
-        # awk limited on older systems (no support for [[:alnum:]])
-        lanINFO=$(ifconfig -a | awk 'BEGIN{n=0} /^[A-Za-z0-9]/ {if ($1 ~ /^virbr/) {next} else {nname[n]=$1; validIP=0; nicON=0; do {if ($0 ~ /^\s*$/) {break} else if ($0 ~ /UP BROADCAST RUNNING/) {nicON=1} else if ($0 ~ /HWaddr/) {macadd[n]=$5} else if ($0 ~ /cast/ && $0 !~ /cast:0\.0\.0\.0/) {ip4add[n]=$2; validIP=1} else if ($0 ~ /inet6/ && $0 ~ /Scope:Global/) {ip6add[n]=$3; validIP=1} getline} while ($0 !~ /^[A-Za-z0-9]/)} if (validIP==1 && nicON==1) {n++; validIP=0; nicON=0} } END{for (i=0; i<n; i++) {split(ip4add[i], ip4, ":"); split(ip6add[i], ip6, /\//); printf "%s n:%s 4:%s 6:%s\n", macadd[i], nname[i], ip4[2], ip6[1]}}')
-        lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f1)
-        lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f2)
-        lanIP=$(echo -e "$lanINFO" | cut -d' ' -f3)
-        lanIP6=$(echo -e "$lanINFO" | cut -d' ' -f4)
-        ;;
-     Darwin)  # removes virtual adapters named "vnic*" from results
-        lanINFO=$(ifconfig -a | tac | awk 'BEGIN{n=0; m=0} /status: active/ {validIP=0; nonVirt=0; {do {if ($0~ /^vnic/) {next} else if ($0 ~ /^[[:alnum:]]/) {split($1, tmpname, ":"); nname[n]=tmpname[1]; nonVirt=1; break} else if ($0 ~ /cast/) {ip4add[n]=$2; validIP=1} else if ($0 ~ /inet6/) {ip6temp[m]=$2; m++} else if ($0 ~ /ether /) {macadd[n]=$2}} while (getline == 1)} {for (i=0; i<m; i++) {if (index(ip6temp[i], nname[n]) ==0) {ip6add[n]=ip6temp[i]; validIP=1} m=0}} if (validIP == 1 && nonVirt == 1) {n++}} END{for (i=n-1; i>=0; i--) {printf "%s n:%s 4:%s 6:%s\n", macadd[i], nname[i], ip4add[i], ip6add[i]}}')
-        lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f1)
-        lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f2)
-        lanIP=$(echo -e "$lanINFO" | cut -d' ' -f3)
-        lanIP6=$(echo -e "$lanINFO" | cut -d' ' -f4)
-        ;;
-     FreeBSD|OpenBSD)
-        lanIP=$(ifconfig | grep -E 'inet.[0-9]' | grep -v '127.0.0.1' | awk '{print $2}')
-        ;;
-     SunOS)
-        lanIP=$(ifconfig -a | grep inet | grep -v '127.0.0.1' | awk '{print $2}')
-        ;;
-     *)
-        lanIP="Unknown"
-        ;;
-    esac
+  case $OS in
+    Linux)   # removes virtual adapters named "virbr*" from results
+      # awk limited on older systems (no support for [[:alnum:]])
+      lanINFO=$(ifconfig -a | awk 'BEGIN{n=0} /^[A-Za-z0-9]/ {if ($1 ~ /^virbr/) {next} else {nname[n]=$1; validIP=0; nicON=0; do {if ($0 ~ /^\s*$/) {break} else if ($0 ~ /UP BROADCAST RUNNING/) {nicON=1} else if ($0 ~ /HWaddr/) {macadd[n]=$5} else if ($0 ~ /cast/ && $0 !~ /cast:0\.0\.0\.0/) {ip4add[n]=$2; validIP=1} else if ($0 ~ /inet6/ && $0 ~ /Scope:Global/) {ip6add[n]=$3; validIP=1} getline} while ($0 !~ /^[A-Za-z0-9]/)} if (validIP==1 && nicON==1) {n++; validIP=0; nicON=0} } END{for (i=0; i<n; i++) {split(ip4add[i], ip4, ":"); split(ip6add[i], ip6, /\//); printf "%s n:%s 4:%s 6:%s\n", macadd[i], nname[i], ip4[2], ip6[1]}}')
+      lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f1)
+      lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f2)
+      lanIP=$(echo -e "$lanINFO" | cut -d' ' -f3)
+      lanIP6=$(echo -e "$lanINFO" | cut -d' ' -f4)
+      ;;
+    Darwin)  # removes virtual adapters named "vnic*" from results
+      lanINFO=$(ifconfig -a | tac | awk 'BEGIN{n=0; m=0} /status: active/ {validIP=0; nonVirt=0; {do {if ($0~ /^vnic/) {next} else if ($0 ~ /^[[:alnum:]]/) {split($1, tmpname, ":"); nname[n]=tmpname[1]; nonVirt=1; break} else if ($0 ~ /cast/) {ip4add[n]=$2; validIP=1} else if ($0 ~ /inet6/) {ip6temp[m]=$2; m++} else if ($0 ~ /ether /) {macadd[n]=$2}} while (getline == 1)} {for (i=0; i<m; i++) {if (index(ip6temp[i], nname[n]) ==0) {ip6add[n]=ip6temp[i]; validIP=1} m=0}} if (validIP == 1 && nonVirt == 1) {n++}} END{for (i=n-1; i>=0; i--) {printf "%s n:%s 4:%s 6:%s\n", macadd[i], nname[i], ip4add[i], ip6add[i]}}')
+      lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f1)
+      lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f2)
+      lanIP=$(echo -e "$lanINFO" | cut -d' ' -f3)
+      lanIP6=$(echo -e "$lanINFO" | cut -d' ' -f4)
+      ;;
+    FreeBSD|OpenBSD)
+      lanIP=$(ifconfig | grep -E 'inet.[0-9]' | grep -v '127.0.0.1' | awk '{print $2}')
+      ;;
+    SunOS)
+      lanIP=$(ifconfig -a | grep inet | grep -v '127.0.0.1' | awk '{print $2}')
+      ;;
+    *)
+      lanIP="Unknown"
+      ;;
+  esac
   fi
   # If all data gathered - lanMAC sets # of connections
   if [[ -n $lanMAC ]]; then
@@ -279,7 +279,7 @@ setLinuxCommon() {
   fi
   if [ -e "/sys/devices/system/cpu/possible" ]; then
     if lscpu | grep -q -m1 'max MHz'; then
-      CPUspeed=$(lscpu | grep -m1 'max MHz')  # exists on adj proc
+      CPUspeed=$(lscpu | grep -m1 'max MHz')  # exists on adj. proc
     else
       CPUspeed=$(lscpu | grep -m1 'MHz')
     fi
@@ -341,7 +341,7 @@ setRPI() {
         *) RPImodel="'Unknown Version'"; RPIman="Unknown"; RPIrel="Unknown";;
     esac
     if [[ -n ${CPUinfo} ]]; then
-      CPUmeta="${CPUname} ${CPUinfo}"  # must be calculated in this if, otherwise vars arent defined
+      CPUmeta="${CPUname} ${CPUinfo}"  # must be calculated in this if, otherwise vars aren't defined
     else
       CPUmeta="${CPUname}"
     fi
@@ -417,7 +417,7 @@ setMac() {
   CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz ${CLRnormal}${CLRwarning}(${CPUcores} Core)${CLRnormal}"
   CPUmeta="${CPUname} ${CPUinfo}"
   MEMsizeMB=$(sysctl -n hw.memsize)
-    MEMsizeMB=$((MEMsizeMB / (1024 * 1024) ))    # Mem in MB
+    MEMsizeMB=$((MEMsizeMB / (1024 * 1024) ))    # Memory in MB
   #  Memory used = App Use + Wired use + Compressed use
   MEMusedApps=$(vm_stat | grep 'active')
     MEMusedApps=$(cleanVARtext "$MEMusedApps")
@@ -528,7 +528,7 @@ reportNetwork() {
 }
 
 reportSystem() {
-  [[ -n $HWdevice ]] && echo -e "\t${CLRtitle}HW Device\t${CLRdefault}${HWdevice}${CLRnormal}"
+  [[ -n $HWdevice ]] && echo -e "\t${CLRtitle}Device\t\t${CLRdefault}${HWdevice}${CLRnormal}"
   [[ -n $OSfullname ]] && echo -e "\t${CLRtitle}OS\t\t${CLRdefault}${OSfullname}${CLRnormal}"
   [[ -n $OSkernel ]] && echo -e "\t${CLRtitle}Kernel\t\t${CLRdefault}${OSkernel}${CLRnormal}"
   [[ -z $compressed ]] && echo
