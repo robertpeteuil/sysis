@@ -10,8 +10,8 @@
 
 
 scriptname="sysis"
-scriptbuildnum="3.7.5"
-scriptbuilddate="2018-02-13"
+scriptbuildnum="3.7.6"
+scriptbuilddate="2018-03-01"
 
 ############################################################
 ### VARS INITS
@@ -158,10 +158,12 @@ cleanVARtext() {
 }
 
 getNetwork() {
-  if [[ $(dig 2> /dev/null) ]]; then
-    pubIP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com | sed 's/"//g')
+  if [[ $(which dig 2&> /dev/null) ]]; then
+    if [[ $(dig +time=1 +tries=1 +short ns1.google.com 2&> /dev/null) ]]; then
+        pubIP=$(dig TXT +time=3 +tries=1 +short o-o.myaddr.l.google.com @ns1.google.com | sed 's/"//g')
+    fi
   elif [[ $(curl -V 2> /dev/null) ]]; then
-    pubIP=$(curl -s https://wtfismyip.com/text)
+    pubIP=$(curl -s --connect-timeout 2 https://wtfismyip.com/text)
     # pubIP=$(curl -s ipinfo.io/ip)  # ipinfo.io no longer provides consistent results as of Nov 2017
   fi
   if [[ $(ip -4 addr 2> /dev/null) ]]; then  # LANIP via 'ip' if possible
