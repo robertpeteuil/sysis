@@ -49,7 +49,7 @@ Sysis can be installed multiple ways:
 - The installation script downloads the latest release and installs it in the path.
 
 ``` shell
-curl -fsSL https://raw.github.com/robertpeteuil/sysis/master/install.sh -o install.sh
+curl -LO https://raw.github.com/robertpeteuil/sysis/master/install.sh
 bash install.sh
 ```
 
