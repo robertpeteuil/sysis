@@ -10,8 +10,8 @@
 
 
 scriptname="sysis"
-scriptbuildnum="3.7.6"
-scriptbuilddate="2018-03-01"
+scriptbuildnum="3.7.7"
+scriptbuilddate="2019-01-06"
 
 ############################################################
 ### VARS INITS
@@ -391,6 +391,7 @@ setMac() {
   MacOSmainVer="10.${MacOSadjustedVer}"
   MacOSver="10.${MacOSadjustedVer}.${MacOSsubVer}"
   case $MacOSmainVer in
+    10.14) OSname="Mojave";;
     10.13) OSname="High Sierra";;
     10.12) OSname="Sierra";;
     10.11) OSname="El Capitan";;
