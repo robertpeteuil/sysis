@@ -10,8 +10,8 @@
 
 
 scriptname="sysis"
-scriptbuildnum="3.7.10"
-scriptbuilddate="2019-11-28"
+scriptbuildnum="3.7.11"
+scriptbuilddate="2019-12-28"
 
 ############################################################
 ### VARS INITS
@@ -304,6 +304,16 @@ setLinuxCommon() {
 setRPI() {
   DeviceType="RPI"
   setLinuxCommon
+  if [[ -z "${lanIP}" ]]; then
+    lanIP=$(ifconfig | grep -E 'inet.[0-9]' | grep -v '127.0.0.1' | awk '{print $2}')
+    if [[ -n $lanIP ]]; then
+    ip4count=0
+    for i in $lanIP; do
+      lanIPS[ip4count]=${i#*':'}  # strip off prefix added by awk if present
+      ((++ip4count))
+    done
+  fi
+  fi
   if [ -e "/proc/cpuinfo" ]; then
     RPIrev=$(awk '/Revision/ { sub(/^.+\:/, "") ; print $1 }' /proc/cpuinfo)
     CPUname=$(awk '/model\ name/ { sub(/-compatible/, ""); print ($4)" r"($7); exit}' /proc/cpuinfo)
