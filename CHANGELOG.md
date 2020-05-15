@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## v3.7.13 - 2020-05-15
+
+**Adjust IP awk command for awk 5.0+**
+
 ## [v3.7.7] - 2019-11-28
 
 **Update macOS and RPi board detection**
