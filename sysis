@@ -10,8 +10,8 @@
 
 
 scriptname="sysis"
-scriptbuildnum="3.7.13"
-scriptbuilddate="2020-05-15"
+scriptbuildnum="3.7.15"
+scriptbuilddate="2020-05-26"
 
 ############################################################
 ### VARS INITS
@@ -32,7 +32,7 @@ if test -t 1; then            # check if stdout is a terminal
   if [ "$TERM" == "xterm-new" ]; then
     TERM="xterm"
   fi
-  ncolors=$(tput colors)    # check if it supports colors
+  ncolors=$(tput colors 2>/dev/null)   # check if it supports colors
   if test -n "$ncolors" && test "$ncolors" -ge 8; then
     # Set Colors
     bold="$(tput bold)"
