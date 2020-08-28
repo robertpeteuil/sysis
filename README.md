@@ -30,7 +30,7 @@ Designed for maximum productivity:
 
 - Linux
 - macOS (OS X)
-- Windows 10 'Bash on Windows'
+- Windows 10 Linux Shells
 - Embedded Devices running Linux
 
 ### Installation

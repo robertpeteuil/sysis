@@ -10,8 +10,8 @@
 
 
 scriptname="sysis"
-scriptbuildnum="3.7.15"
-scriptbuilddate="2020-05-26"
+scriptbuildnum="3.7.16"
+scriptbuilddate="2020-08-28"
 
 ############################################################
 ### VARS INITS
@@ -167,6 +167,7 @@ getNetwork() {
     # pubIP=$(curl -s ipinfo.io/ip)  # ipinfo.io no longer provides consistent results as of Nov 2017
   fi
   if [[ $(ip -4 addr 2> /dev/null) ]]; then  # LANIP via 'ip' if possible
+    # TODO: update for changes in new linux releases & distros
     lanINFO=$(ip -d addr | tac | awk 'BEGIN{n=0} /^[^0-9]/ {validIP=0; bridgeIP=0; if ($0 !~ /bridge.forward_delay/ && $0 !~ /bridge_slave/) { do {if ($0 ~ /^[0-9]/) {if(($0 ~ /NO-CARRIER/ || $0 ~ /LOOPBACK/) || ($0 !~ /BROADCAST/)) {validIP=0; bridgeIP=0; break}} if ($0 ~ /link\/ether/) {macadd[n]=$2} else if ($0 ~ /inet / && $0 ~ /scope global/) {ip4add[n]=$2; validIP=1} else if ($0 ~ /inet6/ && $0 ~ /scope global/) {ip6add[n]=$2; validIP=1} else if ($0 ~ /bridge forward/ || $0 ~ /bridge_slave/) {bridgeIP=1} else if ($0 ~ /^[0-9]/) {nname[n]=$2; break} } while (getline ==1)} if (validIP==1 && bridgeIP==0) {n++; validIP=0} else {bridgeIP=0}} END{for (i=n-1; i>=0; i--) {split(ip4add[i], ip4, /\//); split(ip6add[i], ip6, /\//); split(nname[i], adname, ":"); printf "%s n:%s 4:%s 6:%s\n", macadd[i], adname[1], ip4[1], ip6[1]}}')
     lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f1)
     lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f2)
@@ -399,6 +400,8 @@ setLinux() {
 
 setMac() {
   DeviceType="Mac"
+  # TODO: Validaye & update for macOS Big Sur (11.0 / 10.16)
+  #       reportedly displays either 11.0 & 10.16 depending on version check method
   MacOSinitialVer=${SYSkernalVer%%.*}
   MacOSadjustedVer=$((MacOSinitialVer-4))
   MacOSsubVer=${SYSkernalVer%.*}
@@ -406,6 +409,7 @@ setMac() {
   MacOSmainVer="10.${MacOSadjustedVer}"
   MacOSver="10.${MacOSadjustedVer}.${MacOSsubVer}"
   case $MacOSmainVer in
+    10.16) OSname="Big Sur";;  # prefer 11.0, will require code change
     10.15) OSname="Catalina";;
     10.14) OSname="Mojave";;
     10.13) OSname="High Sierra";;
