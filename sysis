@@ -10,8 +10,8 @@
 
 
 scriptname="sysis"
-scriptbuildnum="3.7.16"
-scriptbuilddate="2020-08-28"
+scriptbuildnum="3.7.17"
+scriptbuilddate="2020-09-23"
 
 ############################################################
 ### VARS INITS
@@ -174,32 +174,32 @@ getNetwork() {
     lanIP=$(echo -e "$lanINFO" | cut -d' ' -f3)
     lanIP6=$(echo -e "$lanINFO" | cut -d' ' -f4)
   elif [[ $(ifconfig -a 2> /dev/null) ]]; then  # else try 'ifconfig'
-  case $OS in
-    Linux)   # removes virtual adapters named "virbr*" from results
-      # awk limited on older systems (no support for [[:alnum:]])
-      lanINFO=$(ifconfig -a | awk 'BEGIN{n=0} /^[A-Za-z0-9]/ {if ($1 ~ /^virbr/) {next} else {nname[n]=$1; validIP=0; nicON=0; do {if ($0 ~ /^\s*$/) {break} else if ($0 ~ /UP BROADCAST RUNNING/) {nicON=1} else if ($0 ~ /HWaddr/) {macadd[n]=$5} else if ($0 ~ /cast/ && $0 !~ /cast:0\.0\.0\.0/) {ip4add[n]=$2; validIP=1} else if ($0 ~ /inet6/ && $0 ~ /Scope:Global/) {ip6add[n]=$3; validIP=1} getline} while ($0 !~ /^[A-Za-z0-9]/)} if (validIP==1 && nicON==1) {n++; validIP=0; nicON=0} } END{for (i=0; i<n; i++) {split(ip4add[i], ip4, ":"); split(ip6add[i], ip6, /\//); printf "%s n:%s 4:%s 6:%s\n", macadd[i], nname[i], ip4[2], ip6[1]}}')
-      lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f1)
-      lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f2)
-      lanIP=$(echo -e "$lanINFO" | cut -d' ' -f3)
-      lanIP6=$(echo -e "$lanINFO" | cut -d' ' -f4)
-      ;;
-    Darwin)  # removes virtual adapters named "vnic*" from results
-      lanINFO=$(ifconfig -a | /usr/bin/tail -r | awk 'BEGIN{n=0; m=0} /status: active/ {validIP=0; nonVirt=0; {do {if ($0~ /^vnic/) {next} else if ($0 ~ /^[[:alnum:]]/) {split($1, tmpname, ":"); nname[n]=tmpname[1]; nonVirt=1; break} else if ($0 ~ /cast/) {ip4add[n]=$2; validIP=1} else if ($0 ~ /inet6/) {ip6temp[m]=$2; m++} else if ($0 ~ /ether /) {macadd[n]=$2}} while (getline == 1)} {for (i=0; i<m; i++) {if (index(ip6temp[i], nname[n]) ==0) {ip6add[n]=ip6temp[i]; validIP=1} m=0}} if (validIP == 1 && nonVirt == 1) {n++}} END{for (i=n-1; i>=0; i--) {printf "%s n:%s 4:%s 6:%s\n", macadd[i], nname[i], ip4add[i], ip6add[i]}}')
-      lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f1)
-      lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f2)
-      lanIP=$(echo -e "$lanINFO" | cut -d' ' -f3)
-      lanIP6=$(echo -e "$lanINFO" | cut -d' ' -f4)
-      ;;
-    FreeBSD|OpenBSD)
-      lanIP=$(ifconfig | grep -E 'inet.[0-9]' | grep -v '127.0.0.1' | awk '{print $2}')
-      ;;
-    SunOS)
-      lanIP=$(ifconfig -a | grep inet | grep -v '127.0.0.1' | awk '{print $2}')
-      ;;
-    *)
-      lanIP="Unknown"
-      ;;
-  esac
+    case $OS in
+      Linux)   # removes virtual adapters named "virbr*" from results
+        # awk limited on older systems (no support for [[:alnum:]])
+        lanINFO=$(ifconfig -a | awk 'BEGIN{n=0} /^[A-Za-z0-9]/ {if ($1 ~ /^virbr/) {next} else {nname[n]=$1; validIP=0; nicON=0; do {if ($0 ~ /^\s*$/) {break} else if ($0 ~ /UP BROADCAST RUNNING/) {nicON=1} else if ($0 ~ /HWaddr/) {macadd[n]=$5} else if ($0 ~ /cast/ && $0 !~ /cast:0\.0\.0\.0/) {ip4add[n]=$2; validIP=1} else if ($0 ~ /inet6/ && $0 ~ /Scope:Global/) {ip6add[n]=$3; validIP=1} getline} while ($0 !~ /^[A-Za-z0-9]/)} if (validIP==1 && nicON==1) {n++; validIP=0; nicON=0} } END{for (i=0; i<n; i++) {split(ip4add[i], ip4, ":"); split(ip6add[i], ip6, /\//); printf "%s n:%s 4:%s 6:%s\n", macadd[i], nname[i], ip4[2], ip6[1]}}')
+        lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f1)
+        lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f2)
+        lanIP=$(echo -e "$lanINFO" | cut -d' ' -f3)
+        lanIP6=$(echo -e "$lanINFO" | cut -d' ' -f4)
+        ;;
+      Darwin)  # removes virtual adapters named "vnic*" from results
+        lanINFO=$(ifconfig -a | /usr/bin/tail -r | awk 'BEGIN{n=0; m=0} /status: active/ {validIP=0; nonVirt=0; {do {if ($0~ /^vnic/) {next} else if ($0 ~ /^[[:alnum:]]/) {split($1, tmpname, ":"); nname[n]=tmpname[1]; nonVirt=1; break} else if ($0 ~ /cast/) {ip4add[n]=$2; validIP=1} else if ($0 ~ /inet6/) {ip6temp[m]=$2; m++} else if ($0 ~ /ether /) {macadd[n]=$2}} while (getline == 1)} {for (i=0; i<m; i++) {if (index(ip6temp[i], nname[n]) ==0) {ip6add[n]=ip6temp[i]; validIP=1} m=0}} if (validIP == 1 && nonVirt == 1) {n++}} END{for (i=n-1; i>=0; i--) {printf "%s n:%s 4:%s 6:%s\n", macadd[i], nname[i], ip4add[i], ip6add[i]}}')
+        lanMAC=$(echo -e "$lanINFO" | cut -d' ' -f1)
+        lanNAME=$(echo -e "$lanINFO" | cut -d' ' -f2)
+        lanIP=$(echo -e "$lanINFO" | cut -d' ' -f3)
+        lanIP6=$(echo -e "$lanINFO" | cut -d' ' -f4)
+        ;;
+      FreeBSD|OpenBSD)
+        lanIP=$(ifconfig | grep -E 'inet.[0-9]' | grep -v '127.0.0.1' | awk '{print $2}')
+        ;;
+      SunOS)
+        lanIP=$(ifconfig -a | grep inet | grep -v '127.0.0.1' | awk '{print $2}')
+        ;;
+      *)
+        lanIP="Unknown"
+        ;;
+    esac
   fi
   # If all data gathered - lanMAC sets # of connections
   if [[ -n $lanMAC ]]; then
@@ -260,9 +260,9 @@ getSystem() {
     LSBidPRE=$(lsb_release -i 2> /dev/null)
     LSBrelPRE=$(lsb_release -r 2> /dev/null)
     LSBcodenamePRE=$(lsb_release -c 2> /dev/null)
-  	[[ -n $LSBidPRE ]] && LSBid=${LSBidPRE#*":"} && LSBid=$(cleanText "$LSBid")
-  	[[ -n $LSBrelPRE ]] && LSBrel=${LSBrelPRE#*":"} && LSBrel=$(cleanText "$LSBrel")
-  	[[ -n $LSBcodenamePRE ]] && LSBcodename=${LSBcodenamePRE#*":"} && LSBcodename=$(cleanText "$LSBcodename")
+    [[ -n $LSBidPRE ]] && LSBid=${LSBidPRE#*":"} && LSBid=$(cleanText "$LSBid")
+    [[ -n $LSBrelPRE ]] && LSBrel=${LSBrelPRE#*":"} && LSBrel=$(cleanText "$LSBrel")
+    [[ -n $LSBcodenamePRE ]] && LSBcodename=${LSBcodenamePRE#*":"} && LSBcodename=$(cleanText "$LSBcodename")
   fi
   LSBcodename=$(for i in $LSBcodename; do B=$(echo -n "${i:0:1}" | tr "[:lower:]" "[:upper:]")${i:1}; echo -n "${B} "; done)
   LSBcodename=$(cleanText "$LSBcodename")
@@ -315,8 +315,8 @@ setRPI() {
     fi
   fi
   if [ -e "/proc/cpuinfo" ]; then
-    RPIrev=$(awk '/Revision/ { sub(/^.+\:/, "") ; print $1 }' /proc/cpuinfo)
-    CPUname=$(awk '/model\ name/ { sub(/-compatible/, ""); print ($4)" r"($7); exit}' /proc/cpuinfo)
+    RPIrev=$(awk '/Revision/ { sub(/^.+:/, "") ; print $1 }' /proc/cpuinfo)
+    CPUname=$(awk '/model name/ { sub(/-compatible/, ""); print ($4)" r"($7); exit}' /proc/cpuinfo)
     # RPI HW version source: http://elinux.org/RPi_HardwareHistory
     case "$RPIrev" in
         *beta) RPImodel="Beta"; RPIman="Beta"; RPIrel="Q1 2012";;
