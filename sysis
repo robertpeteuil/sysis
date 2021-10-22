@@ -405,16 +405,18 @@ setLinux() {
 
 setMac() {
   DeviceType="Mac"
-  # TODO: Validaye & update for macOS Big Sur (11.0 / 10.16)
-  #       reportedly displays either 11.0 & 10.16 depending on version check method
   MacOSinitialVer=${SYSkernalVer%%.*}
-  MacOSadjustedVer=$((MacOSinitialVer-4))
-  MacOSsubVer=${SYSkernalVer%.*}
-  MacOSsubVer=${MacOSsubVer#*.}
-  MacOSmainVer="10.${MacOSadjustedVer}"
-  MacOSver="10.${MacOSadjustedVer}.${MacOSsubVer}"
-  case $MacOSmainVer in
-    10.16) OSname="Big Sur";;  # prefer 11.0, will require code change
+  MacOSsubVer=${SYSkernalVer##*.}
+  if [ -e /usr/bin/sw_vers ]; then
+    MacOSprodVer=$(sw_vers -productVersion)
+  else
+    MacOSadjustedVer=$((MacOSinitialVer-4))
+    MacOSprodVer="10.${MacOSadjustedVer}"
+  fi
+  MacOSver="${MacOSprodVer}.${MacOSsubVer}"
+  case $MacOSprodVer in
+    11.7) OSname="Monterrey";;
+    11.6) OSname="Big Sur";;
     10.15) OSname="Catalina";;
     10.14) OSname="Mojave";;
     10.13) OSname="High Sierra";;
@@ -508,10 +510,7 @@ reportDebug() {
     echo -e "\t${CLRtitle}RPi Manuf =\t${CLRdefault}${RPIman}${CLRnormal}\n"
   elif [[ "$DeviceType" == "Mac" ]]; then
     echo -e "\t${CLRheading}MacOS VARS"
-    echo -e "\t${CLRtitle}Raw Version = \t${CLRdefault}${MacOSinitialVer}${CLRnormal}"
-    echo -e "\t${CLRtitle}Adj Version = \t${CLRdefault}${MacOSadjustedVer}${CLRnormal}"
-    echo -e "\t${CLRtitle}MacOS Ver = \t${CLRdefault}${MacOSmainVer}${CLRnormal}"
-    echo -e "\t${CLRtitle}MacOS sub V = \t${CLRdefault}${MacOSsubVer}${CLRnormal}\n"
+    echo -e "\t${CLRtitle}MacOS Ver = \t${CLRdefault}${MacOSver}${CLRnormal}"
   fi
   return 0
 }
