@@ -10,8 +10,8 @@
 
 
 scriptname="sysis"
-scriptbuildnum="3.7.18"
-scriptbuilddate="2020-10-21"
+scriptbuildnum="3.7.19"
+scriptbuilddate="2020-10-28"
 
 ############################################################
 ### VARS INITS
@@ -415,7 +415,7 @@ setMac() {
   fi
   MacOSver="${MacOSprodVer}.${MacOSsubVer}"
   case $MacOSprodVer in
-    11.7) OSname="Monterrey";;
+    12.0) OSname="Monterey";;
     11.6) OSname="Big Sur";;
     10.15) OSname="Catalina";;
     10.14) OSname="Mojave";;
