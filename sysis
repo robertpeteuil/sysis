@@ -10,8 +10,8 @@
 
 
 scriptname="sysis"
-scriptbuildnum="3.7.19"
-scriptbuilddate="2020-10-28"
+scriptbuildnum="3.7.20"
+scriptbuilddate="2021-11-05"
 
 ############################################################
 ### VARS INITS
@@ -411,26 +411,26 @@ setMac() {
     MacOSprodVer=$(sw_vers -productVersion)
   else
     MacOSadjustedVer=$((MacOSinitialVer-4))
-    MacOSprodVer="10.${MacOSadjustedVer}"
+    MacOSprodVer="10.${MacOSadjustedVer}.${MacOSsubVer}"
   fi
-  MacOSver="${MacOSprodVer}.${MacOSsubVer}"
+  MacOSver="${MacOSprodVer}"
   case $MacOSprodVer in
-    12.0) OSname="Monterey";;
-    11.6) OSname="Big Sur";;
-    10.15) OSname="Catalina";;
-    10.14) OSname="Mojave";;
-    10.13) OSname="High Sierra";;
-    10.12) OSname="Sierra";;
-    10.11) OSname="El Capitan";;
-    10.10) OSname="Yosemite";;
-    10.9) OSname="Mavericks";;
-    10.8) OSname="Mountain Lion";;
-    10.7) OSname="Lion";;
-    10.6) OSname="Snow Leopard";;
-    10.5) OSname="Leopard";;
-    10.4) OSname="Tiger";;
-    10.3) OSname="Panther";;
-    10.2) OSname="Jaguar";;
+    12.0*) OSname="Monterey";;
+    11.6*) OSname="Big Sur";;
+    10.15*) OSname="Catalina";;
+    10.14*) OSname="Mojave";;
+    10.13*) OSname="High Sierra";;
+    10.12*) OSname="Sierra";;
+    10.11*) OSname="El Capitan";;
+    10.10*) OSname="Yosemite";;
+    10.9*) OSname="Mavericks";;
+    10.8*) OSname="Mountain Lion";;
+    10.7*) OSname="Lion";;
+    10.6*) OSname="Snow Leopard";;
+    10.5*) OSname="Leopard";;
+    10.4*) OSname="Tiger";;
+    10.3*) OSname="Panther";;
+    10.2*) OSname="Jaguar";;
     10.1) OSname="Puma";;
     10.0) OSname="Cheetah";;
   esac
