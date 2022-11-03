@@ -1,0 +1,30 @@
+name: Release
+run-name: push v${{ github.event.release.tag_name }} to web
+
+on:
+  release:
+    types: [released]
+  workflow_dispatch:
+
+jobs:
+  upload-script:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Copy File
+      run: cp hcinstall.sh hcinstall
+
+    - name: Push scripts
+      uses: dmnemec/copy_file_to_another_repo_action@main
+      env:
+        API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+      with:
+        source_file: 'hcinstall'
+        destination_repo: 'robertpeteuil/iac.sh'
+        destination_branch: 'master'
+        destination_folder: 'docs'
+        user_email: 'actions@github.com'
+        user_name: 'release-action'
+        commit_message: 'update to v${{ github.event.release.tag_name }} from ${{ github.repository }}'
+  
