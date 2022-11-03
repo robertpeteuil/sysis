@@ -564,6 +564,7 @@ reportSystem() {
   [[ -z $compressed ]] && echo
   [[ -n $HWrelease ]] && echo -e "\t${CLRtitle}Release Date\t${CLRdefault}${HWrelease}${CLRnormal}"
   [[ -n $CPUmeta ]] && echo -e "\t${CLRtitle}Processor\t${CLRdefault}${CPUmeta}${CLRnormal}"
+  [[ -n $SYSmachine ]] && echo -e "\t${CLRtitle}Architcture\t${CLRdefault}${SYSmachine}${CLRnormal}"
   [[ -n $MEMusage ]] && echo -e "\t${CLRtitle}Memory Use\t${CLRdefault}${MEMusage}${CLRnormal}"
   [[ -n $DISKusage ]] && echo -e "\t${CLRtitle}Disk Use\t${CLRdefault}${DISKusage}${CLRnormal}"
   return 0
