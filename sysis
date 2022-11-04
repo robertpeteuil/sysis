@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # sysis - Display Key System Information
-#   Copyright (C) 2014-2020  Robert Peteuil  @RobertPeteuil
+#   Copyright (C) 2014-2022  Robert Peteuil  @RobertPeteuil
 #
 #     Lightweight Cross-Platform Utility for:
 #         macOS, Linux, and Windows 10 Bash on Windows
@@ -240,7 +240,8 @@ getSystem() {
     SYSkernal=$(uname -s 2> /dev/null)
     SYSkernalVer=$(uname -r 2> /dev/null)
     SYSmachine=$(uname -m 2> /dev/null)
-    SYSplatform=$(uname -i 2> /dev/null)
+    SYSdevice=$(uname -i 2> /dev/null)
+    SYSplatform=$(uname -s | tr '[:upper:]' '[:lower:]' 2> /dev/null)
   else
     processExit "cannot execute ${CLRwarning}'uname'${CLRdefault}"
   fi
@@ -440,10 +441,10 @@ setMac() {
     10.0) OSname="Cheetah";;
   esac
   OSfullname="macOS ${MacOSver}${CLRnormal} ${CLRwarning}(${OSname})${CLRnormal}"
-  if [[ "$SYSplatform" == "unknown" ]]; then
+  if [[ "$SYSdevice" == "unknown" ]]; then
     HWdevice=""
   else
-    HWdevice=${SYSplatform//,/.}
+    HWdevice=${SYSdevice//,/.}
   fi
   HWrelease=""
   CPUname=$(sysctl -n machdep.cpu.brand_string)
@@ -505,7 +506,7 @@ reportDebug() {
   echo -e "\t${CLRtitle}SYSkernal = \t${CLRdefault}${SYSkernal}${CLRnormal}"
   echo -e "\t${CLRtitle}SYSkernalVer = \t${CLRdefault}${SYSkernalVer}${CLRnormal}"
   echo -e "\t${CLRtitle}SYSmachine = \t${CLRdefault}${SYSmachine}${CLRnormal}"
-  echo -e "\t${CLRtitle}SYSplatform = \t${CLRdefault}${SYSplatform}${CLRnormal}\n"
+  echo -e "\t${CLRtitle}SYSdevice = \t${CLRdefault}${SYSdevice}${CLRnormal}\n"
   if [[ "$VALUESvia" == "FILE" ]]; then
     echo -e "\t${CLRheading}/ETC/OS-RELEASE${CLRdefault}${CLRnormal}"
     echo -e "\t${CLRtitle}LSBrel = \t${CLRdefault}${LSBrel}${CLRnormal}"
@@ -572,12 +573,13 @@ reportSystem() {
   [[ -n $HWdevice ]] && echo -e "\t${CLRtitle}Device\t\t${CLRdefault}${HWdevice}${CLRnormal}"
   [[ -n $OSfullname ]] && echo -e "\t${CLRtitle}OS\t\t${CLRdefault}${OSfullname}${CLRnormal}"
   [[ -n $OSkernel ]] && echo -e "\t${CLRtitle}Kernel\t\t${CLRdefault}${OSkernel}${CLRnormal}"
+  [[ -n $SYSmachine ]] && echo -e "\t${CLRtitle}Platform\t${CLRdefault}${SYSplatform}${CLRnormal}"
+  [[ -n $SYSmachine ]] && echo -e "\t${CLRtitle}Architcture\t${CLRdefault}${SYSmachine}${CLRnormal}"
   [[ -z $compressed ]] && echo
   reportNetwork
   [[ -z $compressed ]] && echo
   [[ -n $HWrelease ]] && echo -e "\t${CLRtitle}Release Date\t${CLRdefault}${HWrelease}${CLRnormal}"
   [[ -n $CPUmeta ]] && echo -e "\t${CLRtitle}Processor\t${CLRdefault}${CPUmeta}${CLRnormal}"
-  [[ -n $SYSmachine ]] && echo -e "\t${CLRtitle}Architcture\t${CLRdefault}${SYSmachine}${CLRnormal}"
   [[ -n $MEMusage ]] && echo -e "\t${CLRtitle}Memory Use\t${CLRdefault}${MEMusage}${CLRnormal}"
   [[ -n $DISKusage ]] && echo -e "\t${CLRtitle}Disk Use\t${CLRdefault}${DISKusage}${CLRnormal}"
   return 0
@@ -588,7 +590,7 @@ reportMain() {
   if [[ -z "$DeviceType" ]] || [[ "$mode" == "FORCE" ]]; then   # set VARS to most raw form
     OSkernel=${SYSkernalVer}
     CPUname=${SYSmachine}
-    [[ "$SYSplatform" != "unknown" ]] && HWdevice=${SYSplatform}
+    [[ "$SYSdevice" != "unknown" ]] && HWdevice=${SYSdevice}
   fi
   reportSystem
   return 0
