@@ -90,7 +90,8 @@ printHelp() {
   echo -e "\n${CLRdefault}Collect and print information on system, network and OS to standard output.\n"
   echo -e "${CLRtitle}usage: ${CLRdefault}${scriptname} ${CLRtitle2}[OPTIONS] [DEBUG]${CLRdefault}\n"
   echo -e "${CLRtitle}   OPTIONS"
-  echo -e "${CLRtitle2}     -c\t${CLRdefault}: compressed output (no separation lines)"
+  echo -e "${CLRtitle2}     -e\t${CLRdefault}: extended output"
+  echo -e "${CLRtitle2}     -c\t${CLRdefault}: compressed output (no separation)"
   echo -e "${CLRtitle2}     -d\t${CLRdefault}: debug only report"
   echo -e "${CLRtitle2}     -n\t${CLRdefault}: network only report"
   echo -e "${CLRtitle2}     -h\t${CLRdefault}: help"
@@ -114,6 +115,7 @@ getCommandTail() {
     case $1 in
       -c)           compressed="true";;
       -d)           mode="DEBUG";;
+      -e)           EXTENDED="TRUE";;
       -n)           mode="NET";;
       -h)           printHelp;;
       -V)           displayVer; echo; processExit;;
@@ -573,8 +575,10 @@ reportSystem() {
   [[ -n $HWdevice ]] && echo -e "\t${CLRtitle}Device\t\t${CLRdefault}${HWdevice}${CLRnormal}"
   [[ -n $OSfullname ]] && echo -e "\t${CLRtitle}OS\t\t${CLRdefault}${OSfullname}${CLRnormal}"
   [[ -n $OSkernel ]] && echo -e "\t${CLRtitle}Kernel\t\t${CLRdefault}${OSkernel}${CLRnormal}"
-  [[ -n $SYSmachine ]] && echo -e "\t${CLRtitle}Platform\t${CLRdefault}${SYSplatform}${CLRnormal}"
   [[ -n $SYSmachine ]] && echo -e "\t${CLRtitle}Architcture\t${CLRdefault}${SYSmachine}${CLRnormal}"
+  if [[ "$EXTENDED" ]]; then
+    [[ -n $SYSmachine ]] && echo -e "\t${CLRtitle}Platform\t${CLRdefault}${SYSplatform}${CLRnormal}"
+  fi
   [[ -z $compressed ]] && echo
   reportNetwork
   [[ -z $compressed ]] && echo
