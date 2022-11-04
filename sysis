@@ -436,7 +436,11 @@ setMac() {
     10.0) OSname="Cheetah";;
   esac
   OSfullname="macOS ${MacOSver}${CLRnormal} ${CLRwarning}(${OSname})${CLRnormal}"
-  HWdevice=${SYSplatform//,/.}
+  if [[ "$SYSplatform" == "unknown" ]]; then
+    HWdevice=""
+  else
+    HWdevice=${SYSplatform//,/.}
+  fi
   HWrelease=""
   CPUname=$(sysctl -n machdep.cpu.brand_string)
   CPUname=$(cleanCPUname "$CPUname")
@@ -445,7 +449,12 @@ setMac() {
   CPUspeedBig=$((CPUspeed / 1000))
   CPUspeedSmall=$((CPUspeed % 1000))
   CPUcores=$(sysctl -n hw.ncpu)
-  CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz ${CLRnormal}${CLRwarning}(${CPUcores} Core)${CLRnormal}"
+  if [[ "$SYSmachine" == "arm64" ]]; then
+    # hide CPU speed on Apple Silicon macs
+    CPUinfo="${CLRnormal}${CLRwarning}(${CPUcores} Core)${CLRnormal}"
+  else
+    CPUinfo="${CPUspeedBig}.${CPUspeedSmall:0:1} GHz ${CLRnormal}${CLRwarning}(${CPUcores} Core)${CLRnormal}"
+  fi
   CPUmeta="${CPUname} ${CPUinfo}"
   MEMsizeMB=$(sysctl -n hw.memsize)
     MEMsizeMB=$((MEMsizeMB / (1024 * 1024) ))    # Memory in MB
