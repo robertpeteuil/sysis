@@ -394,7 +394,11 @@ setLinux() {
     CPUname=$(grep -m1 'model name' < /proc/cpuinfo)
     CPUname=$(cleanCPUname "$CPUname")
   fi
-  CPUmeta="${CPUname} ${CPUinfo}"
+  if [[ -n "$CPUname" ]]; then
+    CPUmeta="${CPUname} ${CPUinfo}"
+  else
+    CPUmeta="${CPUinfo}"
+  fi
   if [[ $(free 2> /dev/null) ]]; then
     MEMuse=$(free -m | awk 'NR==2{printf "%s/%s MB", $3,$2 }')
     MemRatio=$(free -m | awk 'NR==2{printf "%.0f\n", $3*100/$2 }')
