@@ -449,6 +449,7 @@ setMac() {
     model="${modelline#*: }"
     idline=$(system_profiler SPHardwareDataType | grep 'Identifier')
     modelid="${idline#*: }"
+    modelid="${modelid//,/.}"
     HWdevice="${model} (${modelid})"
   else
     HWdevice=${SYSdevice//,/.}
