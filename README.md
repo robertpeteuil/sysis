@@ -127,4 +127,4 @@ USAGE: sysis [OPTIONS]
 
 ### Project History
 
-**SYSIS**, an acronym for "SYStem IS", was originally written in 2014 and released as open-source in 2017. It's actively maintained and enhancements are continually added.
+**SYSIS**, an acronym for "SYStem IS", was originally written in 2014 and released as open-source in 2017.
