@@ -422,6 +422,7 @@ setMac() {
   fi
   MacOSver="${MacOSprodVer}"
   case $MacOSprodVer in
+    14*) OSname="Sonoma";;
     13*) OSname="Ventura";;
     12*) OSname="Monterey";;
     11*) OSname="Big Sur";;
