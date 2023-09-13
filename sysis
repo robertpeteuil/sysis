@@ -10,8 +10,8 @@
 
 
 scriptname="sysis"
-scriptbuildnum="3.7.24"
-scriptbuilddate="2022-11-04"
+scriptbuildnum="3.7.25"
+scriptbuilddate="2022-11-07"
 
 ############################################################
 ### VARS INITS
@@ -118,7 +118,7 @@ getCommandTail() {
       -e)           EXTENDED="TRUE";;
       -n)           mode="NET";;
       -h)           printHelp;;
-      -V)           displayVer; echo; processExit;;
+      -v|-V)           displayVer; echo; processExit;;
       --help)       printHelp FULL;;
       --force)      mode="FORCE";;
       *)            printHelp;;
@@ -422,6 +422,7 @@ setMac() {
   fi
   MacOSver="${MacOSprodVer}"
   case $MacOSprodVer in
+    14*) OSname="Sonoma";;
     13*) OSname="Ventura";;
     12*) OSname="Monterey";;
     11*) OSname="Big Sur";;
