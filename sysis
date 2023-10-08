@@ -383,6 +383,13 @@ setRPI() {
     MEMuse=$(free -m | awk 'NR==2{printf "%s/%s MB", $3,$2 }')
     MemRatio=$(free -m | awk 'NR==2{printf "%.0f\n", $3*100/$2 }')
     MEMusage="${MEMuse} ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
+    swapUse="$(free -m | awk 'NR==3{printf "%s/%s MB", $3,$2}')"
+    if [ "$(free -m | awk 'NR==3{printf "%.0f\n", $2}')" == 0 ]; then
+      swapRatio="0"
+    else
+      swapRatio="$(free -m | awk 'NR==3{printf "%.0f\n", $3*100/$2'})"
+    fi 
+    swapUsage="${swapUse} ${CLRnormal}${CLRwarning}(${swapRatio}%)${CLRnormal}"
   fi
   return 0
 }
@@ -406,6 +413,13 @@ setLinux() {
     MEMuse=$(free -m | awk 'NR==2{printf "%s/%s MB", $3,$2 }')
     MemRatio=$(free -m | awk 'NR==2{printf "%.0f\n", $3*100/$2 }')
     MEMusage="${MEMuse} ${CLRnormal}${CLRwarning}(${MemRatio}%)${CLRnormal}"
+    swapUse="$(free -m | awk 'NR==3{printf "%s/%s MB", $3,$2}')"
+    if [ "$(free -m | awk 'NR==3{printf "%.0f\n", $2}')" == 0 ]; then
+      swapRatio="0"
+    else
+      swapRatio="$(free -m | awk 'NR==3{printf "%.0f\n", $3*100/$2'})"
+    fi
+    swapUsage="${swapUse} ${CLRnormal}${CLRwarning}(${swapRatio}%)${CLRnormal}"
   fi
   return 0
 }
@@ -592,6 +606,7 @@ reportSystem() {
   [[ -n $HWrelease ]] && echo -e "\t${CLRtitle}Release Date\t${CLRdefault}${HWrelease}${CLRnormal}"
   [[ -n $CPUmeta ]] && echo -e "\t${CLRtitle}Processor\t${CLRdefault}${CPUmeta}${CLRnormal}"
   [[ -n $MEMusage ]] && echo -e "\t${CLRtitle}Memory Use\t${CLRdefault}${MEMusage}${CLRnormal}"
+  [[ -n $swapUsage ]] && echo -e "\t${CLRtitle}Swap Use\t${CLRdefault}${swapUsage}${CLRnormal}"
   [[ -n $DISKusage ]] && echo -e "\t${CLRtitle}Disk Use\t${CLRdefault}${DISKusage}${CLRnormal}"
   return 0
 }
