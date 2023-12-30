@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # sysis - Display Key System Information
-#   Copyright (C) 2014-2022  Robert Peteuil  @RobertPeteuil
+#   Copyright (C) 2014-2023  Robert Peteuil  @RobertPeteuil
 #
 #     Lightweight Cross-Platform Utility for:
 #         macOS, Linux, and Windows 10 Bash on Windows
@@ -10,8 +10,8 @@
 
 
 scriptname="sysis"
-scriptbuildnum="3.7.25"
-scriptbuilddate="2023-09-13"
+scriptbuildnum="3.8.0"
+scriptbuilddate="2023-12-30"
 
 ############################################################
 ### VARS INITS
