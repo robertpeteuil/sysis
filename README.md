@@ -32,45 +32,22 @@ Designed for maximum productivity:
 - Windows 10 Linux Shells
 - Embedded Devices running Linux
 
-### Installation
+### Download
 
-Sysis can be installed multiple ways:
-
-- Download and run installer
-- Clone the repo and run installer
-- Manual download
-
-#### Download and run installer
-
-- Download the installation script
-- Verify the contents of the script you downloaded matches the contents of install.sh
-- Run the installation script
-- The installation script downloads the latest release and installs it in the path.
+Download latest release from my bootstrap server (iac.sh or <https://iac.sh>)
 
 ``` shell
-curl -LO https://raw.github.com/robertpeteuil/sysis/master/install.sh
-bash install.sh
+curl iac.sh/sysis > sysis
+chmod +x sysis
+# optional - move to system binary directory
+sudo mv sysis /usr/local/bin
 ```
 
-#### Clone the repo and run installer
-
-- clone the repo, optionally specifying `--depth=1` to make the download fast and use less disk space
-- cd into the repo directory
-- run the installation script
-- The script will detects that it's running locally and use the downloaded copy of `sysis`, instead of downloading it
+Download from GitHub
 
 ``` shell
-git clone https://github.com/robertpeteuil/sysis.git --depth=1
-cd sysis
-./install.sh
-```
-
-#### Manual download
-
-- This method downloads the latest commit on master, whereas the installation script downloads the latest release.
-
-``` shell
-curl -s -L https://raw.github.com/robertpeteuil/sysis/master/sysis > sysis; chmod +x sysis
+curl -LO https://raw.github.com/robertpeteuil/sysis/master/sysis
+chmod +x sysis
 ```
 
 ### Hosted Script Execution and Security
