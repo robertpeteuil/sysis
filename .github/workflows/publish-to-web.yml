@@ -1,4 +1,10 @@
-name: Release
+# Description: Publish script to another repo hosting a GitHub Pages website
+#
+# required values:
+#   var.SCRIPT_NAME          : name of the script to publish
+#   secrets.API_TOKEN_GITHUB : github token with write access to the repo
+
+name: publish-to-web
 run-name: push ${{ github.event.release.tag_name }} to web
 
 on:
@@ -18,7 +24,7 @@ jobs:
       env:
         API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
       with:
-        source_file: 'sysis'
+        source_file: ${{ vars.SCRIPT_NAME }}
         destination_repo: 'robertpeteuil/iac.sh'
         destination_branch: 'master'
         destination_folder: 'docs'
