@@ -3,6 +3,7 @@
 # required values:
 #   var.SCRIPT_NAME          : name of the script to publish
 #   secrets.API_TOKEN_GITHUB : github token with write access to the repo
+# v2
 
 name: publish-to-web
 run-name: push ${{ github.event.release.tag_name }} to web
