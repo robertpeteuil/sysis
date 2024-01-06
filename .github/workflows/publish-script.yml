@@ -12,6 +12,9 @@ on:
     types: [released]
   workflow_dispatch:
 
+env:
+  SCRIPT_NAME: ${{ vars.SCRIPT_NAME || github.event.repository.name }}
+
 jobs:
   upload-script:
     runs-on: ubuntu-latest
@@ -19,12 +22,12 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
-    - name: Push scripts
-      uses: dmnemec/copy_file_to_another_repo_action@main
+    - name: Publish Script
+      uses: dmnemec/copy_file_to_another_repo_action@v1.1.1
       env:
         API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
       with:
-        source_file: ${{ vars.SCRIPT_NAME }}
+        source_file: ${{ env.SCRIPT_NAME }}
         destination_repo: 'robertpeteuil/iac.sh'
         destination_branch: 'master'
         destination_folder: 'docs'
