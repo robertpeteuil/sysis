@@ -4,7 +4,7 @@
 #   var.SCRIPT_NAME          : name of the script to publish
 #   secrets.API_TOKEN_GITHUB : github token with write access to the repo
 
-name: publish-to-web
+name: publish-script
 run-name: push ${{ github.event.release.tag_name }} to web
 
 on:
@@ -16,12 +16,11 @@ env:
   SCRIPT_NAME: ${{ vars.SCRIPT_NAME || github.event.repository.name }}
 
 jobs:
-  upload-script:
+  publish-to-web:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v3
-
     - name: Publish Script
       uses: dmnemec/copy_file_to_another_repo_action@v1.1.1
       env:
