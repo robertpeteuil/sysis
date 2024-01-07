@@ -1,0 +1,37 @@
+# Description: Publish script to another repo hosting a GitHub Pages website
+#
+# required values:
+#   var.SCRIPT_NAME          : name of the script to publish
+#   secrets.API_TOKEN_GITHUB : github token with write access to the repo
+
+name: publish-to-web
+run-name: push ${{ github.event.release.tag_name }} to web
+
+on:
+  release:
+    types: [released]
+  workflow_dispatch:
+
+env:
+  SCRIPT_NAME: ${{ vars.SCRIPT_NAME || github.event.repository.name }}
+
+jobs:
+  upload-script:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Publish Script
+      uses: dmnemec/copy_file_to_another_repo_action@v1.1.1
+      env:
+        API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+      with:
+        source_file: ${{ env.SCRIPT_NAME }}
+        destination_repo: 'robertpeteuil/iac.sh'
+        destination_branch: 'master'
+        destination_folder: 'docs'
+        user_email: 'actions@github.com'
+        user_name: 'release-action'
+        commit_message: 'update to ${{ github.event.release.tag_name }} from ${{ github.repository }}'
+  
