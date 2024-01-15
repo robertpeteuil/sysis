@@ -10,8 +10,8 @@
 
 
 scriptname="sysis"
-scriptbuildnum="3.8.1"
-scriptbuilddate="2024-01-03"
+scriptbuildnum="3.8.2"
+scriptbuilddate="2024-01-15"
 
 ############################################################
 ### VARS INITS
@@ -282,7 +282,7 @@ setLinuxCommon() {
   else                                        # plan c - use uname
     OSfullname="${SYSkernal}"
   fi
-  if [ -e "/sys/devices/system/cpu/possible" ]; then
+  if [[ -e "/sys/devices/system/cpu/possible" ]] && [[ $(lscpu -h 2> /dev/null) ]]; then
     if lscpu | grep -q -m1 'max MHz'; then
       CPUspeed=$(lscpu | grep -m1 'max MHz')  # exists on adj. proc
     else
