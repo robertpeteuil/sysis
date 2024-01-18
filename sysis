@@ -42,6 +42,7 @@ if test -t 1; then            # check if stdout is a terminal
     blue="$(tput setaf 4)"
     magenta="$(tput setaf 5)"
     cyan="$(tput setaf 6)"
+    # shellcheck disable=SC2034
     white="$(tput setaf 7)"
     clrreset="\033[0m"
     # color theme to enable quick color changing
@@ -51,7 +52,8 @@ if test -t 1; then            # check if stdout is a terminal
     CLRheading2="${clrreset}${green}"
     CLRtitle="${clrreset}${cyan}"
     CLRtitle2="${bold}${magenta}"
-    CLRsuccess="${bold}${green}"  # shellcheck disable SC2034
+    # shellcheck disable=SC2034
+    CLRsuccess="${bold}${green}"  
     CLRwarning="${clrreset}${yellow}"
     CLRerror="${bold}${red}"
   fi
@@ -74,10 +76,14 @@ processExit () {    # error message can be sent to function when calling
   exit $EXITSTATUS
 }
 
-processAbort () {
+processAbort () {  
+  # shellcheck disable=SC2317
   local var=$*
+  # shellcheck disable=SC2317
   [[ -n $var ]] && EXITMESSAGE="${CLRerror}AZBORT${CLRdefault} - ${var}${CLRnormal}"
+  # shellcheck disable=SC2317
   EXITSTATUS=2
+  # shellcheck disable=SC2317
   processExit
 }
 
@@ -252,8 +258,10 @@ getSystem() {
   fi
   if [ -r /etc/os-release ]; then
     VALUESvia="FILE"
+    # shellcheck source=/dev/null
     LSBrel="$(. /etc/os-release && echo "$PRETTY_NAME")"
     LSBrel=${LSBrel%' ('*}     # strip right of ' (' to remove codename suffix (if present)
+    # shellcheck source=/dev/null
     LSBcodename="$(. /etc/os-release && echo "$VERSION")"
     LSBcodename=${LSBcodename#*', '}
     LSBcodename=${LSBcodename#* (}
@@ -634,7 +642,7 @@ getNetwork
 getSystem
 
 if [[ "$OS" == "Linux" ]]; then
-  if ([[ "$PROCarch" == "armhf" ]] || [[ $SYSmachine == armv* ]] || [[ "$OSTYPE" == "linux-gnueabihf" ]]); then
+  if [[ "$PROCarch" == "armhf" ]] || [[ $SYSmachine == armv* ]] || [[ "$OSTYPE" == "linux-gnueabihf" ]]; then
     setRPI                          # Some Linux common extraction + RPi unique
   else
     setLinux                        # Use linux common + linux defaults)
@@ -651,5 +659,7 @@ reportMain
 processExit
 
 ### SHOULD NEVER RUN CODE BELOW THIS LINE
+# shellcheck disable=SC2317
 echo "ERROR - exit function didnt work" >&2
+# shellcheck disable=SC2317
 exit 2
