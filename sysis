@@ -395,6 +395,7 @@ setRPI() {
     if [ "$(free -m | awk 'NR==3{printf "%.0f\n", $2}')" == 0 ]; then
       swapRatio="0"
     else
+      # shellcheck disable=SC1083
       swapRatio="$(free -m | awk 'NR==3{printf "%.0f\n", $3*100/$2'})"
     fi 
     swapUsage="${swapUse} ${CLRnormal}${CLRwarning}(${swapRatio}%)${CLRnormal}"
@@ -425,6 +426,7 @@ setLinux() {
     if [ "$(free -m | awk 'NR==3{printf "%.0f\n", $2}')" == 0 ]; then
       swapRatio="0"
     else
+      # shellcheck disable=SC1083
       swapRatio="$(free -m | awk 'NR==3{printf "%.0f\n", $3*100/$2'})"
     fi
     swapUsage="${swapUse} ${CLRnormal}${CLRwarning}(${swapRatio}%)${CLRnormal}"
