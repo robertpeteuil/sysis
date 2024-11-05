@@ -10,8 +10,8 @@
 
 
 scriptname="sysis"
-scriptbuildnum="3.8.2"
-scriptbuilddate="2024-01-15"
+scriptbuildnum="3.8.3"
+scriptbuilddate="2024-11-04"
 
 ############################################################
 ### VARS INITS
@@ -368,10 +368,14 @@ setRPI() {
         *b03111) RPImodel="4B 2G [1.1]"; RPIman="Sony"; RPIrel="Q2 2019";;
         *b03112) RPImodel="4B 2G [1.2]"; RPIman="Sony"; RPIrel="Q2 2019";;
         *b03114) RPImodel="4B 2G [1.4]"; RPIman="Sony"; RPIrel="Q2 2020";;
+        *b03115) RPImodel="4B 2G [1.5]"; RPIman="Sony"; RPIrel="Q1 2022";;
         *c03111) RPImodel="4B 4G [1.1]"; RPIman="Sony"; RPIrel="Q2 2019";;
         *c03112) RPImodel="4B 4G [1.2]"; RPIman="Sony"; RPIrel="Q2 2019";;
         *c03114) RPImodel="4B 4G [1.4]"; RPIman="Sony"; RPIrel="Q2 2020";;
+        *c03115) RPImodel="4B 4G [1.5]"; RPIman="Sony"; RPIrel="Q1 2022";;
         *d03114) RPImodel="4B 8G [1.4]"; RPIman="Sony"; RPIrel="Q2 2020";;
+        *d03115) RPImodel="4B 8G [1.5]"; RPIman="Sony"; RPIrel="Q1 2022";;
+        *902120) RPImodel="Zero 2 W 512M [1.0]"; RPIman="Sony"; RPIrel="Q4 2021";;
         *) RPImodel="'Unknown Version'"; RPIman="Unknown"; RPIrel="Unknown";;
     esac
     if [[ -n ${CPUinfo} ]]; then
